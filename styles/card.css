@@ -1,0 +1,64 @@
+.card {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 100px;
+    height: 100%;
+    min-height: 450px;
+    background-color: #2E5C6B;
+    border-radius: 20px;
+    margin-top: 5rem;
+    overflow: hidden;
+}
+
+.year-block {
+    width: 60%;
+    min-height: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 5rem 0 3rem 0;
+    flex-basis: 100px;
+    flex-wrap: wrap;
+}
+
+.year-color__1 {
+    background-color: #B39081;
+}
+
+.year-color__2 {
+    background-color: #85BAFA;
+}
+
+.year-color__3 {
+    background-color: #818BB3;
+}
+
+.card-bb-1 {
+    border-bottom: 5px solid #EAB1B1;
+    box-shadow: -2px 15px 33px 0px rgba(178, 145, 129, 0.10), -9px 59px 59px 0px rgba(178, 145, 129, 0.09), -20px 132px 80px 0px rgba(178, 145, 129, 0.05), -35px 235px 95px 0px rgba(178, 145, 129, 0.01), -55px 367px 104px 0px rgba(178, 145, 129, 0.00);
+}
+
+.card-bb-2 {
+    border-bottom: 5px solid #85BAFA;
+    box-shadow: -2px 12px 28px 0px rgba(132, 186, 250, 0.10), -8px 50px 50px 0px rgba(132, 186, 250, 0.09), -19px 112px 68px 0px rgba(132, 186, 250, 0.05), -33px 198px 80px 0px rgba(132, 186, 250, 0.01), -52px 310px 88px 0px rgba(132, 186, 250, 0.00);
+}
+
+.card-bb-3 {
+    border-bottom: 5px solid #B1B1EA;
+    box-shadow: -2px 12px 28px 0px rgba(177, 177, 234, 0.10), -8px 49px 50px 0px rgba(177, 177, 234, 0.09), -19px 111px 68px 0px rgba(177, 177, 234, 0.05), -33px 198px 80px 0px rgba(177, 177, 234, 0.01), -52px 309px 88px 0px rgba(177, 177, 234, 0.00);
+}
+
+.grow-card {
+    max-width: 720px;
+    min-height: 300px;
+    border-bottom: 3px solid #FFF;
+    filter: drop-shadow(0px 20px 44px rgba(255, 255, 255, 0.10)) drop-shadow(0px 79px 79px rgba(255, 255, 255, 0.09)) drop-shadow(0px 178px 107px rgba(255, 255, 255, 0.05)) drop-shadow(0px 317px 127px rgba(255, 255, 255, 0.01)) drop-shadow(0px 495px 139px rgba(255, 255, 255, 0.00));
+
+}
+
+.testimonial-card {
+    align-items: start;
+    justify-content: center;
+    width: 60%;
+}

@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: "Nunito" sans-serif;
+  overflow-x: hidden;
+}
+
+.stone-color {
+  color: #808080
+}
+
+.heading-text {
+  font-size: 64px;
+  font-style: normal;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.desc {
+  color: #F9F9F9;
+  font-size: 17px;
+  font-style: normal;
+  line-height: normal;
+}
+
+
+.link {
+  @apply mx-5 cursor-pointer
+}
+
+.flex-center {
+  @apply flex justify-center items-center;
+}
+
+.flex-start {
+  @apply flex justify-start items-start;
+}
+
+.flex-end {
+  @apply flex justify-end items-center;
+}
+
+.flex-between {
+  @apply flex justify-between items-center;
+}
+
+.flex-around {
+  @apply flex justify-around items-center;
+}

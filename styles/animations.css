@@ -1,0 +1,58 @@
+.header-buttons {
+    transition: all 200ms;
+}
+
+.header-buttons:hover {
+    scale: 1.1;
+}
+
+.shop-btn:hover {
+    scale: 1.1;
+    background-color: white
+}
+
+.link:hover {
+    opacity: 0.6;
+}
+
+.testimonial-animatable {
+    transition: 200ms;
+    z-index: 2;
+}
+
+.card {
+    min-height: none;
+}
+
+.testimonial-animatable:hover {
+    scale: 1.1;
+    filter: blur(0);
+    margin-left: 0;
+    margin-right: 0;
+    width: 50%;
+}
+
+.testimonial-animatable:hover .active-card {
+    width: 50%;
+}
+
+.__right {
+    margin-right: -7rem;
+}
+
+.__left {
+    margin-left: -7rem;
+}
+
+.menu-icon {
+    transition: all 200ms ease;
+    cursor: pointer;
+}
+
+.menu-icon:active {
+    scale: 0.8;
+}
+
+.sign-up-bg:active {
+    background-color: #737272;
+}

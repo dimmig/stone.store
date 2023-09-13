@@ -1,0 +1,16 @@
+.about-bg {
+    background: linear-gradient(180deg, #132A2D 92.99%, #314144 99.22%);
+}
+
+.user-circle {
+    width: 100px;
+    height: 100px;
+    background-color: #fff;
+}
+
+.username {
+color: #DBEBF0;
+font-size: 32px;
+font-style: normal;
+line-height: 36px; 
+}
