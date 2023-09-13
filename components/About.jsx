@@ -8,7 +8,7 @@ import Reveal from "./Reveal";
 const About = () => {
   return (
     <div className="about-bg" id="about">
-      <Reveal>
+      <Reveal delay={0}>
         <h1 className="heading-text md:text-8xl text-center text-blue-50 pt-10">
           About us
         </h1>
