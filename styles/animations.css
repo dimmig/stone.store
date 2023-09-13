@@ -29,11 +29,11 @@
     filter: blur(0);
     margin-left: 0;
     margin-right: 0;
-    width: 50%;
+    height: calc(max-content + 40px)
 }
 
 .testimonial-animatable:hover .active-card {
-    width: 50%;
+    height: 100%;
 }
 
 .__right {

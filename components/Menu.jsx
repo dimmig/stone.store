@@ -55,6 +55,7 @@ const Menu = () => {
             width={50}
             height={50}
             onClick={() => setIsOpen((prev) => !prev)}
+            alt="menu-icon"
           />
         </motion.div>
         <motion.div
@@ -85,6 +86,11 @@ const Menu = () => {
           <motion.p
             className="link text-white py-2 hover:text-gray-500 active:text-gray-600"
             variants={itemVariants}
+            onClick={() =>
+              document
+                .getElementById("about")
+                .scrollIntoView({ behavior: "smooth" })
+            }
           >
             About us
           </motion.p>

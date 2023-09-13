@@ -68,6 +68,7 @@ const TestimonialsMobile = () => {
           width={10}
           height={10}
           className="rotate-180"
+          alt="select-arrow"
         />
       </button>
       <li className="hidden testimonial-card card-bb-1" id="card-1">
