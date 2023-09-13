@@ -29,7 +29,6 @@
     filter: blur(0);
     margin-left: 0;
     margin-right: 0;
-    height: calc(max-content + 40px)
 }
 
 .testimonial-animatable:hover .active-card {

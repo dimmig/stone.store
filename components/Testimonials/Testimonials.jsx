@@ -7,7 +7,7 @@ const Testimonials = () => {
     <div>
       {/* Desktop */}
       <div className="hidden md:flex md:flex-row md:justify-center gap-5 md:px-10 md:pb-10">
-        <div className="card testimonial-card __right scale-90 blur-sm card-bb-1 testimonial-animatable px-5/6">
+        <div className="card testimonial-card __right scale-90 blur-sm card-bb-1 testimonial-animatable">
           <div className="flex flex-col">
             <div className="w-full  flex md:flex-row flex-col gap-5 flex-center p-10">
               <div className="user-circle flex-center rounded-full">
