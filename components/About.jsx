@@ -22,16 +22,15 @@ const About = () => {
           Elevating excellence, embracing integrity
         </p>
       </Reveal>
-
       <CoreValues />
-
       <Reveal>
         <p className="desc md:text-2xl px-10 mt-16 font-thin">
           Feedback fuels excellence
         </p>
       </Reveal>
-
-      <Testimonials />
+      <Reveal>
+        <Testimonials />
+      </Reveal>
     </div>
   );
 };

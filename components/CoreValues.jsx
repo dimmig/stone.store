@@ -13,7 +13,7 @@ const CoreValues = () => {
         className="hidden md:flex md:mt-64 scale-x-125"
       />
       <div className="flex flex-col px-5">
-        <Reveal delay={0.1}>
+        <Reveal>
           <div className="card sm:flex-row flex-col px-5 gap-5 grow-card">
             <Image
               src="/assets/icons/diamond.svg"
@@ -30,7 +30,7 @@ const CoreValues = () => {
             </p>
           </div>
         </Reveal>
-        <Reveal delay={0.2}>
+        <Reveal>
           <div className="card sm:flex-row flex-col px-5 gap-5 grow-card">
             <Image
               src="/assets/icons/integrity.svg"
@@ -47,7 +47,7 @@ const CoreValues = () => {
             </p>
           </div>
         </Reveal>
-        <Reveal delay={0.3}>
+        <Reveal>
           <div className="card sm:flex-row flex-col px-5 gap-5 grow-card">
             <Image
               src="/assets/icons/growth.svg"
