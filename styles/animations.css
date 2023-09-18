@@ -55,3 +55,13 @@
 .sign-up-bg:active {
     background-color: #737272;
 }
+
+.color-card:hover {
+    scale: 1.1;
+    background-color: #446F82;
+    cursor: pointer;
+}
+
+.color-card:hover h3 {
+    color: #fff;
+}

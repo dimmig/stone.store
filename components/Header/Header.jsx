@@ -1,12 +1,12 @@
+import Menu from "./Menu";
+import Reveal from "../Reveal";
 import "@/styles/globals.css";
 import "@/styles/header.css";
-import Menu from "./Menu";
-import Reveal from "./Reveal";
 
 const Header = () => {
   return (
     <div className="header">
-      <Reveal>
+      <Reveal isCentered={false}>
         <Menu />
         <div className="w-full flex-center flex-col mt-52">
           <div>

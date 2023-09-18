@@ -26,7 +26,7 @@ const Menu = () => {
         className="pointer-events-none"
         alt="app-logo"
       />
-      <div className="max-md:hidden w-1/3 flex flex-row flex-around text-gray-500 whitespace-nowrap">
+      <div className="max-md:hidden w-1/2 flex flex-row flex-around text-gray-500 whitespace-nowrap">
         <p
           className="link"
           onClick={() =>
@@ -37,7 +37,36 @@ const Menu = () => {
         >
           About us
         </p>
-        <p className="link">Products</p>
+        <p
+          className="link"
+          onClick={() =>
+            document
+              .getElementById("clothes")
+              .scrollIntoView({ behavior: "smooth" })
+          }
+        >
+          Clothes
+        </p>
+        <p
+          className="link"
+          onClick={() =>
+            document
+              .getElementById("why-us")
+              .scrollIntoView({ behavior: "smooth" })
+          }
+        >
+          Why us
+        </p>
+        <p
+          className="link"
+          onClick={() =>
+            document
+              .getElementById("how-to-use")
+              .scrollIntoView({ behavior: "smooth" })
+          }
+        >
+          How to use
+        </p>
         <p className="link">Contacts</p>
       </div>
       <div className="flex flex-row whitespace-nowrap w-max">
@@ -84,7 +113,7 @@ const Menu = () => {
           animate={isOpen ? "open" : "closed"}
         >
           <motion.p
-            className="link text-white py-2 hover:text-gray-500 active:text-gray-600"
+            className="link text-gray-200 py-2 hover:text-white py-2 cursor-pointer active:text-gray-600"
             variants={itemVariants}
             onClick={() =>
               document
@@ -95,13 +124,40 @@ const Menu = () => {
             About us
           </motion.p>
           <motion.p
-            className="link text-white py-2 hover:text-gray-500 active:text-gray-600"
+            className="link text-gray-200 py-2 hover:text-white py-2 cursor-pointer active:text-gray-600"
             variants={itemVariants}
+            onClick={() =>
+              document
+                .getElementById("clothes")
+                .scrollIntoView({ behavior: "smooth" })
+            }
           >
-            Products
+            Clothes
           </motion.p>
           <motion.p
-            className="link text-white py-2 hover:text-gray-500 active:text-gray-600"
+            className="link text-gray-200 py-2 hover:text-white py-2 cursor-pointer active:text-gray-600"
+            variants={itemVariants}
+            onClick={() =>
+              document
+                .getElementById("why-us")
+                .scrollIntoView({ behavior: "smooth" })
+            }
+          >
+            Why us
+          </motion.p>
+          <motion.p
+            className="link text-gray-200 py-2 hover:text-white py-2 cursor-pointer active:text-gray-600"
+            variants={itemVariants}
+            onClick={() =>
+              document
+                .getElementById("how-to-use")
+                .scrollIntoView({ behavior: "smooth" })
+            }
+          >
+            How to use
+          </motion.p>
+          <motion.p
+            className="link text-gray-200 py-2 hover:text-white cursor-pointer active:text-gray-300"
             variants={itemVariants}
           >
             Contacts

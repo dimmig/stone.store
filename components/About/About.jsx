@@ -1,9 +1,9 @@
 import Timeline from "./Timeline";
 import CoreValues from "./CoreValues";
 import Testimonials from "./Testimonials/Testimonials.jsx";
+import Reveal from "../Reveal";
 import "@/styles/about.css";
 import "@/styles/card.css";
-import Reveal from "./Reveal";
 
 const About = () => {
   return (

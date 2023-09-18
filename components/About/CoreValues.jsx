@@ -1,6 +1,6 @@
 import Image from "next/image";
 import "@/styles/card.css";
-import Reveal from "./Reveal";
+import Reveal from "../Reveal";
 
 const CoreValues = () => {
   return (
@@ -30,7 +30,7 @@ const CoreValues = () => {
             </p>
           </div>
         </Reveal>
-        <Reveal>
+        <Reveal delay={0.1}>
           <div className="card sm:flex-row flex-col px-5 gap-5 grow-card">
             <Image
               src="/assets/icons/integrity.svg"
@@ -47,7 +47,7 @@ const CoreValues = () => {
             </p>
           </div>
         </Reveal>
-        <Reveal>
+        <Reveal delay={0.2}>
           <div className="card sm:flex-row flex-col px-5 gap-5 grow-card">
             <Image
               src="/assets/icons/growth.svg"

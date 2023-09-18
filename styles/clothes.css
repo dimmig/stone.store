@@ -1,0 +1,80 @@
+.clothes-bg {
+    background: #416A7C;
+}
+
+.clothes-secondary-bg {
+    background: #446F82;
+}
+
+.color-card {
+    width: 300px;
+    height: 150px;
+    min-width: 150px;
+    min-height: 75px;
+    border-radius: 20px;
+    transition: all 200ms;
+}
+
+.color-name {
+    font-size: 32px;
+    font-style: normal;
+    font-weight: 700;
+}
+
+.less-width {
+    width: 210px;
+}
+
+.color-row-2 {
+    height: 70px;
+}
+
+.feature-card {
+    width: 230px;
+    height: 75px;
+    border-radius: 20px;
+}
+
+.color-feature {
+    background: linear-gradient(90deg, rgba(131, 90, 248, 0.60) 6.12%, rgba(126, 95, 214, 0.60) 6.14%, rgba(125, 126, 255, 0.80) 17.69%, rgba(123, 152, 223, 0.90) 31.18%, rgba(125, 156, 215, 0.94) 44.68%, rgba(126, 168, 207, 0.87) 56.24%, rgba(127, 182, 199, 0.80) 68.45%, rgba(129, 198, 189, 0.71) 86.45%, rgba(130, 219, 176, 0.50) 103.15%, #91C26A 129.5%);
+}
+
+.feature-name {
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 700;
+    color: #fff
+}
+
+.quality-card {
+    width: 330px;
+    height: 270px;
+    border-radius: 20px;
+    border: 1px solid #FFF;
+    display: flex;
+    flex-direction: column;
+}
+
+.secure-card {
+    width: 90%;
+    min-height: 230px;
+    display: flex;
+    flex-direction: column;
+    background-color: #416A7C;
+    border-radius: 20px;
+    padding: 2rem 0;
+}
+
+.more-height {
+    min-height: 230px;
+    height: 100%;
+}
+
+.observe-btn {
+    width: 70%;
+    font-size: 2rem;
+    font-weight: 600;
+    border-radius: 20px;
+    padding: 1rem;
+    cursor: pointer;
+}

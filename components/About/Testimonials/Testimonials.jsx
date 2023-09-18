@@ -1,10 +1,9 @@
 import Image from "next/image";
 import TestimonialsMobile from "./TestimonialsMobile";
-import Reveal from "../Reveal";
 
 const Testimonials = () => {
   return (
-    <div>
+    <div className="pb-48">
       {/* Desktop */}
       <div className="hidden md:flex md:flex-row md:justify-center gap-5 md:px-10 md:pb-10">
         <div className="card testimonial-card __right scale-90 blur-sm card-bb-1 testimonial-animatable">

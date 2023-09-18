@@ -24,11 +24,11 @@
 }
 
 .dropdown {
-    background-color: #AFCDCF;
+    background-color: #67939E;
     position: absolute;
-    width: 130%;
+    width: 150%;
     padding: 1rem;
     right: 10%;
     top: 150%;
-    opacity: 0.8
+    opacity: 0.6    
 }
