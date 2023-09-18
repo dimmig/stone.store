@@ -11,6 +11,14 @@
     overflow: hidden;
 }
 
+.start {
+    align-items: start;
+}
+
+.max-width {
+    width: 500px;
+}
+
 .year-block {
     width: 60%;
     min-height: 100px;

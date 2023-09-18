@@ -67,7 +67,16 @@ const Menu = () => {
         >
           How to use
         </p>
-        <p className="link">Contacts</p>
+        <p
+          className="link"
+          onClick={() =>
+            document
+              .getElementById("contacts")
+              .scrollIntoView({ behavior: "smooth" })
+          }
+        >
+          Contacts
+        </p>
       </div>
       <div className="flex flex-row whitespace-nowrap w-max">
         <button className="max-md:hidden header-buttons bg-gray-600 mx-5 px-5 py-1 text-white rounded-full">
@@ -159,6 +168,11 @@ const Menu = () => {
           <motion.p
             className="link text-gray-200 py-2 hover:text-white cursor-pointer active:text-gray-300"
             variants={itemVariants}
+            onClick={() =>
+              document
+                .getElementById("contacts")
+                .scrollIntoView({ behavior: "smooth" })
+            }
           >
             Contacts
           </motion.p>

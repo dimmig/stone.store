@@ -4,7 +4,7 @@ import "@/styles/card.css";
 import Reveal from "../Reveal";
 
 const App = () => (
-  <div className="clothes-bg text-center" id="how-to-use">
+  <div className="clothes-bg text-center pb-20" id="how-to-use">
     <Reveal isFull={true}>
       <h1 className="heading-text md:text-8xl text-center text-blue-50 pt-20">
         App guide

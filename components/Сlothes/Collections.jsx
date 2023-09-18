@@ -56,7 +56,7 @@ const Collections = () => {
                 <button className="observe-btn bg-[#7D888C] text-[#D9D9D9] hidden">
                   Observe
                 </button>
-                <h3 className="color-name text-[#D9D9D9]">attleship gray</h3>
+                <h3 className="color-name text-[#D9D9D9]">Battleship gray</h3>
               </div>
             </Reveal>
             <Reveal isScale={true} delay={0.4}>
