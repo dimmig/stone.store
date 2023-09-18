@@ -9,7 +9,7 @@ const Header = () => {
       <Reveal isCentered={false}>
         <Menu />
         <div className="w-full flex-center flex-col mt-52">
-          <div>
+          <div className="md:ml-16">
             <h1 className="heading-text md:text-8xl stone-color w-max">
               Stone
             </h1>
@@ -19,7 +19,7 @@ const Header = () => {
           </div>
         </div>
         <div className="h-2/5 flex-center mt-24">
-          <button className="shop-btn stone-color rounded-sm md:w-60 md:h-16 md:text-3xl md:mr-20">
+          <button className="shop-btn stone-color rounded-sm md:w-60 md:h-16 md:text-3xl">
             Shop now
           </button>
         </div>

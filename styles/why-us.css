@@ -1,7 +1,7 @@
 .why-card {
-    width: 380px;
     height: 170px;
     border-radius: 20px;
+    padding: 0 1rem;
 }
 
 .decreased {

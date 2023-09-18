@@ -2,9 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+overflow-x: hidden;
+}
+
 body {
   font-family: "Nunito" sans-serif;
-  overflow-x: hidden;
 }
 
 .stone-color {
