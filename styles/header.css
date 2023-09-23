@@ -20,7 +20,10 @@
     height: 60px;
     background-color: #D9D9D9;
     font-size: 24px;
-    transition: all 200ms
+    transition: all 200ms;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .dropdown {

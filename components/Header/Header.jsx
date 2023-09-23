@@ -2,6 +2,7 @@ import Menu from "./Menu";
 import Reveal from "../Reveal";
 import "@/styles/globals.css";
 import "@/styles/header.css";
+import Link from "next/link";
 
 const Header = () => {
   return (
@@ -19,9 +20,12 @@ const Header = () => {
           </div>
         </div>
         <div className="h-2/5 flex-center mt-24">
-          <button className="shop-btn stone-color rounded-sm md:w-60 md:h-16 md:text-3xl">
+          <Link
+            href="/store"
+            className="shop-btn stone-color rounded-sm md:w-60 md:h-16 md:text-3xl"
+          >
             Shop now
-          </button>
+          </Link>
         </div>
       </Reveal>
     </div>

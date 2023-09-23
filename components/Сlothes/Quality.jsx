@@ -66,7 +66,7 @@ const Quality = () => {
           <Reveal delay={0.2} isCentered={true}>
             <div className="flex flex-row gap-10 max-[1100px]:flex-col max-[1100px]:items-center">
               <Image
-                src="assets/icons/search.svg"
+                src="assets/icons/analytics.svg"
                 width={100}
                 height={100}
                 alt="search"
