@@ -65,3 +65,51 @@
 .color-card:hover h3 {
     color: #fff;
 }
+
+.menu-item:hover {
+    opacity: 0.7;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.color-circle:hover {
+    scale: 1.1;
+    cursor: pointer;
+}
+
+.color-circle {
+    transition: all 0.2s ease;
+}
+
+.buy-btn {
+    transition: all 0.2s ease;
+}
+
+.buy-btn:hover {
+    scale: 1.1;
+}
+
+.collection-item {
+    transition: all 0.2s ease;
+}
+
+.collection-item:hover {
+    scale: 1.1;
+    cursor: pointer;
+}
+
+.footer-item:hover {
+    text-decoration: underline;
+    color: #b0bcc1;
+    cursor: pointer;
+}
+
+.footer-icon {
+    transition: all 0.2s ease;
+}
+
+.footer-icon:hover {
+    scale: 1.1;
+    cursor: pointer;
+    filter: brightness(0.9);
+}
