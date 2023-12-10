@@ -16,8 +16,18 @@ const CollectionCards = () => {
             alt="black hoodie"
           />
         </div>
-        <div className="w-[420px] h-[130px] bg-[#9DB2BF] rounded-[10px] flex-center collection-item">
-          <h3 className="text-white font-bold text-6xl">Hodies</h3>
+        <div className="relative w-full py-5 rounded-[10px] bg-[#9DB2BF] flex flex-row max-[540px]:gap-0">
+          <div>
+            <h3 className="text-white text-4xl font-bold px-10 pt-3">
+              Stone hoodies
+            </h3>
+            <p className="text-white px-10 pt-2">More than 31 varieties</p>
+            <p className="text-white px-10">of our branded hoodies</p>
+          </div>
+
+          <button className="absolute bottom-5 right-5 bg-[#C1CFD6] w-[130px] h-[35px] rounded-[10px] text-white font-bold text-2xl buy-btn  max-[540px]:w-[70px]">
+            Observe
+          </button>
         </div>
       </div>
       <div className="flex flex-col gap-5">
@@ -33,8 +43,18 @@ const CollectionCards = () => {
             alt="blue jeans"
           />
         </div>
-        <div className="flex-center w-[420px] h-[130px] bg-[#9DB2BF] rounded-[10px] collection-item">
-          <h3 className="text-white font-bold text-6xl">Jeans</h3>
+        <div className="relative w-full py-5 rounded-[10px] bg-[#9DB2BF] flex flex-row max-[540px]:gap-0">
+          <div>
+            <h3 className="text-white text-4xl font-bold px-10 pt-3">
+              Stone jeans
+            </h3>
+            <p className="text-white px-10 pt-2">More than 24 varieties</p>
+            <p className="text-white px-10">of our branded jeans</p>
+          </div>
+
+          <button className="absolute bottom-5 right-5 bg-[#C1CFD6] w-[130px] h-[35px] rounded-[10px] text-white font-bold text-2xl buy-btn  max-[540px]:w-[70px]">
+            Observe
+          </button>
         </div>
       </div>
       <div className="flex flex-col gap-5">
@@ -50,8 +70,18 @@ const CollectionCards = () => {
             alt="black shorts"
           />
         </div>
-        <div className="flex-center w-[420px] h-[130px] bg-[#9DB2BF] rounded-[10px] collection-item">
-          <h3 className="text-white font-bold text-6xl">Shorts</h3>
+        <div className="relative w-full py-5 rounded-[10px] bg-[#9DB2BF] flex flex-row max-[540px]:gap-0">
+          <div>
+            <h3 className="text-white text-4xl font-bold px-10 pt-3">
+              Stone shorts
+            </h3>
+            <p className="text-white px-10 pt-2 m-0">More than 27 varieties</p>
+            <p className="text-white px-10">of our branded shorts</p>
+          </div>
+
+          <button className="absolute bottom-5 right-5 bg-[#C1CFD6] w-[130px] h-[35px] rounded-[10px] text-white font-bold text-2xl buy-btn  max-[540px]:w-[70px]">
+            Observe
+          </button>
         </div>
       </div>
     </div>

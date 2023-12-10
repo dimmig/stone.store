@@ -6,6 +6,10 @@
     scale: 1.1;
 }
 
+.hid {
+    display: none;
+}
+
 .shop-btn:hover {
     scale: 1.1;
     background-color: white
@@ -91,11 +95,6 @@
 
 .collection-item {
     transition: all 0.2s ease;
-}
-
-.collection-item:hover {
-    scale: 1.1;
-    cursor: pointer;
 }
 
 .footer-item:hover {

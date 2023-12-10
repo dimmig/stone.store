@@ -1,8 +1,26 @@
-import Image from "next/image";
+"use client";
 
-const Footer = () => {
+import { DEFAULT_MENU_COLOR, generateTints } from "@/utils/colors";
+import Image from "next/image";
+import { useEffect } from "react";
+import tinycolor from "tinycolor2";
+
+const Footer = ({ footerColor }) => {
+  useEffect(() => {
+    if (footerColor !== DEFAULT_MENU_COLOR) {
+      document.getElementById("store-footer").style.backgroundColor = tinycolor(
+        footerColor
+      ).isDark()
+        ? tinycolor(footerColor).lighten(10)
+        : tinycolor(footerColor).darken(1);
+    } else {
+      document.getElementById("store-footer").style.backgroundColor =
+        DEFAULT_MENU_COLOR;
+    }
+  }, [footerColor]);
+
   return (
-    <div className="bg-[#CFDFEB] w-full py-10">
+    <div className="w-full py-10" id="store-footer">
       <div className="flex-around flex-wrap max-[900px]:gap-16">
         <div className="flex flex-col">
           <h3 className="text-white text-4xl font-bold">Products</h3>
@@ -59,7 +77,7 @@ const Footer = () => {
             <div className="flex flex-col gap-5 flex-start">
               <div className="flex flex-row gap-5">
                 <Image
-                  src="assets/icons/insta.svg"
+                  src="/assets/icons/insta.svg"
                   width={35}
                   height={35}
                   className="footer-icon"
@@ -69,7 +87,7 @@ const Footer = () => {
               </div>
               <div className="flex flex-row gap-5">
                 <Image
-                  src="assets/icons/facebook.svg"
+                  src="/assets/icons/facebook.svg"
                   width={35}
                   height={35}
                   className="footer-icon"
@@ -79,7 +97,7 @@ const Footer = () => {
               </div>
               <div className="flex flex-row gap-5">
                 <Image
-                  src="assets/icons/telegram.svg"
+                  src="/assets/icons/telegram.svg"
                   width={35}
                   height={35}
                   className="footer-icon"
@@ -89,7 +107,7 @@ const Footer = () => {
               </div>
               <div className="flex flex-row gap-5">
                 <Image
-                  src="assets/icons/email.svg"
+                  src="/assets/icons/email.svg"
                   width={35}
                   height={35}
                   className="footer-icon"

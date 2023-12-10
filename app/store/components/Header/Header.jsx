@@ -3,10 +3,38 @@
 import Image from "next/image";
 import Menu from "./Menu";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { DEFAULT_MENU_COLOR, generateTints } from "@/utils/colors";
+import tinycolor from "tinycolor2";
 
-const Header = () => {
+const Header = ({ headerColor }) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (headerColor !== DEFAULT_MENU_COLOR) {
+      document.getElementById("store-header").style.backgroundColor = tinycolor(
+        headerColor
+      ).isDark()
+        ? tinycolor(headerColor).lighten(10)
+        : tinycolor(headerColor).darken(1);
+      console.log(document.getElementById("store-header"));
+      document.getElementById("header-input").style.backgroundColor = tinycolor(
+        headerColor
+      ).isDark()
+        ? tinycolor(headerColor).lighten(7)
+        : tinycolor(headerColor).darken(7);
+
+      document.getElementById("search-btn").style.backgroundColor = tinycolor(
+        headerColor
+      ).isDark()
+        ? tinycolor(headerColor).lighten(7)
+        : tinycolor(headerColor).darken(7);
+    } else {
+      document.getElementById("store-header").style.backgroundColor =
+        DEFAULT_MENU_COLOR;
+    }
+  }, [headerColor]);
 
   const itemVariants = {
     open: {
@@ -23,19 +51,32 @@ const Header = () => {
         el.classList.add("hidden");
       }
     });
+    document.getElementById(`${e.target.id}-items`).classList.add("py-10");
+
     document.getElementById(`${e.target.id}-items`).classList.remove("hidden");
-    document.getElementById("items-wrapper").classList.add("py-5");
+  };
+
+  const mouseLeave = () => {
+    document.querySelectorAll(".menu-card").forEach((el) => {
+      if (!el.classList.contains("hidden")) {
+        el.classList.add("hidden");
+      }
+    });
   };
 
   return (
-    <div className="flex-between bg-[#9DB2BF] relative" id="store-header">
+    <div
+      className="flex-between relative"
+      id="store-header"
+      onMouseLeave={mouseLeave}
+    >
       <Image
         src="/assets/icons/app-logo-white.svg"
         width={180}
         height={40}
         alt="app-logo-icon"
       />
-      <div className="flex flex-row  text-white text-2xl ml-10 max-[880px]:ml-0 max-[540px]:text-[14px]">
+      <div className="flex flex-row text-white text-2xl ml-10 max-[880px]:ml-0 max-[540px]:text-[14px]">
         <h3
           className="cursor-pointer hover:opacity-80"
           id="men"
@@ -64,10 +105,14 @@ const Header = () => {
         <input
           placeholder="Search"
           className="outline-none border-none bg-[#526D82B2] py-2 px-2 text-white rounded-[10px] w-2/4"
+          id="header-input"
         />
-        <button className="flex flex-center bg-[#DDE6ED] px-5 py-2 rounded-[10px] hover:bg-[#D7E2EA]">
+        <button
+          className="flex flex-center bg-[#DDE6ED] px-5 py-2 rounded-[10px] hover:bg-[#D7E2EA]"
+          id="search-btn"
+        >
           <Image
-            src="assets/icons/search.svg"
+            src="/assets/icons/search.svg"
             width={20}
             height={20}
             alt="search-icon"
@@ -76,22 +121,26 @@ const Header = () => {
       </div>
       <div className="flex flex-row max-[1100px]:hidden">
         <div className="flex flex-row gap-16 mr-16">
+          <div className="min-w-[30px]">
+            <Link href="/store/purchases">
+              <Image
+                src="/assets/icons/purchase.svg"
+                width={25}
+                height={40}
+                alt="purchase-icon"
+                className="cursor-pointer hover:opacity-80"
+              />
+            </Link>
+          </div>
           <Image
-            src="assets/icons/purchase.svg"
-            width={24}
-            height={40}
-            alt="purchase-icon"
-            className="cursor-pointer hover:opacity-80"
-          />
-          <Image
-            src="assets/icons/heart.svg"
+            src="/assets/icons/heart.svg"
             width={30}
             height={35}
             alt="favourites-icon"
             className="cursor-pointer hover:opacity-80"
           />
           <Image
-            src="assets/icons/user-icon-white.svg"
+            src="/assets/icons/user-icon-white.svg"
             width={25}
             height={40}
             alt="user-icon"
@@ -99,7 +148,7 @@ const Header = () => {
           />
         </div>
         <Image
-          src="assets/icons/moon.svg"
+          src="/assets/icons/moon.svg"
           width={30}
           height={35}
           alt="dark-theme-icon"
@@ -202,7 +251,7 @@ const Header = () => {
           </motion.p>
         </motion.div>
       </div>
-      <Menu />
+      <Menu menuColor={headerColor} />
     </div>
   );
 };

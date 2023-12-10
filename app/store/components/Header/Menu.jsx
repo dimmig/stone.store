@@ -1,9 +1,23 @@
 import "@/styles/animations.css";
+import { DEFAULT_MENU_COLOR, generateTints } from "@/utils/colors";
+import { useEffect } from "react";
+import tinycolor from "tinycolor2";
 
-const Menu = () => {
+const Menu = ({ menuColor }) => {
+  useEffect(() => {
+    if (menuColor === DEFAULT_MENU_COLOR) {
+      document.getElementById("items-wrapper").style.backgroundColor =
+        menuColor;
+    } else {
+      document.getElementById("items-wrapper").style.backgroundColor =
+        tinycolor(menuColor).isDark()
+          ? tinycolor(menuColor).lighten(5)
+          : tinycolor(menuColor).darken(10);
+    }
+  }, [menuColor]);
   return (
     <div
-      className="absolute top-[105px] left-64 bg-[#9DB2BF] w-1/2 pl-10 text-white rounded-[10px] max-[1100px]:w-full max-[1100px]:left-0"
+      className="absolute top-[105px] left-64 w-1/2 pl-10 text-white rounded-[10px] max-[1100px]:w-full max-[1100px]:left-0 z-20"
       id="items-wrapper"
     >
       <div className="menu-card flex justify-around hidden" id="men-items">
