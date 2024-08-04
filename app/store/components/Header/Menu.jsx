@@ -1,5 +1,5 @@
 import "@/styles/animations.css";
-import { DEFAULT_MENU_COLOR, generateTints } from "@/utils/colors";
+import { DEFAULT_MENU_COLOR } from "@/utils/colors";
 import { useEffect } from "react";
 import tinycolor from "tinycolor2";
 
@@ -11,7 +11,7 @@ const Menu = ({ menuColor }) => {
     } else {
       document.getElementById("items-wrapper").style.backgroundColor =
         tinycolor(menuColor).isDark()
-          ? tinycolor(menuColor).lighten(5)
+          ? tinycolor(menuColor).lighten(10)
           : tinycolor(menuColor).darken(10);
     }
   }, [menuColor]);

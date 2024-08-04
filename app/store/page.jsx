@@ -5,8 +5,11 @@ import StoneCollection from "./components/Collection/StoneCollection";
 import Discounts from "./components/Discounts/Discounts";
 import Layout from "./components/Layout";
 import { DEFAULT_MENU_COLOR } from "@/utils/colors";
+import { useState } from "react";
 
 const Store = () => {
+  const [isShown, setIsShown] = useState(false);
+
   const hideMenuItems = () => {
     if (document.getElementById("items-wrapper").classList.contains("py-5")) {
       document.querySelectorAll(".menu-card").forEach((el) => {
@@ -21,7 +24,11 @@ const Store = () => {
     <div>
       <div className="h-screen" onMouseOver={hideMenuItems}>
         <Layout color={DEFAULT_MENU_COLOR}>
-          <div className="flex flex-col items-center gap-20 pt-20 bg-[#EAEFF4] px-5">
+
+          <div
+            className="flex flex-col items-center gap-20 pt-20 bg-[#EAEFF4] px-5"
+            id="images"
+          >
             <h1 className="text-[#698294] text-5xl max-[570px]:text-3xl">
               Discover your own style
             </h1>
@@ -30,7 +37,7 @@ const Store = () => {
                 src="/assets/images/men-image.png"
                 width={600}
                 height={500}
-                className="cursor-pointer darker transition duration-1"
+                className="cursor-pointer  transition duration-1"
                 alt="men-image"
               />
 
@@ -38,7 +45,7 @@ const Store = () => {
                 src="/assets/images/women-image.png"
                 width={600}
                 height={500}
-                className="cursor-pointer darker transition duration-1"
+                className="cursor-pointer transition duration-1"
                 alt="women-image"
               />
             </div>
