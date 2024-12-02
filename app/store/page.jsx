@@ -1,62 +1,33 @@
 "use client";
-import Image from "next/image";
-import Suggestions from "./components/Suggestions/Suggestions";
-import StoneCollection from "./components/Collection/StoneCollection";
-import Discounts from "./components/Discounts/Discounts";
-import Layout from "./components/Layout";
-import { DEFAULT_MENU_COLOR } from "@/utils/colors";
-import { useState } from "react";
+
+import {CarouselComponent} from "@/components/Store/Carousel";
+import {StoneCollection} from "@/components/Store/StoneCollection";
+import {SeasonBoom} from "@/components/Store/SeasonBoom";
+import Footer from "@/components/Store/Footer";
+import Layout from "@/app/store/product/[productId]/layout";
+import {Mountain, Rocket, SunSnow} from "lucide-react";
+import data from "../../mock_data/data.json"
 
 const Store = () => {
-  const [isShown, setIsShown] = useState(false);
 
-  const hideMenuItems = () => {
-    if (document.getElementById("items-wrapper").classList.contains("py-5")) {
-      document.querySelectorAll(".menu-card").forEach((el) => {
-        if (!el.classList.contains("hidden")) {
-          el.classList.add("hidden");
-          document.getElementById("items-wrapper").classList.remove("py-5");
-        }
-      });
-    }
-  };
-  return (
-    <div>
-      <div className="h-screen" onMouseOver={hideMenuItems}>
-        <Layout color={DEFAULT_MENU_COLOR}>
-
-          <div
-            className="flex flex-col items-center gap-20 pt-20 bg-[#EAEFF4] px-5"
-            id="images"
-          >
-            <h1 className="text-[#698294] text-5xl max-[570px]:text-3xl">
-              Discover your own style
-            </h1>
-            <div className="flex flex-row gap-10 max-[1130px]:flex-col">
-              <Image
-                src="/assets/images/men-image.png"
-                width={600}
-                height={500}
-                className="cursor-pointer  transition duration-1"
-                alt="men-image"
-              />
-
-              <Image
-                src="/assets/images/women-image.png"
-                width={600}
-                height={500}
-                className="cursor-pointer transition duration-1"
-                alt="women-image"
-              />
-            </div>
-            <Suggestions />
-            <StoneCollection />
-            <Discounts />
-          </div>
-        </Layout>
-      </div>
-    </div>
-  );
+    return (
+        <div>
+            <Layout>
+                <h1 className='text-3xl font-bold mt-10 ml-10 flex flex-row gap-2 items-center'>Our bestsellers <Rocket /></h1>
+                <CarouselComponent items={data.filter(item => item.discount)}/>
+                <div className='mt-20 bg-gray-50 py-10'>
+                    <h1 className='text-3xl font-bold ml-10 flex flex-row gap-2 items-center'>Stone
+                        collection <Mountain/></h1>
+                    <StoneCollection/>
+                </div>
+                <h1 className='mt-20 text-3xl font-bold ml-10 flex flex-row gap-2 items-center'>Season Boom <SunSnow /></h1>
+                <SeasonBoom/>
+                <div className='sticky top-0  bg-white shadow-lg shadow-black/5 z-50'>
+                    <Footer/>
+                </div>
+            </Layout>
+        </div>
+    );
 };
 
 export default Store;

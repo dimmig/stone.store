@@ -16,11 +16,6 @@ const Collections = () => {
         el.children[0].classList.add("hidden");
       });
     });
-    return () =>
-      document.querySelectorAll(".color-card").forEach((el) => {
-        el.removeEventListener("mouseover", handleMouseOver);
-        el.removeEventListener("mouseleave", handleMouseLeave);
-      });
   }, []);
 
   return (

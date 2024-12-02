@@ -6,7 +6,7 @@ const nunito = Nunito({ subsets: ["latin"] });
 
 export const metadata = {
   title: "Stone store",
-  description: "Sophistication in sahdes of gray",
+  description: "Sophistication in shades of gray",
 };
 
 export default function RootLayout({ children }) {
@@ -15,7 +15,9 @@ export default function RootLayout({ children }) {
       <Head>
         <link rel="shortcut icon" href="/favicon.ico" />
       </Head>
-      <body className={nunito.className}>{children}</body>
+      <body className={nunito.className}>
+      {children}
+      </body>
     </html>
   );
 }
