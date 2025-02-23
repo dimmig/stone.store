@@ -12,7 +12,7 @@ const Contacts = () => {
           Your questions - our answers
         </p>
       </Reveal>
-      <div className="flex-wrap basis-[300px] flex justify-center flex-row gap-5 px-10">
+      <div className="flex-wrap basis-[300px] flex justify-center flex-row gap-10">
         <Reveal
           isCentered={true}
           isFull={false}
@@ -71,7 +71,7 @@ const Contacts = () => {
 
               <div className="flex flex-row gap-5 items-center mt-5">
                 <p className="text-lg md:text-2xl text-white">
-                  Warshaw: Daszyńskiego 13, 56799
+                  Warshaw: Daszyńskiego 13
                 </p>
               </div>
             </div>
