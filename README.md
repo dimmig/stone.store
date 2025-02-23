@@ -1,5 +1,6 @@
 # Stone.Store-V2
 
+[![View Website Demo](https://img.shields.io/badge/View%20Website%20Demo-%E2%9C%94-blue)](https://stone-store-v2.vercel.app/)
 
 The ultimate e-commerce application for selling clothes.
 
