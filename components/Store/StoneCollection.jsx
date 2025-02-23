@@ -19,7 +19,7 @@ export const StoneCollection = ({className}) => {
                             key={item.id}
                             className="md:basis-1/2 lg:basis-1/3 pb-10 px-10"
                         >
-                            <Card className='w-[450px] h-[450px] p-20 relative bg-gray-200 shadow-md shadow-gray-400'>
+                            <Card className='w-[450px] h-[450px] p-20 relative bg-gray-50 shadow-md'>
                                 <CardContent
                                     className="flex flex-col aspect-square items-center justify-center p-6 ">
                                     <h2 className='absolute text-3xl top-5 left-5 font-bold'>{item.name}</h2>
@@ -38,7 +38,7 @@ export const StoneCollection = ({className}) => {
                                         {item.price}$
                                     </Badge>
                                     <Button onClick={() => router.push(`/store/product/${item.id}`)} variant="outline" size="icon"
-                                            className='absolute text-lg bottom-5 right-5'>
+                                            className='absolute text-lg bottom-5 right-10'>
                                         <ChevronRightIcon className="h-4 w-4"/>
                                     </Button>
                                 </CardContent>
