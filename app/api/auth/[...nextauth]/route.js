@@ -23,7 +23,6 @@ export const authOptions = {
             email: credentials.email,
           },
         });
-        console.log("USER :", user)
 
         if (!user) {
           throw new Error('No user found with this email');
