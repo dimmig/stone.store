@@ -1,6 +1,5 @@
 "use client"
 import {useEffect, useState} from "react";
-import data from "../../../../mock_data/data.json"
 import {Spinner} from '@/components/ui/spinner';
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
@@ -9,22 +8,36 @@ import {Card, CardContent} from "@/components/ui/card";
 import Footer from "@/components/Store/Footer";
 import {SimilarProducts} from "@/components/Store/SimilarProducts";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import Image from "next/image";
 
 const BuyProduct = ({params}) => {
     const [currentItem, setCurrentItem] = useState(null)
     const [hydrated, setHydrated] = useState(false)
     const [selectedSize, setSelectedSize] = useState(null)
-    const [selectedItemVariation, setSelectedItemVariation] = useState(currentItem ? currentItem.image[currentItem.colors[0]] : "")
+    const [selectedColor, setSelectedColor] = useState(null)
 
     useEffect(() => {
         setHydrated(true)
     }, []);
 
     useEffect(() => {
-        const item = data.find(it => it.id === params.productId)
-        if (item) {
-            setCurrentItem(item)
-        }
+        const fetchProduct = async () => {
+            try {
+                const response = await fetch(`/api/products/${params.productId}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch product');
+                }
+                const data = await response.json();
+                setCurrentItem(data)
+                if (data.colors && data.colors.length > 0) {
+                    setSelectedColor(data.colors[0])
+                }
+            } catch (error) {
+                console.error('Error fetching product:', error);
+            }
+        };
+
+        fetchProduct();
     }, [params.productId]);
 
     if (!currentItem || !hydrated) {
@@ -54,22 +67,30 @@ const BuyProduct = ({params}) => {
             <div className="main-info flex flex-row justify-around mt-32 pb-16">
                 <div className='flex flex-row pl-10'>
                     <div className='flex flex-col gap-2'>
-                        {currentItem.colors.map(color =>
+                        {currentItem.colors.map(color => (
                             <Card
                                 key={color}
-                                className={`w-[150px] h-[150px] flex justify-center items-center relative shadow-md hover:cursor-pointer${selectedItemVariation === currentItem.image[color] ? "border border-black" : ""}`}
-                                onClick={() => setSelectedItemVariation(currentItem.image[color])}
+                                className={`w-[150px] h-[150px] flex justify-center items-center relative shadow-md hover:cursor-pointer ${
+                                    selectedColor === color ? "border border-black" : ""
+                                }`}
+                                onClick={() => setSelectedColor(color)}
                             >
                                 <CardContent className='p-0'>
-                                    <img src={currentItem.image[color]} width={100} height={100}/>
+                                    <div className="relative w-full h-full">
+                                        <Image
+                                            src={currentItem.images[0]}
+                                            alt={`${currentItem.name} - ${color}`}
+                                            fill
+                                            className="object-cover"
+                                        />
+                                    </div>
                                 </CardContent>
                             </Card>
-                        )}
+                        ))}
                     </div>
                     <div className="flex justify-center items-center relative p-10 pr-20 pl-48 rounded-sm pt-0"
                          id="img-bg">
                         {currentItem.discount && (
-
                             <div
                                 className="absolute flex-center right-0 top-0 w-[100px] h-[40px] "
                                 id="discount"
@@ -80,13 +101,14 @@ const BuyProduct = ({params}) => {
                             </div>
                         )}
 
-                        <img
-                            src={selectedItemVariation === "" ? currentItem.image[currentItem.colors[0]] : selectedItemVariation}
-                            width={currentItem.width * 1.8}
-                            height={currentItem.height}
-                            id="item-image"
-                            alt={currentItem.name}
-                        />
+                        <div className="relative w-full h-full">
+                            <Image
+                                src={currentItem.images[0]}
+                                alt={currentItem.name}
+                                fill
+                                className="object-contain"
+                            />
+                        </div>
                     </div>
                 </div>
                 <div className="mr-20">
@@ -104,16 +126,16 @@ const BuyProduct = ({params}) => {
                             </p>
                         </div>
                         <div className="mb-4">
-                            <Select>
+                            <Select onValueChange={setSelectedSize}>
                                 <SelectTrigger className="flex flex-1">
-                                    <SelectValue placeholder="Sizes"/>
+                                    <SelectValue placeholder="Select size" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {currentItem.sizes.map(size => (
                                         <SelectItem
-                                            className='text-xl px-10 hover:cursor-pointer'
+                                            key={size}
                                             value={size}
-                                            onClick={() => setSelectedSize(size)}
+                                            className='text-xl px-10 hover:cursor-pointer'
                                         >
                                             {size}
                                         </SelectItem>
@@ -122,24 +144,22 @@ const BuyProduct = ({params}) => {
                             </Select>
                         </div>
                     </div>
+                    <div className="flex items-center gap-4">
+                        <span className={`${typography.h3} text-gray-900`}>
+                            ${currentItem.price.toLocaleString()}
+                        </span>
+                    </div>
                     <div className="relative flex flex-row flex-between gap-5">
                         <Button
-                            className={`py-5 px-3 ${currentItem.discount ? "w-[150px]" : "w-[200px]"} font-bold  text-3xl mt-5 rounded-sm flex-center  bg-black`}
+                            className="w-[200px] font-bold text-3xl mt-5 rounded-sm flex-center bg-black"
                         >
-                            Buy
+                            Add to Cart
                         </Button>
-                        {currentItem.discount && (
-                            <div
-                                className="opacity-20 cross text-3xl top-6 left-[46%]"
-                            >
-                                {currentItem.price * (currentItem.discount / 100) + currentItem.price} $
-                            </div>
-                        )}
                         <Badge
                             className={`${currentItem.discount ? "" : "w-[200px]"} px-10 font-bold  text-3xl mt-5 rounded-sm flex-center`}
                             variant='secondary'
                         >
-                            {currentItem.price} $
+                            {currentItem.inStock ? 'In Stock' : 'Out of Stock'}
                         </Badge>
                     </div>
                 </div>

@@ -1,0 +1,35 @@
+import React from 'react';
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import '../styles/globals.css';
+import { Header } from './components/layout/Header';
+import { Footer } from './components/layout/Footer';
+import { Providers } from './providers/Providers';
+import { ClientProviders } from './providers/ClientProviders';
+
+const inter = Inter({ subsets: ['latin'] });
+
+export const metadata: Metadata = {
+  title: 'Stone.Store - Premium Clothing & Accessories',
+  description: 'Your premier destination for high-quality clothing and accessories.',
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body className={inter.className}>
+        <ClientProviders>
+          <Providers>
+            <Header />
+            <main className="min-h-screen">{children}</main>
+            <Footer />
+          </Providers>
+        </ClientProviders>
+      </body>
+    </html>
+  );
+} 
