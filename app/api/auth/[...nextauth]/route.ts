@@ -1,36 +1,35 @@
-import NextAuth from 'next-auth';
+import NextAuth, { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { PrismaClient } from '@prisma/client';
+import {PrismaClient, User} from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
-export const authOptions = {
+export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
+        console.log("CREDENTIALS: ", credentials)
         if (!credentials?.email || !credentials?.password) {
           throw new Error('Please enter an email and password');
         }
 
         const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email,
-          },
-        });
+          where: { email: credentials.email },
+        }) as User;
 
         if (!user) {
           throw new Error('No user found with this email');
         }
 
         const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
+            credentials.password,
+            user.password
         );
 
         if (!isPasswordValid) {
@@ -49,13 +48,17 @@ export const authOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role;
+        if ("role" in user) {
+          token.role = user.role;
+        }
       }
       return token;
     },
     async session({ session, token }) {
       if (session?.user) {
+        if ("role" in session.user) {
         session.user.role = token.role;
+        }
       }
       return session;
     },
@@ -69,4 +72,4 @@ export const authOptions = {
 };
 
 const handler = NextAuth(authOptions);
-export { handler as GET, handler as POST }; 
+export { handler as GET, handler as POST };

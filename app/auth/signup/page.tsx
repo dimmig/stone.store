@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -30,7 +30,7 @@ export default function SignUpPage() {
     }
 
     try {
-      const response = await fetch('/api/auth/signup', {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -42,10 +42,8 @@ export default function SignUpPage() {
         }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.message || 'Something went wrong');
+        throw new Error('Something went wrong');
       }
 
       // Sign in the user after successful registration
@@ -61,6 +59,7 @@ export default function SignUpPage() {
 
       router.push('/');
     } catch (err) {
+      console.log(err)
       setError(err instanceof Error ? err.message : 'Failed to create account');
     } finally {
       setLoading(false);

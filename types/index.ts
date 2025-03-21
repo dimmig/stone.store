@@ -4,15 +4,14 @@ export interface Product {
   description: string;
   price: number;
   images: string[];
-  category: string;
   sizes: string[];
   colors: string[];
+  category: string;
   inStock: boolean;
-  discount?: number;
-  isNew?: boolean;
-  rating?: number;
+  discount: number;
+  rating: number;
   createdAt: Date;
-  updatedAt: Date;
+  wishlistItems: WishlistItem[]
 }
 
 export interface Category {
@@ -26,10 +25,18 @@ export interface Category {
 }
 
 export interface CartItem {
-  product: Product;
+  id: string;
+  userId: string;
+  productId: string;
   quantity: number;
-  size: string;
-  color: string;
+  size?: string;
+  color?: string;
+  product: {
+    id: string;
+    name: string;
+    price: number;
+    images: string[];
+  };
 }
 
 export interface WishlistItem {
@@ -38,4 +45,44 @@ export interface WishlistItem {
   productId: string;
   product: Product;
   createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Address {
+  id: string;
+  userId: string;
+  name: string;
+  street: string;
+  city: string;
+  state: string;
+  zip: string;
+  isDefault: boolean;
+}
+
+export interface Order {
+  id: string;
+  userId: string;
+  items: OrderItem[];
+  total: number;
+  status: string;
+  shippingAddressId: string;
+  trackingNumber?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface OrderItem {
+  id: string;
+  orderId: string;
+  productId: string;
+  quantity: number;
+  price: number;
+  size?: string;
+  color?: string;
+  product: {
+    id: string;
+    name: string;
+    price: number;
+    images: string[];
+  };
 } 

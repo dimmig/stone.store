@@ -41,6 +41,7 @@ export async function GET(request: Request) {
       },
       include: {
         category: true,
+        wishlistItems: true,
       },
       orderBy: sortBy === 'price-asc'
           ? { price: 'asc' }

@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    // TODO: Replace this with actual user data fetching from your database
-    // This is just a mock response
     const userDetails = {
       name: 'John Doe',
       email: 'john@example.com',
@@ -21,4 +19,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-} 
+}
