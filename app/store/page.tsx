@@ -3,7 +3,7 @@
 import React, {useState, useEffect} from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import {Heart, ShoppingBag, Search, Filter, X, Star, Pin, PinOff, Check} from 'lucide-react';
+import {Heart, ShoppingBag, Search, Filter, X, Star, Pin, PinOff, Check, ChevronDown, ChevronUp, Loader2, ChevronLeft, ChevronRight} from 'lucide-react';
 import {useCart} from '@/app/providers/CartProvider';
 import {useWishlist} from '@/app/providers/WishlistProvider';
 import {Product} from '@/types';
@@ -13,14 +13,33 @@ import {useRouter} from "next/navigation";
 import moment from "moment"
 import {useUserStore} from "@/store/user-store";
 
-async function getProducts(searchQuery = '', filters = {}) {
+interface ProductFilters {
+    category?: string;
+    priceRange?: string;
+    sortBy?: string;
+    color?: string;
+    size?: string;
+    rating?: string;
+    inStock?: boolean;
+}
+
+async function getProducts(searchQuery = '', filters: ProductFilters = {}, page = 1, limit = 12) {
     const params = new URLSearchParams({
-        search: searchQuery,
-        ...filters
+        page: page.toString(),
+        limit: limit.toString(),
+        ...(searchQuery && { search: searchQuery }),
+        ...(filters.category && { category: filters.category }),
+        ...(filters.priceRange && { priceRange: filters.priceRange }),
+        ...(filters.sortBy && { sortBy: filters.sortBy }),
+        ...(filters.color && { color: filters.color }),
+        ...(filters.size && { size: filters.size }),
+        ...(filters.rating && { rating: filters.rating }),
+        ...(filters.inStock && { stockFilter: 'inStock' })
     });
+
     const response = await fetch(`/api/products?${params}`);
-    const data = await response.json();
-    return data;
+    if (!response.ok) throw new Error('Failed to fetch products');
+    return response.json();
 }
 
 export default function StorePage() {
@@ -41,6 +60,10 @@ export default function StorePage() {
         size: '',
         rating: ''
     });
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const productsPerPage = 10;
+    const [totalProducts, setTotalProducts] = useState(0);
 
     const {addToCart} = useCart();
     const {addToWishlist, removeFromWishlist, isInWishlist} = useWishlist();
@@ -49,19 +72,42 @@ export default function StorePage() {
         const fetchProducts = async () => {
             setLoading(true);
             try {
-                const fetchedProducts = await getProducts(searchQuery, filters);
-                setProducts(Array.isArray(fetchedProducts) ? fetchedProducts : []);
-                setLoading(false);
+                const data = await getProducts(
+                    searchQuery,
+                    {
+                        category: filters.category,
+                        priceRange: filters.priceRange,
+                        sortBy: filters.sortBy,
+                        color: filters.color,
+                        size: filters.size,
+                        rating: filters.rating,
+                        inStock: filters.inStock
+                    },
+                    currentPage,
+                    productsPerPage
+                );
+
+                if (data && data.products) {
+                    setProducts(data.products);
+                    setTotalProducts(data.total);
+                    setTotalPages(data.totalPages);
+                } else {
+                    setProducts([]);
+                    setTotalProducts(0);
+                    setTotalPages(1);
+                }
             } catch (error) {
                 console.error('Error fetching products:', error);
                 setProducts([]);
+                setTotalProducts(0);
+                setTotalPages(1);
+            } finally {
                 setLoading(false);
             }
         };
 
-        const debounceTimer = setTimeout(fetchProducts, 300);
-        return () => clearTimeout(debounceTimer);
-    }, [searchQuery, filters]);
+        fetchProducts();
+    }, [currentPage, searchQuery, filters, productsPerPage]);
 
     const handleAddToCart = async (e: React.MouseEvent, product: Product) => {
         e.preventDefault();
@@ -364,10 +410,9 @@ export default function StorePage() {
 
                     {/* Main Content */}
                     <div className="flex-1">
-                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                            {loading ? (
-                                // Loading skeletons
-                                [...Array(8)].map((_, i) => (
+                        {loading ? (
+                            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                {[...Array(10)].map((_, i) => (
                                     <div key={i} className="animate-pulse rounded-2xl bg-white p-5 shadow-sm">
                                         <div className="aspect-[4/5] rounded-xl bg-gray-100"/>
                                         <div className="mt-5 space-y-3">
@@ -378,92 +423,173 @@ export default function StorePage() {
                                             </div>
                                         </div>
                                     </div>
-                                ))
-                            ) : (
-                                // Product grid
-                                products?.map((product) => (
-                                    <Link
-                                        key={product.id}
-                                        href={`/products/${product.id}`}
-                                        className="group relative overflow-hidden rounded-2xl bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-gray-100/50"
-                                    >
-                                        <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-gray-50">
-                                            <Image
-                                                src={product.images[0]}
-                                                alt={product.name}
-                                                width={500}
-                                                height={500}
-                                                className="h-full w-full object-cover object-center transition-transform duration-500 will-change-transform group-hover:scale-105"
-                                            />
-                                            <div className="absolute right-3 top-3 flex gap-2">
-                                                <button
-                                                    onClick={(e) => handleToggleWishlist(e, product)}
-                                                    className={`rounded-xl bg-white/90 p-2.5 backdrop-blur-sm transition-all hover:scale-110 ${
-                                                        isInWishlist(product.id)
-                                                            ? 'text-red-500 hover:bg-red-50'
-                                                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                                                    }`}
-                                                >
-                                                    <Heart
-                                                        className={`h-[18px] w-[18px] ${isInWishlist(product.id) ? 'fill-current' : ''}`}/>
-                                                </button>
-                                                <button
-                                                    onClick={(e) => handleAddToCart(e, product)}
-                                                    className="rounded-xl bg-white/90 p-2.5 text-gray-600 backdrop-blur-sm transition-all hover:scale-110 hover:bg-gray-50 hover:text-gray-900"
-                                                >
-                                                    <ShoppingBag className="h-[18px] w-[18px]"/>
-                                                </button>
-                                            </div>
-                                            {product.discount > 0 && (
-                                                <div className="absolute left-3 top-3">
-                                                    <div
-                                                        className="rounded-lg bg-black px-2 py-1 text-xs font-medium text-white">
-                                                        -{product.discount}%
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {moment(product.createdAt).isAfter(moment().subtract(1, 'weeks')) && (
-                                                <div className="absolute left-3 top-3">
-                                                    <div
-                                                        className="rounded-lg bg-blue-500 px-2 py-1 text-xs font-medium text-white">
-                                                        New
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="mt-5 space-y-2">
-                                            <div className="flex items-start justify-between gap-2">
-                                                <h3 className="flex-1 text-sm font-medium text-gray-900 line-clamp-1">{product.name}</h3>
-                                                <div className="flex items-center gap-1">
-                                                    <Star className="h-4 w-4 fill-current text-yellow-400"/>
-                                                    <span className="text-xs font-medium text-gray-600">
-                            {product.rating || '4.5'}
-                          </span>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <div className="space-x-2">
-                          <span className="text-sm font-medium text-gray-900">
-                            ${product.price}
-                          </span>
-                                                    {product.discount > 0 && (
-                                                        <span className="text-xs text-gray-500 line-through">
-                              ${Math.round(product.price * (1 + product.discount / 100))}
-                            </span>
+                                ))}
+                            </div>
+                        ) : products.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-12">
+                                <p className="text-lg font-medium text-gray-900">No products found</p>
+                                <p className="mt-2 text-sm text-gray-500">Try adjusting your search or filter criteria</p>
+                                <button
+                                    onClick={() => {
+                                        setSearchQuery('');
+                                        setFilters({
+                                            category: '',
+                                            priceRange: '',
+                                            sortBy: 'newest',
+                                            inStock: false,
+                                            color: '',
+                                            size: '',
+                                            rating: ''
+                                        });
+                                        setCurrentPage(1);
+                                    }}
+                                    className="mt-4 rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-900"
+                                >
+                                    Clear all filters
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                    {products.map((product) => (
+                                        <Link
+                                            key={product.id}
+                                            href={`/products/${product.id}`}
+                                            className="group relative overflow-hidden rounded-2xl bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-gray-100/50"
+                                        >
+                                            <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-gray-50">
+                                                <Image
+                                                    src={product.images[0]}
+                                                    alt={product.name}
+                                                    width={500}
+                                                    height={500}
+                                                    className="h-full w-full object-cover object-center transition-transform duration-500 will-change-transform group-hover:scale-105"
+                                                />
+                                                <div className="absolute right-3 top-3 flex gap-2">
+                                                    <button
+                                                        onClick={(e) => handleToggleWishlist(e, product)}
+                                                        className={`rounded-xl bg-white/90 p-2.5 backdrop-blur-sm transition-all hover:scale-110 ${
+                                                            isInWishlist(product.id)
+                                                                ? 'text-red-500 hover:bg-red-50'
+                                                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                                        }`}
+                                                    >
+                                                        <Heart
+                                                            className={`h-[18px] w-[18px] ${isInWishlist(product.id) ? 'fill-current' : ''}`}/>
+                                                    </button>
+                                                    {product?.inStock && (
+                                                        <button
+                                                            onClick={(e) => handleAddToCart(e, product)}
+                                                            className="rounded-xl bg-white/90 p-2.5 text-gray-600 backdrop-blur-sm transition-all hover:scale-110 hover:bg-gray-50 hover:text-gray-900"
+                                                        >
+                                                            <ShoppingBag className="h-[18px] w-[18px]"/>
+                                                        </button>
                                                     )}
                                                 </div>
-                                                {product.inStock ? (
-                                                    <span className="text-xs font-medium text-green-600">In Stock</span>
-                                                ) : (
-                                                    <span
-                                                        className="text-xs font-medium text-red-500">Out of Stock</span>
+                                                {product.discount > 0 && (
+                                                    <div className="absolute left-3 top-3">
+                                                        <div
+                                                            className="rounded-lg bg-black px-2 py-1 text-xs font-medium text-white">
+                                                            -{product.discount}%
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {moment(product.createdAt).isAfter(moment().subtract(1, 'weeks')) && (
+                                                    <div className="absolute left-3 top-3">
+                                                        <div
+                                                            className="rounded-lg bg-blue-500 px-2 py-1 text-xs font-medium text-white">
+                                                            New
+                                                        </div>
+                                                    </div>
                                                 )}
                                             </div>
+                                            <div className="mt-5 space-y-2">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <h3 className="flex-1 text-sm font-medium text-gray-900 line-clamp-1">{product.name}</h3>
+                                                    <div className="flex items-center gap-1">
+                                                        <Star className="h-4 w-4 fill-current text-yellow-400"/>
+                                                        <span className="text-xs font-medium text-gray-600">
+                                {product.rating || '4.5'}
+                              </span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <div className="space-x-2">
+                              <span className="text-sm font-medium text-gray-900">
+                                ${product.price}
+                              </span>
+                                                        {product.discount > 0 && (
+                                                            <span className="text-xs text-gray-500 line-through">
+                                  ${Math.round(product.price * (1 + product.discount / 100))}
+                                </span>
+                                                        )}
+                                                    </div>
+                                                    {product.inStock ? (
+                                                        <span className="text-xs font-medium text-green-600">In Stock</span>
+                                                    ) : (
+                                                        <span
+                                                            className="text-xs font-medium text-red-500">Out of Stock</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+
+                                {/* Pagination */}
+                                <div className="mt-8 flex items-center justify-between border-t border-gray-200 pt-4">
+                                    <div className="text-sm text-gray-700">
+                                        Showing <span className="font-medium">{((currentPage - 1) * productsPerPage) + 1}</span> to <span className="font-medium">{Math.min(currentPage * productsPerPage, totalProducts)}</span> of{' '}
+                                        <span className="font-medium">{totalProducts}</span> products
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <motion.button
+                                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                            disabled={currentPage === 1}
+                                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                                                currentPage === 1
+                                                    ? 'text-gray-400 cursor-not-allowed'
+                                                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                                            }`}
+                                            whileHover={{ scale: currentPage === 1 ? 1 : 1.02 }}
+                                            whileTap={{ scale: currentPage === 1 ? 1 : 0.98 }}
+                                        >
+                                            <ChevronLeft className="h-4 w-4" />
+                                        </motion.button>
+                                        <div className="flex items-center gap-1">
+                                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                                <motion.button
+                                                    key={page}
+                                                    onClick={() => setCurrentPage(page)}
+                                                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                                                        currentPage === page
+                                                            ? 'bg-black text-white'
+                                                            : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                                                    }`}
+                                                    whileHover={{ scale: 1.02 }}
+                                                    whileTap={{ scale: 0.98 }}
+                                                >
+                                                    {page}
+                                                </motion.button>
+                                            ))}
                                         </div>
-                                    </Link>
-                                ))
-                            )}
-                        </div>
+                                        <motion.button
+                                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                            disabled={currentPage === totalPages}
+                                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                                                currentPage === totalPages
+                                                    ? 'text-gray-400 cursor-not-allowed'
+                                                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                                            }`}
+                                            whileHover={{ scale: currentPage === totalPages ? 1 : 1.02 }}
+                                            whileTap={{ scale: currentPage === totalPages ? 1 : 0.98 }}
+                                        >
+                                            <ChevronRight className="h-4 w-4" />
+                                        </motion.button>
+                                    </div>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

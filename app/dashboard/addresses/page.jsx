@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   MapPin,
@@ -12,325 +12,290 @@ import {
 import { colors, typography, spacing, shadows, transitions } from '../../styles/design-system';
 
 export default function AddressesPage() {
-  const [addresses, setAddresses] = useState([
-    {
-      id: 1,
-      name: 'John Doe',
-      street: '123 Main St',
-      city: 'New York',
-      state: 'NY',
-      zip: '10001',
-      isDefault: true,
-    },
-    {
-      id: 2,
-      name: 'John Doe',
-      street: '456 Park Ave',
-      city: 'Los Angeles',
-      state: 'CA',
-      zip: '90001',
-      isDefault: false,
-    },
-  ]);
-
-  const [isAddingAddress, setIsAddingAddress] = useState(false);
-  const [editingAddress, setEditingAddress] = useState(null);
+  const [addresses, setAddresses] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     street: '',
     city: '',
     state: '',
     zip: '',
+    isDefault: false,
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (editingAddress) {
-      // Update existing address
-      setAddresses(
-        addresses.map((addr) =>
-          addr.id === editingAddress.id
-            ? { ...addr, ...formData }
-            : addr
-        )
-      );
-      setEditingAddress(null);
-    } else {
-      // Add new address
-      setAddresses([
-        ...addresses,
-        {
-          id: addresses.length + 1,
-          ...formData,
-          isDefault: addresses.length === 0,
-        },
-      ]);
+  useEffect(() => {
+    fetchAddresses();
+  }, []);
+
+  const fetchAddresses = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/user/addresses');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch addresses');
+      }
+
+      const data = await response.json();
+      setAddresses(data);
+    } catch (error) {
+      console.error('Error fetching addresses:', error);
+    } finally {
+      setIsLoading(false);
     }
-    setIsAddingAddress(false);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/user/addresses', {
+        method: editingId ? 'PUT' : 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editingId ? { ...formData, id: editingId } : formData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save address');
+      }
+
+      await fetchAddresses();
+      resetForm();
+    } catch (error) {
+      console.error('Error saving address:', error);
+    }
+  };
+
+  const handleEdit = (address) => {
+    setFormData(address);
+    setEditingId(address.id);
+    setIsAddingNew(true);
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const response = await fetch(`/api/user/addresses/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete address');
+      }
+
+      await fetchAddresses();
+    } catch (error) {
+      console.error('Error deleting address:', error);
+    }
+  };
+
+  const resetForm = () => {
     setFormData({
       name: '',
       street: '',
       city: '',
       state: '',
       zip: '',
+      isDefault: false,
     });
+    setEditingId(null);
+    setIsAddingNew(false);
   };
 
-  const handleEdit = (address) => {
-    setEditingAddress(address);
-    setFormData(address);
-    setIsAddingAddress(true);
-  };
-
-  const handleDelete = (id) => {
-    setAddresses(addresses.filter((addr) => addr.id !== id));
-  };
-
-  const setDefaultAddress = (id) => {
-    setAddresses(
-      addresses.map((addr) => ({
-        ...addr,
-        isDefault: addr.id === id,
-      }))
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent-gold"></div>
+      </div>
     );
-  };
+  }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className={`${typography.h2} text-gray-900`}>Shipping Addresses</h1>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setIsAddingAddress(true)}
-          className="flex items-center space-x-2 px-4 py-2 bg-accent-gold text-white rounded-full hover:bg-accent-gold-dark transition-colors duration-300"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Add Address</span>
-        </motion.button>
+        <h1 className={`${typography.h2} text-gray-900`}>My Addresses</h1>
+        {!isAddingNew && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setIsAddingNew(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-accent-gold text-white rounded-full hover:bg-accent-gold-dark transition-colors duration-300"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Add New Address</span>
+          </motion.button>
+        )}
       </div>
 
-      {/* Address Form */}
-      {(isAddingAddress || editingAddress) && (
-        <motion.div
+      {isAddingNew ? (
+        <motion.form
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
           className="bg-white rounded-lg shadow-sm p-6"
+          onSubmit={handleSubmit}
         >
-          <h2 className={`${typography.h4} text-gray-900 mb-6`}>
-            {editingAddress ? 'Edit Address' : 'Add New Address'}
+          <h2 className={`${typography.h3} text-gray-900 mb-6`}>
+            {editingId ? 'Edit Address' : 'Add New Address'}
           </h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label
-                htmlFor="name"
-                className={`${typography.body} text-gray-700 block mb-1`}
-              >
-                Full Name
+              <label className={`${typography.body} text-gray-600 block mb-1`}>
+                Name / Label
               </label>
               <input
                 type="text"
-                id="name"
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-gold focus:border-transparent"
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-accent-gold focus:border-transparent"
                 required
               />
             </div>
             <div>
-              <label
-                htmlFor="street"
-                className={`${typography.body} text-gray-700 block mb-1`}
-              >
+              <label className={`${typography.body} text-gray-600 block mb-1`}>
                 Street Address
               </label>
               <input
                 type="text"
-                id="street"
                 value={formData.street}
-                onChange={(e) =>
-                  setFormData({ ...formData, street: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-gold focus:border-transparent"
+                onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-accent-gold focus:border-transparent"
                 required
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="city"
-                  className={`${typography.body} text-gray-700 block mb-1`}
-                >
-                  City
-                </label>
-                <input
-                  type="text"
-                  id="city"
-                  value={formData.city}
-                  onChange={(e) =>
-                    setFormData({ ...formData, city: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-gold focus:border-transparent"
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="state"
-                  className={`${typography.body} text-gray-700 block mb-1`}
-                >
-                  State
-                </label>
-                <input
-                  type="text"
-                  id="state"
-                  value={formData.state}
-                  onChange={(e) =>
-                    setFormData({ ...formData, state: e.target.value })
-                  }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-gold focus:border-transparent"
-                  required
-                />
-              </div>
+            <div>
+              <label className={`${typography.body} text-gray-600 block mb-1`}>
+                City
+              </label>
+              <input
+                type="text"
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-accent-gold focus:border-transparent"
+                required
+              />
             </div>
             <div>
-              <label
-                htmlFor="zip"
-                className={`${typography.body} text-gray-700 block mb-1`}
-              >
+              <label className={`${typography.body} text-gray-600 block mb-1`}>
+                State
+              </label>
+              <input
+                type="text"
+                value={formData.state}
+                onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-accent-gold focus:border-transparent"
+                required
+              />
+            </div>
+            <div>
+              <label className={`${typography.body} text-gray-600 block mb-1`}>
                 ZIP Code
               </label>
               <input
                 type="text"
-                id="zip"
                 value={formData.zip}
-                onChange={(e) =>
-                  setFormData({ ...formData, zip: e.target.value })
-                }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-gold focus:border-transparent"
+                onChange={(e) => setFormData({ ...formData, zip: e.target.value })}
+                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-accent-gold focus:border-transparent"
                 required
               />
             </div>
-            <div className="flex justify-end space-x-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                type="button"
-                onClick={() => {
-                  setIsAddingAddress(false);
-                  setEditingAddress(null);
-                  setFormData({
-                    name: '',
-                    street: '',
-                    city: '',
-                    state: '',
-                    zip: '',
-                  });
-                }}
-                className="px-4 py-2 text-gray-700 hover:text-gray-900"
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="isDefault"
+                checked={formData.isDefault}
+                onChange={(e) => setFormData({ ...formData, isDefault: e.target.checked })}
+                className="rounded border-gray-300 text-accent-gold focus:ring-accent-gold"
+              />
+              <label
+                htmlFor="isDefault"
+                className={`${typography.body} text-gray-600`}
               >
-                Cancel
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                type="submit"
-                className="px-4 py-2 bg-accent-gold text-white rounded-full hover:bg-accent-gold-dark transition-colors duration-300"
-              >
-                {editingAddress ? 'Update Address' : 'Add Address'}
-              </motion.button>
+                Set as default address
+              </label>
             </div>
-          </form>
-        </motion.div>
-      )}
-
-      {/* Addresses List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {addresses.map((address) => (
-          <motion.div
-            key={address.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="bg-white rounded-lg shadow-sm p-6"
-          >
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex items-center space-x-2">
-                <MapPin className="h-5 w-5 text-accent-gold" />
-                <h3 className={`${typography.h4} text-gray-900`}>
-                  {address.name}
-                </h3>
-              </div>
-              {address.isDefault && (
-                <span className="px-2 py-1 bg-accent-gold/10 text-accent-gold rounded-full text-sm">
-                  Default
-                </span>
-              )}
-            </div>
-            <div className="space-y-1">
-              <p className={`${typography.body} text-gray-700`}>
-                {address.street}
-              </p>
-              <p className={`${typography.body} text-gray-700`}>
-                {address.city}, {address.state} {address.zip}
-              </p>
-            </div>
-            <div className="flex justify-end space-x-4 mt-6">
-              {!address.isDefault && (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setDefaultAddress(address.id)}
-                  className="text-accent-gold hover:text-accent-gold-dark"
-                >
-                  Set as Default
-                </motion.button>
-              )}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => handleEdit(address)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <Edit2 className="h-5 w-5" />
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => handleDelete(address.id)}
-                className="text-red-500 hover:text-red-600"
-              >
-                <Trash2 className="h-5 w-5" />
-              </motion.button>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Empty State */}
-      {addresses.length === 0 && (
-        <div className="text-center py-12">
-          <div className="inline-block p-4 rounded-full bg-accent-gold/10 mb-4">
-            <MapPin className="h-8 w-8 text-accent-gold" />
           </div>
-          <h3 className={`${typography.h4} text-gray-900 mb-2`}>
-            No addresses saved
-          </h3>
-          <p className={`${typography.body} text-gray-500 mb-4`}>
-            Add your shipping addresses to make checkout faster.
-          </p>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setIsAddingAddress(true)}
-            className="px-6 py-3 bg-accent-gold text-white rounded-full hover:bg-accent-gold-dark transition-colors duration-300"
-          >
-            Add Address
-          </motion.button>
+
+          <div className="flex space-x-4 mt-6">
+            <motion.button
+              type="submit"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="px-6 py-3 bg-accent-gold text-white rounded-full hover:bg-accent-gold-dark transition-colors duration-300"
+            >
+              {editingId ? 'Save Changes' : 'Add Address'}
+            </motion.button>
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={resetForm}
+              className="px-6 py-3 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors duration-300"
+            >
+              Cancel
+            </motion.button>
+          </div>
+        </motion.form>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {addresses.length === 0 ? (
+            <div className="col-span-full text-center py-8">
+              <MapPin className="mx-auto h-12 w-12 text-gray-400" />
+              <p className={`${typography.body} text-gray-500 mt-2`}>
+                No addresses saved yet
+              </p>
+            </div>
+          ) : (
+            addresses.map((address) => (
+              <motion.div
+                key={address.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-lg shadow-sm p-6"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center space-x-2">
+                    <h3 className={`${typography.h4} text-gray-900`}>
+                      {address.name}
+                    </h3>
+                    {address.isDefault && (
+                      <span className="px-2 py-1 bg-accent-gold/10 text-accent-gold text-xs rounded-full">
+                        Default
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex space-x-2">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => handleEdit(address)}
+                      className="p-2 text-gray-500 hover:text-accent-gold rounded-full hover:bg-accent-gold/10 transition-colors duration-300"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => handleDelete(address.id)}
+                      className="p-2 text-gray-500 hover:text-red-500 rounded-full hover:bg-red-50 transition-colors duration-300"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </motion.button>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <p className={`${typography.body} text-gray-600`}>
+                    {address.street}
+                  </p>
+                  <p className={`${typography.body} text-gray-600`}>
+                    {address.city}, {address.state} {address.zip}
+                  </p>
+                </div>
+              </motion.div>
+            ))
+          )}
         </div>
       )}
     </div>

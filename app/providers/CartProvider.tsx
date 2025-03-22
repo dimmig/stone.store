@@ -5,6 +5,8 @@ import { CartItem, Product } from '@/types';
 import { getStripe } from '@/lib/stripe';
 import { toast } from 'sonner';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import {useUserStore} from "@/store/user-store";
 
 interface CartContextType {
   items: CartItem[];
@@ -23,6 +25,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { data: session } = useSession();
+  const { user } = useUserStore()
 
   // Fetch cart items from API on mount and when session changes
   useEffect(() => {
@@ -161,7 +164,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cartItems: items }),
+        body: JSON.stringify({ 
+          cartItems: items,
+          userId: user?.id
+        }),
       });
 
       if (!response.ok) throw new Error('Failed to initiate checkout');

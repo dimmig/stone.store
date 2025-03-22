@@ -34,6 +34,7 @@ model User {
   cartItems     CartItem[]
   notifications Notification[]
   role          Role
+  checkoutSessions CheckoutSession[]
 }
 
 model Product {
@@ -76,6 +77,7 @@ model Order {
   shippingAddress   Address     @relation(fields: [shippingAddressId], references: [id])
   shippingAddressId String
   trackingNumber    String?
+  note              String?     @db.Text
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 }
@@ -135,4 +137,14 @@ model Notification {
   message   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+model CheckoutSession {
+  id        String   @id @default(cuid())
+  sessionId String   @unique
+  userId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
 }

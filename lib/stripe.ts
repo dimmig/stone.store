@@ -1,15 +1,13 @@
 import { Stripe } from 'stripe';
 
-// Server-side Stripe instance
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 export const stripe = stripeSecretKey 
   ? new Stripe(stripeSecretKey, {
-      apiVersion: '2025-02-24.acacia', // Updated to match the required version
+      apiVersion: '2025-02-24.acacia',
       typescript: true,
     })
   : null;
 
-// Client-side Stripe instance
 export const getStripe = async () => {
   const { loadStripe } = await import('@stripe/stripe-js');
   

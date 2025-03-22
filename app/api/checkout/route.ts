@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { CartItem } from '@/types';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(req: Request) {
   if (!stripe) {
@@ -41,8 +42,13 @@ export async function POST(req: Request) {
       mode: 'payment',
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/cart`,
-      metadata: {
-        userId: userId || 'guest',
+    });
+
+    // Store the checkout session in our database
+    await prisma.checkoutSession.create({
+      data: {
+        sessionId: session.id,
+        userId,
       },
     });
 

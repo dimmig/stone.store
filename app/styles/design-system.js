@@ -50,6 +50,13 @@ export const typography = {
     semibold: 600,
     bold: 700,
   },
+  h1: 'text-4xl font-bold',
+  h2: 'text-3xl font-semibold',
+  h3: 'text-2xl font-semibold',
+  h4: 'text-xl font-semibold',
+  body: 'text-base',
+  small: 'text-sm',
+  xs: 'text-xs',
 };
 
 export const spacing = {

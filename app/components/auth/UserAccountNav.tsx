@@ -18,13 +18,6 @@ export function UserAccountNav() {
           <User className="mr-3 h-4 w-4" />
           Dashboard
         </Link>
-        <Link
-          href="/settings"
-          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-        >
-          <Settings className="mr-3 h-4 w-4" />
-          Settings
-        </Link>
         <button
           onClick={() => signOut()}
           className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

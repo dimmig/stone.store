@@ -41,12 +41,6 @@ export default function SettingsPage() {
       description: 'Manage your password and security settings',
     },
     {
-      id: 'payment',
-      title: 'Payment Methods',
-      icon: CreditCard,
-      description: 'Manage your saved payment methods',
-    },
-    {
       id: 'language',
       title: 'Language & Region',
       icon: Globe,
@@ -272,63 +266,6 @@ export default function SettingsPage() {
                   />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent-gold/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-gold"></div>
                 </label>
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'payment':
-        return (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className={`${typography.h4} text-gray-900`}>
-                Saved Payment Methods
-              </h3>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-4 py-2 bg-accent-gold text-white rounded-full hover:bg-accent-gold-dark transition-colors duration-300"
-              >
-                Add Payment Method
-              </motion.button>
-            </div>
-            <div className="space-y-4">
-              <div className="p-4 bg-white rounded-lg shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-8 bg-gray-200 rounded"></div>
-                    <div>
-                      <p className={`${typography.body} text-gray-900`}>
-                        Visa ending in 4242
-                      </p>
-                      <p className={`${typography.body} text-gray-500`}>
-                        Expires 12/24
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      Edit
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="text-red-500 hover:text-red-600"
-                    >
-                      Remove
-                    </motion.button>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 rounded-full bg-accent-gold"></div>
-                  <p className={`${typography.body} text-gray-500`}>
-                    Default payment method
-                  </p>
-                </div>
               </div>
             </div>
           </div>

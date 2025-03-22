@@ -1,37 +1,39 @@
 import React from 'react';
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import type {Metadata} from 'next';
+import {Inter} from 'next/font/google';
 import '../styles/globals.css';
-import { Header } from './components/layout/Header';
-import { Footer } from './components/layout/Footer';
-import { Providers } from './providers/Providers';
-import { ClientProviders } from './providers/ClientProviders';
-import { Toaster } from "sonner";
+import {HeaderWrapper} from './components/layout/HeaderWrapper';
+import {Footer} from './components/layout/Footer';
+import {Providers} from './providers/Providers';
+import {ClientProviders} from './providers/ClientProviders';
+import {Toaster} from "sonner";
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({subsets: ['latin']});
 
 export const metadata: Metadata = {
-  title: 'Stone.Store - Premium Clothing & Accessories',
-  description: 'Your premier destination for high-quality clothing and accessories.',
+    title: 'Stone.Store - Premium Clothing & Accessories',
+    description: 'Your premier destination for high-quality clothing and accessories.',
 };
 
 export default function RootLayout({
-  children,
+    children,
 }: {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }) {
-  return (
-    <html lang="en">
-      <body className={inter.className}>
+    return (
+        <html lang="en">
+        <body className={inter.className}>
         <ClientProviders>
-          <Providers>
-            <Header />
-            <main className="min-h-screen">{children}</main>
-            <Footer />
-          </Providers>
+            <Providers>
+                <HeaderWrapper />
+                <main className="min-h-screen">
+                    {children}
+                </main>
+                <Footer/>
+            </Providers>
         </ClientProviders>
-        <Toaster position="top-center" richColors />
-      </body>
-    </html>
-  );
+        <Toaster position="top-center" richColors/>
+        </body>
+        </html>
+    );
 } 

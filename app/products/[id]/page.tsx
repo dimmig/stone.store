@@ -31,6 +31,7 @@ export default function ProductPage({params}: ProductPageProps) {
     const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [imageLoading, setImageLoading] = useState(true);
 
     const [selectedSize, setSelectedSize] = useState('');
     const [selectedColor, setSelectedColor] = useState('');
@@ -56,19 +57,20 @@ export default function ProductPage({params}: ProductPageProps) {
                 const relatedResponse = await fetch(`/api/products?category=${data.categoryId}&limit=4`);
                 if (relatedResponse.ok) {
                     const relatedData = await relatedResponse.json();
-                    setRelatedProducts(relatedData.filter((p: Product) => p.id !== data.id).slice(0, 4));
+                    setRelatedProducts(relatedData.products?.filter((p: Product) => p.id !== data.id).slice(0, 4));
                 }
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'An error occurred');
             } finally {
                 setIsLoading(false);
+                setImageLoading(false);
             }
         };
 
         fetchProduct();
     }, [params.id]);
 
-    if (isLoading) {
+    if (isLoading || imageLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-accent-gold"></div>
@@ -163,6 +165,12 @@ export default function ProductPage({params}: ProductPageProps) {
                                         alt={`${product.name} - View ${index + 1}`}
                                         fill
                                         className="object-cover"
+                                        loading="eager"
+                                        onError={(e) => {
+                                            console.error('Image failed to load:', e);
+                                            setImageLoading(false);
+                                        }}
+                                        onLoadingComplete={() => setImageLoading(false)}
                                     />
                                 </motion.button>
                             ))}
