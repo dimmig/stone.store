@@ -7,6 +7,15 @@ async function getProduct(id: string) {
     where: { id },
     include: {
       category: true,
+      reviews: {
+        include: {
+          user: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -28,6 +37,13 @@ async function getRelatedProducts(categoryId: string, currentProductId: string) 
       id: { not: currentProductId },
     },
     take: 4,
+    select: {
+      id: true,
+      name: true,
+      price: true,
+      images: true,
+      rating: true,
+    },
   });
 
   return relatedProducts.map(product => ({

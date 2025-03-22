@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { prisma } from '@/lib/prisma';
-import { Order } from "@/types";
+import { Order, OrderItem, Product, CartItem } from "@prisma/client";
+import { sendEmail } from '@/lib/email';
+import { getOrderStatusEmailTemplate } from '@/lib/email-templates';
+
+interface CartItemWithProduct extends CartItem {
+  product: Product;
+}
 
 const handleDevCheckout = async (session: any) => {
   console.log('Processing development checkout session:', session.id);
@@ -28,7 +34,6 @@ const handleDevCheckout = async (session: any) => {
     return acc + (item.product.price * item.quantity);
   }, 0);
 
-
   const shippingAddress = await prisma.address.create({
     data: {
       userId,
@@ -42,22 +47,59 @@ const handleDevCheckout = async (session: any) => {
 
   console.log('Created shipping address');
 
-  // Create order
-  const order = await prisma.order.create({
-    data: {
-      userId,
-      total,
-      shippingAddressId: shippingAddress.id,
-      trackingNumber: null,
-      items: {
-        create: cartItems.map(item => ({
-          productId: item.product.id,
-          quantity: item.quantity,
-          price: item.product.price
-        }))
+  // Use a transaction to ensure atomicity
+  const order = await prisma.$transaction(async (tx) => {
+    // First, verify stock availability for all items
+    for (const item of cartItems) {
+      const product = await tx.product.findUnique({
+        where: { id: item.product.id }
+      });
+
+      if (!product || product.stockQuantity < item.quantity) {
+        throw new Error(`Insufficient stock for product ${item.product.name}`);
       }
     }
-  }) as Order;
+
+    // Create order with items
+    const order = await tx.order.create({
+      data: {
+        userId,
+        total,
+        shippingAddressId: shippingAddress.id,
+        trackingNumber: null,
+        items: {
+          create: cartItems.map(item => ({
+            productId: item.product.id,
+            quantity: item.quantity,
+            price: item.product.price,
+            size: item.size || undefined,
+            color: item.color || undefined
+          }))
+        }
+      },
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        }
+      }
+    });
+
+    // Update stock quantities
+    for (const item of cartItems) {
+      await tx.product.update({
+        where: { id: item.product.id },
+        data: {
+          stockQuantity: {
+            decrement: item.quantity
+          }
+        }
+      });
+    }
+
+    return order;
+  });
 
   console.log('Created order:', order.id);
 
@@ -70,7 +112,38 @@ const handleDevCheckout = async (session: any) => {
     }
   });
 
-  console.log('Created notification');
+  // Send email notification
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true, name: true }
+  });
+
+  if (user?.email) {
+    await sendEmail({
+      to: user.email,
+      subject: `Order #${order.id} Confirmation`,
+      html: getOrderStatusEmailTemplate({
+        orderId: order.id,
+        status: 'processing',
+        appUrl: process.env.NEXT_PUBLIC_APP_URL!,
+        items: order.items.map(item => ({
+          name: item.product.name,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        total: order.total,
+        shippingAddress: {
+          name: 'Default Address',
+          street: '123 Test St',
+          city: 'Test City',
+          state: 'TS',
+          zip: '12345'
+        }
+      })
+    });
+  }
+
+  console.log('Created notification and sent email');
 
   // Clear cart
   await prisma.cartItem.deleteMany({
@@ -101,11 +174,13 @@ const handleCheckoutComplete = async (session: any) => {
 
   const userId = checkoutSession.userId;
 
-  // Get cart items
+  // Get cart items with product stock information
   const cartItems = await prisma.cartItem.findMany({
     where: { userId },
-    include: { product: true }
-  });
+    include: { 
+      product: true
+    }
+  }) as CartItemWithProduct[];
 
   // Calculate total
   const total = cartItems.reduce((acc, item) => {
@@ -124,22 +199,59 @@ const handleCheckoutComplete = async (session: any) => {
     }
   });
 
-  // Create order
-  const order = await prisma.order.create({
-    data: {
-      userId,
-      total,
-      shippingAddressId: shippingAddress.id,
-      trackingNumber: null,
-      items: {
-        create: cartItems.map(item => ({
-          productId: item.product.id,
-          quantity: item.quantity,
-          price: item.product.price
-        }))
+  // Use a transaction to ensure atomicity
+  const order = await prisma.$transaction(async (tx) => {
+    // First, verify stock availability for all items
+    for (const item of cartItems) {
+      const product = await tx.product.findUnique({
+        where: { id: item.product.id }
+      });
+
+      if (!product || product.stockQuantity < item.quantity) {
+        throw new Error(`Insufficient stock for product ${item.product.name}`);
       }
     }
-  }) as Order;
+
+    // Create order with items
+    const order = await tx.order.create({
+      data: {
+        userId,
+        total,
+        shippingAddressId: shippingAddress.id,
+        trackingNumber: null,
+        items: {
+          create: cartItems.map(item => ({
+            productId: item.product.id,
+            quantity: item.quantity,
+            price: item.product.price,
+            size: item.size || undefined,
+            color: item.color || undefined
+          }))
+        }
+      },
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        }
+      }
+    });
+
+    // Update stock quantities
+    for (const item of cartItems) {
+      await tx.product.update({
+        where: { id: item.product.id },
+        data: {
+          stockQuantity: {
+            decrement: item.quantity
+          }
+        }
+      });
+    }
+
+    return order;
+  });
 
   // Create notification
   await prisma.notification.create({
@@ -149,6 +261,37 @@ const handleCheckoutComplete = async (session: any) => {
       message: `Your order #${order.id} has been created.`
     }
   });
+
+  // Send email notification
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true, name: true }
+  });
+
+  if (user?.email) {
+    await sendEmail({
+      to: user.email,
+      subject: `Order #${order.id} Confirmation`,
+      html: getOrderStatusEmailTemplate({
+        orderId: order.id,
+        status: 'processing',
+        appUrl: process.env.NEXT_PUBLIC_APP_URL!,
+        items: order.items.map(item => ({
+          name: item.product.name,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        total: order.total,
+        shippingAddress: {
+          name: session.shipping_details.name,
+          street: session.shipping_details.address.line1,
+          city: session.shipping_details.address.city,
+          state: session.shipping_details.address.state,
+          zip: session.shipping_details.address.postal_code
+        }
+      })
+    });
+  }
 
   // Clear cart
   await prisma.cartItem.deleteMany({

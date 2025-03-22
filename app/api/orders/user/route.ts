@@ -51,7 +51,13 @@ export async function GET() {
                     }
                 },
                 items: {
-                    include: {
+                    select: {
+                        id: true,
+                        productId: true,
+                        quantity: true,
+                        price: true,
+                        size: true,
+                        color: true,
                         product: {
                             select: {
                                 id: true,

@@ -27,7 +27,7 @@ interface Product {
     };
     sizes: string[];
     colors: string[];
-    inStock: boolean;
+    stockQuantity: number;
     createdAt: string;
 }
 
@@ -277,13 +277,13 @@ export default function ProductsPage() {
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="text-sm text-gray-900">${product.price.toFixed(2)}</div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                    product.inStock
+                                                    product.stockQuantity > 0
                                                         ? 'bg-green-100 text-green-800'
                                                         : 'bg-red-100 text-red-800'
                                                 }`}>
-                                                    {product.inStock ? 'In Stock' : 'Out of Stock'}
+                                                    {product.stockQuantity > 0 ? `${product.stockQuantity} in Stock` : 'Out of Stock'}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { LogOut, Settings, User } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 import Link from 'next/link';
 import { signOut } from 'next-auth/react';
 
@@ -20,7 +20,7 @@ export function UserAccountNav() {
         </Link>
         <button
           onClick={() => signOut()}
-          className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          className="flex w-full items-center px-4 py-2 text-sm text-gray-700 rounded-sm hover:bg-gray-100"
         >
           <LogOut className="mr-3 h-4 w-4" />
           Sign out

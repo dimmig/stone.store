@@ -22,12 +22,6 @@ export async function GET() {
         email: true,
         phone: true,
         birthday: true,
-        addresses: true,
-        wishlist: {
-          include: {
-            product: true,
-          },
-        },
       },
     });
 
@@ -62,12 +56,15 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { name, phone, birthday } = body;
 
+    // Format birthday to ISO string if provided
+    const formattedBirthday = birthday ? new Date(birthday + 'T00:00:00Z').toISOString() : null;
+
     const user = await prisma.user.update({
       where: { id: session.user.id },
       data: {
         name,
         phone,
-        birthday,
+        birthday: formattedBirthday,
       },
       select: {
         id: true,

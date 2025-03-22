@@ -7,6 +7,9 @@ import {Heart, Minus, Plus, ShoppingBag, ChevronRight, Star, Check, Ban} from 'l
 import {useCart} from '@/app/providers/CartProvider';
 import {useWishlist} from '@/app/providers/WishlistProvider';
 import {Product} from '@/types';
+import {useSession} from 'next-auth/react';
+import {toast} from 'sonner';
+import { useUserStore } from '@/store/user-store';
 
 interface ProductPageProps {
     params: { id: string };
@@ -41,6 +44,29 @@ export default function ProductPage({params}: ProductPageProps) {
     const {addToCart} = useCart();
     const {addToWishlist, removeFromWishlist, isInWishlist} = useWishlist();
 
+    const [activeTab, setActiveTab] = useState('details');
+    const [reviews, setReviews] = useState<any[]>([]);
+    const [reviewLoading, setReviewLoading] = useState(true);
+
+    const {data: session} = useSession();
+    const {user} = useUserStore()
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [newReview, setNewReview] = useState({rating: 5, comment: ''});
+    const [userReview, setUserReview] = useState<any>(null);
+    const [isReviewed, setIsReviewed] = useState(false);
+
+    const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
+
+    useEffect(() => {
+       if (reviews) {
+        reviews?.forEach((review: any) => {
+            if (review.userId === user?.id) {
+                setIsReviewed(true);
+            }
+        });
+       }
+    }, [reviews]);
+
     useEffect(() => {
         const fetchProduct = async () => {
             try {
@@ -70,6 +96,29 @@ export default function ProductPage({params}: ProductPageProps) {
         fetchProduct();
     }, [params.id]);
 
+    useEffect(() => {
+        const fetchReviews = async () => {
+            try {
+                const response = await fetch(`/api/products/${params.id}/reviews`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setReviews(data);
+                    // Find user's review if logged in
+                    if (session?.user) {
+                        const userReview = data.find((review: any) => review.userId === session.user.id);
+                        setUserReview(userReview);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching reviews:', error);
+            } finally {
+                setReviewLoading(false);
+            }
+        };
+
+        fetchReviews();
+    }, [params.id, session?.user]);
+
     if (isLoading || imageLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -96,6 +145,10 @@ export default function ProductPage({params}: ProductPageProps) {
             alert('Please select size and color');
             return;
         }
+        if (product.stockQuantity < quantity) {
+            alert('Not enough stock available');
+            return;
+        }
         addToCart(product, quantity, selectedSize, selectedColor);
     };
 
@@ -104,6 +157,63 @@ export default function ProductPage({params}: ProductPageProps) {
             removeFromWishlist(product.id);
         } else {
             addToWishlist(product);
+        }
+    };
+
+    const handleSubmitReview = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!session) {
+            toast.error('Please sign in to leave a review');
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const response = await fetch(`/api/products/${params.id}/reviews`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(newReview),
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to submit review');
+            }
+
+            const review = await response.json();
+            setReviews(prev => [review, ...prev]);
+            setUserReview(review);
+            setNewReview({rating: 5, comment: ''});
+            toast.success('Review submitted successfully');
+        } catch (error) {
+            console.error('Error submitting review:', error);
+            toast.error(error instanceof Error ? error.message : 'Failed to submit review');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleDeleteReview = async (reviewId: string) => {
+        if (!session) return;
+
+        try {
+            const response = await fetch(`/api/products/${params.id}/reviews/${reviewId}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to delete review');
+            }
+
+            setReviews(prev => prev.filter(review => review.id !== reviewId));
+            setUserReview(null);
+            toast.success('Review deleted successfully');
+        } catch (error) {
+            console.error('Error deleting review:', error);
+            toast.error(error instanceof Error ? error.message : 'Failed to delete review');
         }
     };
 
@@ -201,10 +311,10 @@ export default function ProductPage({params}: ProductPageProps) {
                                     >
                                         <div className="flex items-center gap-1">
                                             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400"/>
-                                            <span className="text-sm font-medium text-gray-900">4.8</span>
+                                            <span className="text-sm font-medium text-gray-900">{product.rating.toFixed(1)}</span>
                                         </div>
                                         <span className="text-sm text-gray-500">·</span>
-                                        <span className="text-sm text-gray-500">42 reviews</span>
+                                        <span className="text-sm text-gray-500">{reviews.length} reviews</span>
                                     </motion.div>
                                 </div>
                                 <motion.div
@@ -240,7 +350,10 @@ export default function ProductPage({params}: ProductPageProps) {
                             <motion.div variants={staggerContainer} className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-sm font-medium text-gray-900">Size</h3>
-                                    <button className="text-sm font-medium text-gray-600 hover:text-gray-900">
+                                    <button 
+                                        onClick={() => setIsSizeGuideOpen(true)}
+                                        className="text-sm font-medium text-gray-600 hover:text-gray-900"
+                                    >
                                         Size guide
                                     </button>
                                 </div>
@@ -342,11 +455,11 @@ export default function ProductPage({params}: ProductPageProps) {
                                     whileHover={{scale: 1.02}}
                                     whileTap={{scale: 0.98}}
                                     onClick={handleAddToCart}
-                                    disabled={!product.inStock}
+                                    disabled={product.stockQuantity <= 0}
                                     className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-black px-6 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:bg-white disabled:text-black disabled:border-2 disabled:pointer-events-none"
                                 >
                                     <>
-                                        {product.inStock ? (
+                                        {product.stockQuantity > 0 ? (
                                             <>
                                                 <ShoppingBag className="h-5 w-5"/>
                                                 Add to Cart
@@ -354,7 +467,7 @@ export default function ProductPage({params}: ProductPageProps) {
                                         ) : (
                                             <>
                                                 <Ban className="h-5 w-5"/>
-                                                Unavailable
+                                                Out of Stock
                                             </>
                                         )}
                                     </>
@@ -376,7 +489,279 @@ export default function ProductPage({params}: ProductPageProps) {
                     </div>
                 </div>
 
-                {/* Related Products */}
+                {/* Tabs */}
+                <div className="mt-12 border-b border-gray-200">
+                    <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+                        {['details', 'reviews', 'shipping'].map((tab) => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`${
+                                    activeTab === tab
+                                        ? 'border-black text-black'
+                                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                                } whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium capitalize`}
+                            >
+                                {tab.replace('-', ' ')}
+                            </button>
+                        ))}
+                    </nav>
+                </div>
+
+                {/* Tab Content */}
+                <div className="mt-8">
+                    {/* Product Details Tab */}
+                    {activeTab === 'details' && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="space-y-6"
+                        >
+                            <div className="grid gap-6 md:grid-cols-2">
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-medium text-gray-900">Product Details</h3>
+                                    <dl className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500">Material</dt>
+                                            <dd className="mt-1 text-sm text-gray-900">{product.material || 'Premium cotton blend'}</dd>
+                                        </div>
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500">Care Instructions</dt>
+                                            <dd className="mt-1 text-sm text-gray-900">{product.careInstructions || 'Machine wash cold'}</dd>
+                                        </div>
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500">Origin</dt>
+                                            <dd className="mt-1 text-sm text-gray-900">{product.origin || 'Made in Portugal'}</dd>
+                                        </div>
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500">SKU</dt>
+                                            <dd className="mt-1 text-sm text-gray-900">{product.id}</dd>
+                                        </div>
+                                    </dl>
+                                </div>
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-medium text-gray-900">Care Instructions</h3>
+                                    <ul className="list-disc list-inside space-y-2 text-sm text-gray-600">
+                                        <li>Machine wash cold</li>
+                                        <li>Do not bleach</li>
+                                        <li>Tumble dry low</li>
+                                        <li>Iron on medium heat</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {/* Reviews Tab */}
+                    {activeTab === 'reviews' && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="space-y-6"
+                        >
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-lg font-medium text-gray-900">Customer Reviews</h3>
+                                    <div className="mt-1 flex items-center gap-2">
+                                        <div className="flex items-center">
+                                            <Star className="h-5 w-5 fill-yellow-400 text-yellow-400"/>
+                                            <span className="ml-1 text-sm font-medium text-gray-900">{product.rating.toFixed(1)}</span>
+                                        </div>
+                                        <span className="text-sm text-gray-500">·</span>
+                                        <span className="text-sm text-gray-500">{reviews.length} reviews</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Review Form */}
+                            {(session && !userReview && !isReviewed) && (
+                                <motion.form
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    onSubmit={handleSubmitReview}
+                                    className="rounded-2xl bg-white p-6 shadow-sm"
+                                >
+                                    <h4 className="text-sm font-medium text-gray-900">Write a Review</h4>
+                                    <div className="mt-4">
+                                        <div className="flex items-center gap-2">
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                <button
+                                                    key={star}
+                                                    type="button"
+                                                    onClick={() => setNewReview(prev => ({ ...prev, rating: star }))}
+                                                    className="focus:outline-none"
+                                                >
+                                                    <Star
+                                                        className={`h-6 w-6 ${
+                                                            star <= newReview.rating
+                                                                ? 'fill-yellow-400 text-yellow-400'
+                                                                : 'fill-gray-200 text-gray-200'
+                                                        }`}
+                                                    />
+                                                </button>
+                                            ))}
+                                        </div>
+                                            <textarea
+                                                value={newReview.comment}
+                                                onChange={(e) => setNewReview(prev => ({ ...prev, comment: e.target.value }))}
+                                            placeholder="Share your thoughts about this product..."
+                                            className="mt-4 w-full rounded-xl border border-gray-200 p-4 text-sm focus:border-black focus:outline-none focus:ring-0"
+                                            rows={4}
+                                            required
+                                        />
+                                        
+                                        <div className="mt-4 flex justify-end">
+                                            <button
+                                                type="submit"
+                                                disabled={isSubmitting}
+                                                className="rounded-xl bg-black px-6 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                                            >
+                                                {isSubmitting ? 'Submitting...' : 'Submit Review'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </motion.form>
+                            )}
+
+                            {/* User's Review */}
+                            {session && userReview && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="rounded-2xl bg-white p-6 shadow-sm"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="text-sm font-medium text-gray-900">Your Review</h4>
+                                        <button
+                                            onClick={() => handleDeleteReview(userReview.id)}
+                                            className="text-sm text-red-500 hover:text-red-600"
+                                        >
+                                            Delete Review
+                                        </button>
+                                    </div>
+                                    <div className="mt-4">
+                                        <div className="flex items-center gap-2">
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                <Star
+                                                    key={star}
+                                                    className={`h-5 w-5 ${
+                                                        star <= userReview.rating
+                                                            ? 'fill-yellow-400 text-yellow-400'
+                                                            : 'fill-gray-200 text-gray-200'
+                                                    }`}
+                                                />
+                                            ))}
+                                        </div>
+                                        <p className="mt-2 text-sm text-gray-600">{userReview.comment}</p>
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {/* Reviews List */}
+                            {reviewLoading ? (
+                                <div className="flex items-center justify-center py-8">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
+                                </div>
+                            ) : reviews.length === 0 ? (
+                                <div className="text-center py-8">
+                                    <p className="text-gray-500">No reviews yet. Be the first to review this product!</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    {reviews
+                                        .filter(review => !userReview || review.id !== userReview.id)
+                                        .map((review) => (
+                                            <div key={review.id} className="rounded-2xl bg-white p-6 shadow-sm">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex items-center">
+                                                            {[...Array(5)].map((_, i) => (
+                                                                <Star
+                                                                    key={i}
+                                                                    className={`h-4 w-4 ${
+                                                                        i < review.rating
+                                                                            ? 'fill-yellow-400 text-yellow-400'
+                                                                            : 'fill-gray-200 text-gray-200'
+                                                                    }`}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                        <span className="text-sm font-medium text-gray-900">{review.user.name}</span>
+                                                    </div>
+                                                    <span className="text-sm text-gray-500">
+                                                        {new Date(review.createdAt).toLocaleDateString()}
+                                                    </span>
+                                                </div>
+                                                <p className="mt-2 text-sm text-gray-600">{review.comment}</p>
+                                            </div>
+                                        ))}
+                                </div>
+                            )}
+                        </motion.div>
+                    )}
+
+                    {/* Shipping Tab */}
+                    {activeTab === 'shipping' && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="space-y-6"
+                        >
+                            <div className="grid gap-6 md:grid-cols-2">
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-medium text-gray-900">Shipping Information</h3>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <h4 className="text-sm font-medium text-gray-900">Standard Shipping</h4>
+                                            <p className="mt-1 text-sm text-gray-600">
+                                                Free shipping on orders over $50. Delivery within 3-5 business days.
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-medium text-gray-900">Express Shipping</h4>
+                                            <p className="mt-1 text-sm text-gray-600">
+                                                Available for an additional fee. Delivery within 1-2 business days.
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-medium text-gray-900">International Shipping</h4>
+                                            <p className="mt-1 text-sm text-gray-600">
+                                                Available to most countries. Shipping costs and delivery times vary by location.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-medium text-gray-900">Returns & Exchanges</h3>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <h4 className="text-sm font-medium text-gray-900">30-Day Returns</h4>
+                                            <p className="mt-1 text-sm text-gray-600">
+                                                We offer a 30-day return window for all unused items in their original packaging.
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-medium text-gray-900">Free Returns</h4>
+                                            <p className="mt-1 text-sm text-gray-600">
+                                                Returns are free with our prepaid shipping label.
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-medium text-gray-900">Exchange Policy</h4>
+                                            <p className="mt-1 text-sm text-gray-600">
+                                                We offer free exchanges for size or color changes within 30 days of purchase.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </div>
+            </div>
+
+            {/* Related Products */}
+            <div className="mt-16">
                 {relatedProducts.length > 0 && (
                     <motion.div
                         variants={fadeIn}
@@ -422,6 +807,79 @@ export default function ProductPage({params}: ProductPageProps) {
                     </motion.div>
                 )}
             </div>
+
+            {/* Size Guide Modal */}
+            {isSizeGuideOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl"
+                    >
+                        <button
+                            onClick={() => setIsSizeGuideOpen(false)}
+                            className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+                        >
+                            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+
+                        <h3 className="text-lg font-semibold text-gray-900">Size Guide</h3>
+                        
+                        <div className="mt-4">
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead>
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chest (in)</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Waist (in)</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hip (in)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                        {[
+                                            { size: 'XS', chest: '32-34', waist: '26-28', hip: '35-37' },
+                                            { size: 'S', chest: '34-36', waist: '28-30', hip: '37-39' },
+                                            { size: 'M', chest: '36-38', waist: '30-32', hip: '39-41' },
+                                            { size: 'L', chest: '38-40', waist: '32-34', hip: '41-43' },
+                                            { size: 'XL', chest: '40-42', waist: '34-36', hip: '43-45' },
+                                            { size: '2XL', chest: '42-44', waist: '36-38', hip: '45-47' },
+                                        ].map((row) => (
+                                            <tr key={row.size}>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{row.size}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.chest}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.waist}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.hip}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div className="mt-6 space-y-4">
+                                <h4 className="text-sm font-medium text-gray-900">How to Measure</h4>
+                                <ul className="list-disc list-inside space-y-2 text-sm text-gray-600">
+                                    <li>Chest: Measure around the fullest part of your chest, keeping the tape horizontal.</li>
+                                    <li>Waist: Measure around your natural waistline, keeping the tape comfortably loose.</li>
+                                    <li>Hip: Measure around the fullest part of your hips, keeping the tape horizontal.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="mt-6 flex justify-end">
+                            <button
+                                onClick={() => setIsSizeGuideOpen(false)}
+                                className="rounded-xl bg-black px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
         </motion.div>
     );
 } 

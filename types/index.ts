@@ -7,11 +7,15 @@ export interface Product {
   sizes: string[];
   colors: string[];
   category: string;
-  inStock: boolean;
+  stockQuantity: number;
   discount: number;
   rating: number;
   createdAt: Date;
-  wishlistItems: WishlistItem[]
+  wishlistItems: WishlistItem[];
+  reviews?: Review[];
+  material?: string;
+  careInstructions?: string;
+  origin?: string;
 }
 
 export interface Category {
@@ -84,5 +88,18 @@ export interface OrderItem {
     name: string;
     price: number;
     images: string[];
+  };
+}
+
+export interface Review {
+  id: string;
+  rating: number;
+  comment: string;
+  productId: string;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  user: {
+    name: string;
   };
 } 

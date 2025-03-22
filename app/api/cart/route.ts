@@ -52,15 +52,26 @@ export async function POST(req: Request) {
       return new NextResponse('Product ID is required', { status: 400 });
     }
 
-    // Check if product exists
+    // Check if product exists and has enough stock
     const product = await prisma.product.findUnique({
       where: {
         id: productId,
+      },
+      select: {
+        id: true,
+        name: true,
+        price: true,
+        images: true,
+        stockQuantity: true,
       },
     });
 
     if (!product) {
       return new NextResponse('Product not found', { status: 404 });
+    }
+
+    if (product.stockQuantity < quantity) {
+      return new NextResponse('Not enough stock available', { status: 400 });
     }
 
     // Check if item already exists in cart

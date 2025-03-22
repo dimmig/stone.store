@@ -15,7 +15,7 @@ interface DashboardStats {
     id: string;
     name: string;
     price: number;
-    inStock: boolean;
+    stockQuantity: number;
   }>;
   orderTrend: number;
   revenueTrend: number;
@@ -58,53 +58,87 @@ export async function GET() {
     // Get out of stock items
     const lowStockProducts = await prisma.product.findMany({
       where: {
-        inStock: false,
+        stockQuantity: {
+          lte: 5, // Consider items with 5 or fewer units as low stock
+        },
       },
       select: {
         id: true,
         name: true,
         price: true,
-        inStock: true,
+        stockQuantity: true,
       },
     });
 
     // Calculate trends (comparing with previous period)
-    const previousPeriod = new Date();
-    previousPeriod.setDate(previousPeriod.getDate() - 30);
+    const now = new Date();
+    const currentPeriodStart = new Date();
+    currentPeriodStart.setDate(now.getDate() - 30); // Last 30 days
+    
+    const previousPeriodStart = new Date(currentPeriodStart);
+    previousPeriodStart.setDate(previousPeriodStart.getDate() - 30); // 30 days before that
 
-    const previousOrders = await prisma.order.findMany({
-      where: {
-        createdAt: {
-          lt: previousPeriod,
+    const [currentPeriodOrders, previousPeriodOrders, currentPeriodCustomers, previousPeriodCustomers] = await Promise.all([
+      // Current period orders
+      prisma.order.findMany({
+        where: {
+          createdAt: {
+            gte: currentPeriodStart,
+            lte: now,
+          },
         },
-      },
-    });
-
-    const previousRevenue = previousOrders.reduce((sum: number, order) => sum + order.total, 0);
-    const previousCustomers = await prisma.user.count({
-      where: {
-        role: 'USER',
-        createdAt: {
-          lt: previousPeriod,
+      }),
+      // Previous period orders
+      prisma.order.findMany({
+        where: {
+          createdAt: {
+            gte: previousPeriodStart,
+            lt: currentPeriodStart,
+          },
         },
-      },
-    });
+      }),
+      // Current period customers
+      prisma.user.count({
+        where: {
+          role: 'USER',
+          createdAt: {
+            gte: currentPeriodStart,
+            lte: now,
+          },
+        },
+      }),
+      // Previous period customers
+      prisma.user.count({
+        where: {
+          role: 'USER',
+          createdAt: {
+            gte: previousPeriodStart,
+            lt: currentPeriodStart,
+          },
+        },
+      }),
+    ]);
 
-    const orderTrend = previousOrders.length > 0
-      ? ((totalOrders - previousOrders.length) / previousOrders.length) * 100
-      : 0;
+    const currentPeriodRevenue = currentPeriodOrders.reduce((sum, order) => sum + order.total, 0);
+    const previousPeriodRevenue = previousPeriodOrders.reduce((sum, order) => sum + order.total, 0);
+    const currentPeriodAOV = currentPeriodOrders.length > 0 ? currentPeriodRevenue / currentPeriodOrders.length : 0;
+    const previousPeriodAOV = previousPeriodOrders.length > 0 ? previousPeriodRevenue / previousPeriodOrders.length : 0;
 
-    const revenueTrend = previousRevenue > 0
-      ? ((totalRevenue - previousRevenue) / previousRevenue) * 100
-      : 0;
+    const orderTrend = previousPeriodOrders.length > 0
+      ? ((currentPeriodOrders.length - previousPeriodOrders.length) / previousPeriodOrders.length) * 100
+      : currentPeriodOrders.length > 0 ? 100 : 0;
 
-    const customerTrend = previousCustomers > 0
-      ? ((totalCustomers - previousCustomers) / previousCustomers) * 100
-      : 0;
+    const revenueTrend = previousPeriodRevenue > 0
+      ? ((currentPeriodRevenue - previousPeriodRevenue) / previousPeriodRevenue) * 100
+      : currentPeriodRevenue > 0 ? 100 : 0;
 
-    const aovTrend = previousOrders.length > 0
-      ? ((averageOrderValue - (previousRevenue / previousOrders.length)) / (previousRevenue / previousOrders.length)) * 100
-      : 0;
+    const customerTrend = previousPeriodCustomers > 0
+      ? ((currentPeriodCustomers - previousPeriodCustomers) / previousPeriodCustomers) * 100
+      : currentPeriodCustomers > 0 ? 100 : 0;
+
+    const aovTrend = previousPeriodAOV > 0
+      ? ((currentPeriodAOV - previousPeriodAOV) / previousPeriodAOV) * 100
+      : currentPeriodAOV > 0 ? 100 : 0;
 
     const stats: DashboardStats = {
       totalOrders,
@@ -114,10 +148,10 @@ export async function GET() {
       pendingOrders,
       lowStockItems: lowStockProducts.length,
       lowStockProducts,
-      orderTrend,
-      revenueTrend,
-      customerTrend,
-      aovTrend,
+      orderTrend: Math.round(orderTrend),
+      revenueTrend: Math.round(revenueTrend),
+      customerTrend: Math.round(customerTrend),
+      aovTrend: Math.round(aovTrend),
     };
 
     return NextResponse.json(stats);

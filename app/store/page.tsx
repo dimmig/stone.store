@@ -12,6 +12,13 @@ import {useSession} from 'next-auth/react';
 import {useRouter} from "next/navigation";
 import moment from "moment"
 import {useUserStore} from "@/store/user-store";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/app/components/ui/select"
 
 interface ProductFilters {
     category?: string;
@@ -20,7 +27,15 @@ interface ProductFilters {
     color?: string;
     size?: string;
     rating?: string;
-    inStock?: boolean;
+    stockFilter?: string;
+}
+
+interface FilterOptions {
+    categories: Array<{ label: string; value: string }>;
+    colors: Array<{ label: string; value: string; class: string }>;
+    sizes: string[];
+    priceRanges: Array<{ label: string; value: string }>;
+    ratingOptions: Array<{ label: string; value: string; count: number }>;
 }
 
 async function getProducts(searchQuery = '', filters: ProductFilters = {}, page = 1, limit = 12) {
@@ -34,7 +49,7 @@ async function getProducts(searchQuery = '', filters: ProductFilters = {}, page 
         ...(filters.color && { color: filters.color }),
         ...(filters.size && { size: filters.size }),
         ...(filters.rating && { rating: filters.rating }),
-        ...(filters.inStock && { stockFilter: 'inStock' })
+        ...(filters.stockFilter && { stockFilter: filters.stockFilter })
     });
 
     const response = await fetch(`/api/products?${params}`);
@@ -55,7 +70,7 @@ export default function StorePage() {
         category: '',
         priceRange: '',
         sortBy: 'newest',
-        inStock: false,
+        stockFilter: '',
         color: '',
         size: '',
         rating: ''
@@ -64,6 +79,13 @@ export default function StorePage() {
     const [totalPages, setTotalPages] = useState(1);
     const productsPerPage = 12;
     const [totalProducts, setTotalProducts] = useState(0);
+    const [filterOptions, setFilterOptions] = useState<FilterOptions>({
+        categories: [],
+        colors: [],
+        sizes: [],
+        priceRanges: [],
+        ratingOptions: []
+    });
 
     const {addToCart} = useCart();
     const {addToWishlist, removeFromWishlist, isInWishlist} = useWishlist();
@@ -81,7 +103,7 @@ export default function StorePage() {
                         color: filters.color,
                         size: filters.size,
                         rating: filters.rating,
-                        inStock: filters.inStock
+                        stockFilter: filters.stockFilter
                     },
                     currentPage,
                     productsPerPage
@@ -109,6 +131,21 @@ export default function StorePage() {
         fetchProducts();
     }, [currentPage, searchQuery, filters, productsPerPage]);
 
+    useEffect(() => {
+        const fetchFilterOptions = async () => {
+            try {
+                const response = await fetch('/api/filters');
+                if (!response.ok) throw new Error('Failed to fetch filter options');
+                const data = await response.json();
+                setFilterOptions(data);
+            } catch (error) {
+                console.error('Error fetching filter options:', error);
+            }
+        };
+
+        fetchFilterOptions();
+    }, []);
+
     const handleAddToCart = async (e: React.MouseEvent, product: Product) => {
         e.preventDefault();
         if (!session) {
@@ -132,20 +169,6 @@ export default function StorePage() {
         }
     };
 
-    const categories = [
-        {label: 'All Categories', value: ''},
-        {label: 'Clothing', value: 'clothing'},
-        {label: 'Accessories', value: 'accessories'},
-        {label: 'Footwear', value: 'footwear'}
-    ];
-
-    const priceRanges = [
-        {label: 'All Prices', value: ''},
-        {label: 'Under $50', value: '0-50'},
-        {label: '$50 - $100', value: '50-100'},
-        {label: '$100 - $200', value: '100-200'},
-        {label: 'Over $200', value: '200-'}
-    ];
 
     const sortOptions = [
         {label: 'Newest', value: 'newest'},
@@ -155,59 +178,59 @@ export default function StorePage() {
         {label: 'Best Rating', value: 'rating-desc'}
     ];
 
-    const colorOptions = [
-        {label: 'Black', value: 'black', class: 'bg-black'},
-        {label: 'White', value: 'white', class: 'bg-white border border-gray-200'},
-        {label: 'Red', value: 'red', class: 'bg-red-500'},
-        {label: 'Blue', value: 'blue', class: 'bg-blue-500'},
-        {label: 'Green', value: 'green', class: 'bg-green-500'}
-    ];
-
-    const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
-    const ratingOptions = ['4 & up', '3 & up', '2 & up', '1 & up'];
-
     const FilterContent = () => (
-        <div className="space-y-8">
-            <div className="flex items-center justify-between">
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-gray-200 pb-4">
                 <div>
-                    <h2 className="text-xl font-semibold text-gray-900">Filters</h2>
-                    <p className="mt-1 text-sm text-gray-500">Refine your search</p>
+                    <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+                    <p className="mt-1 text-sm text-gray-500">Refine your results</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => setIsPinned(!isPinned)}
-                        className="group rounded-full p-2 hover:bg-gray-100"
+                        className="group rounded-full p-2 hover:bg-gray-100 transition-colors"
                         title={isPinned ? "Unpin filters" : "Pin filters"}
                     >
                         {isPinned ? (
-                            <PinOff className="h-5 w-5 text-gray-400 transition-colors group-hover:text-gray-600"/>
+                            <PinOff className="h-5 w-5 text-gray-400 group-hover:text-gray-600" />
                         ) : (
-                            <Pin className="h-5 w-5 text-gray-400 transition-colors group-hover:text-gray-600"/>
+                            <Pin className="h-5 w-5 text-gray-400 group-hover:text-gray-600" />
                         )}
                     </button>
                     {!isPinned && (
                         <button
                             onClick={() => setShowFilters(false)}
-                            className="group rounded-full p-2 hover:bg-gray-100"
+                            className="group rounded-full p-2 hover:bg-gray-100 transition-colors"
                         >
-                            <X className="h-5 w-5 text-gray-400 transition-colors group-hover:text-gray-600"/>
+                            <X className="h-5 w-5 text-gray-400 group-hover:text-gray-600" />
                         </button>
                     )}
                 </div>
             </div>
 
             {/* Categories */}
-            <div className="rounded-xl bg-gray-50/50 p-4">
-                <h3 className="mb-4 text-sm font-medium text-gray-900">Categories</h3>
+            <div className="space-y-3">
+                <h3 className="text-sm font-medium text-gray-900">Categories</h3>
                 <div className="grid grid-cols-2 gap-2">
-                    {categories.map((category) => (
+                    <button
+                        onClick={() => setFilters({...filters, category: ''})}
+                        className={`flex items-center justify-center rounded-lg px-3 py-2.5 text-sm transition-all ${
+                            !filters.category
+                                ? 'bg-black text-white'
+                                : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                        }`}
+                    >
+                        All Categories
+                    </button>
+                    {filterOptions.categories.map((category) => (
                         <button
                             key={category.value}
                             onClick={() => setFilters({...filters, category: category.value})}
-                            className={`flex items-center justify-center rounded-lg px-3 py-2 text-sm transition-all ${
+                            className={`flex items-center justify-center rounded-lg px-3 py-2.5 text-sm transition-all ${
                                 filters.category === category.value
                                     ? 'bg-black text-white'
-                                    : 'bg-white text-gray-600 hover:bg-gray-100'
+                                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                             }`}
                         >
                             {category.label}
@@ -217,17 +240,17 @@ export default function StorePage() {
             </div>
 
             {/* Price Range */}
-            <div className="rounded-xl bg-gray-50/50 p-4">
-                <h3 className="mb-4 text-sm font-medium text-gray-900">Price Range</h3>
+            <div className="space-y-3">
+                <h3 className="text-sm font-medium text-gray-900">Price Range</h3>
                 <div className="grid grid-cols-2 gap-2">
-                    {priceRanges.map((range) => (
+                    {filterOptions.priceRanges.map((range) => (
                         <button
                             key={range.value}
                             onClick={() => setFilters({...filters, priceRange: range.value})}
-                            className={`flex items-center justify-center rounded-lg px-3 py-2 text-sm transition-all ${
+                            className={`flex items-center justify-center rounded-lg px-3 py-2.5 text-sm transition-all ${
                                 filters.priceRange === range.value
                                     ? 'bg-black text-white'
-                                    : 'bg-white text-gray-600 hover:bg-gray-100'
+                                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                             }`}
                         >
                             {range.label}
@@ -237,21 +260,21 @@ export default function StorePage() {
             </div>
 
             {/* Colors */}
-            <div className="rounded-xl bg-gray-50/50 p-4">
-                <h3 className="mb-4 text-sm font-medium text-gray-900">Colors</h3>
+            <div className="space-y-3">
+                <h3 className="text-sm font-medium text-gray-900">Colors</h3>
                 <div className="flex flex-wrap gap-3">
-                    {colorOptions.map((color) => (
+                    {filterOptions.colors.map((color) => (
                         <button
                             key={color.value}
                             onClick={() => setFilters({...filters, color: color.value})}
-                            className={`group relative h-10 w-10 overflow-hidden rounded-xl ${color.class} ${
+                            className={`group relative h-12 w-12 overflow-hidden rounded-xl ${color.class} ${
                                 filters.color === color.value ? 'ring-2 ring-black ring-offset-2' : ''
-                            } transition-all hover:scale-110`}
+                            } transition-all hover:scale-105`}
                             title={color.label}
                         >
                             {filters.color === color.value && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                                    <Check className="h-5 w-5 text-white drop-shadow"/>
+                                    <Check className="h-5 w-5 text-white drop-shadow" />
                                 </div>
                             )}
                         </button>
@@ -260,17 +283,17 @@ export default function StorePage() {
             </div>
 
             {/* Sizes */}
-            <div className="rounded-xl bg-gray-50/50 p-4">
-                <h3 className="mb-4 text-sm font-medium text-gray-900">Sizes</h3>
+            <div className="space-y-3">
+                <h3 className="text-sm font-medium text-gray-900">Sizes</h3>
                 <div className="flex flex-wrap gap-2">
-                    {sizeOptions.map((size) => (
+                    {filterOptions.sizes.map((size) => (
                         <button
                             key={size}
                             onClick={() => setFilters({...filters, size})}
-                            className={`relative h-10 w-10 rounded-lg text-sm transition-all hover:scale-105 ${
+                            className={`relative h-11 w-11 rounded-lg text-sm font-medium transition-all hover:scale-105 ${
                                 filters.size === size
                                     ? 'bg-black text-white'
-                                    : 'bg-white text-gray-600 hover:bg-gray-100'
+                                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                             }`}
                         >
                             {size}
@@ -280,77 +303,81 @@ export default function StorePage() {
             </div>
 
             {/* Rating */}
-            <div className="rounded-xl bg-gray-50/50 p-4">
-                <h3 className="mb-4 text-sm font-medium text-gray-900">Rating</h3>
+            <div className="space-y-3">
+                <h3 className="text-sm font-medium text-gray-900">Rating</h3>
                 <div className="space-y-2">
-                    {ratingOptions.map((rating) => (
+                    {filterOptions.ratingOptions.map((rating) => (
                         <button
-                            key={rating}
-                            onClick={() => setFilters({...filters, rating})}
-                            className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-all ${
-                                filters.rating === rating
+                            key={rating.value}
+                            onClick={() => setFilters({...filters, rating: rating.value})}
+                            className={`flex w-full items-center justify-between rounded-lg px-4 py-3 text-sm transition-all ${
+                                filters.rating === rating.value
                                     ? 'bg-black text-white'
-                                    : 'bg-white text-gray-600 hover:bg-gray-100'
+                                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                             }`}
                         >
               <span className="flex items-center gap-1.5">
-                {rating.split(' ')[0]}
-                  <Star
-                      className={`h-4 w-4 fill-current ${filters.rating === rating ? 'text-white' : 'text-yellow-400'}`}/>
+                                {rating.label.split(' ')[0]}
+                                <Star className={`h-4 w-4 ${
+                                    filters.rating === rating.value ? 'fill-white text-white' : 'fill-yellow-400 text-yellow-400'
+                                }`} />
                 & up
               </span>
-                            <span className="text-xs opacity-60">({Math.floor(Math.random() * 100) + 50})</span>
+                            <span className={`text-xs ${
+                                filters.rating === rating.value ? 'text-white/60' : 'text-gray-500'
+                            }`}>
+                                ({rating.count?.toFixed(1)})
+                            </span>
                         </button>
                     ))}
                 </div>
             </div>
 
-            {/* In Stock */}
-            <div className="rounded-xl bg-gray-50/50 p-4">
-                <label className="flex cursor-pointer items-center justify-between">
-                    <span className="text-sm font-medium text-gray-900">In Stock Only</span>
-                    <div
-                        className={`relative h-6 w-11 rounded-full transition-colors ${
-                            filters.inStock ? 'bg-black' : 'bg-gray-200'
-                        }`}
-                    >
-                        <div
-                            className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
-                                filters.inStock ? 'translate-x-5' : 'translate-x-0'
-                            }`}
-                        />
+            {/* In Stock Toggle */}
+            <div className="space-y-3">
+                <h3 className="text-sm font-medium text-gray-900">Availability</h3>
+                <label className="flex cursor-pointer items-center justify-between rounded-lg bg-gray-50 px-4 py-3 hover:bg-gray-100">
+                    <span className="text-sm text-gray-700">Show In-Stock Items Only</span>
+                    <div className={`relative h-6 w-11 rounded-full transition-colors ${
+                        filters.stockFilter === 'inStock' ? 'bg-black' : 'bg-gray-300'
+                    }`}>
+                        <div className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
+                            filters.stockFilter === 'inStock' ? 'translate-x-5' : 'translate-x-0'
+                        }`} />
                         <input
                             type="checkbox"
                             className="sr-only"
-                            checked={filters.inStock}
-                            onChange={(e) => setFilters({...filters, inStock: e.target.checked})}
+                            checked={filters.stockFilter === 'inStock'}
+                            onChange={(e) => setFilters({...filters, stockFilter: e.target.checked ? 'inStock' : ''})}
                         />
                     </div>
                 </label>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-2">
+            <div className="sticky bottom-0 -mx-6 -mb-6 border-t border-gray-200 bg-white p-6 pt-4">
+                <div className="flex gap-3">
                 <button
                     onClick={() => setFilters({
                         category: '',
                         priceRange: '',
                         sortBy: 'newest',
-                        inStock: false,
+                        stockFilter: '',
                         color: '',
                         size: '',
                         rating: ''
                     })}
-                    className="flex-1 rounded-xl bg-gray-100 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
+                        className="flex-1 rounded-xl bg-gray-100 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
                 >
                     Clear All
                 </button>
                 <button
                     onClick={() => setShowFilters(false)}
-                    className="flex-1 rounded-xl bg-black py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+                        className="flex-1 rounded-xl bg-black py-3 text-sm font-medium text-white transition-opacity hover:opacity-90"
                 >
                     Apply Filters
                 </button>
+                </div>
             </div>
         </div>
     );
@@ -372,17 +399,25 @@ export default function StorePage() {
                             <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-500"/>
                         </div>
                         <div className="flex items-center gap-2">
-                            <select
+                            <Select
                                 value={filters.sortBy}
-                                onChange={(e) => setFilters({...filters, sortBy: e.target.value})}
-                                className="rounded-lg border-0 bg-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black/5"
+                                onValueChange={(value: string) => setFilters({...filters, sortBy: value})}
                             >
-                                {sortOptions.map((option) => (
-                                    <option key={option.value} value={option.value}>
-                                        {option.label}
-                                    </option>
-                                ))}
-                            </select>
+                                <SelectTrigger className="w-[180px] bg-gray-100 border-0 focus:ring-2 focus:ring-black/5">
+                                    <SelectValue placeholder="Sort by" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="clear">Clear sorting</SelectItem>
+                                    {sortOptions.map((option) => (
+                                        <SelectItem 
+                                            key={option.value} 
+                                            value={option.value}
+                                        >
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                             {!isPinned && (
                                 <button
                                     onClick={() => setShowFilters(!showFilters)}
@@ -401,9 +436,188 @@ export default function StorePage() {
                 <div className="flex gap-6">
                     {/* Pinned Filters Sidebar */}
                     {isPinned && (
-                        <div className="w-64 shrink-0">
-                            <div className="sticky top-20 rounded-xl border border-gray-200/50 bg-white p-5 shadow-sm">
-                                <FilterContent/>
+                        <div className="w-72 shrink-0">
+                            <div className="sticky top-20 rounded-2xl border border-gray-200/50 bg-white shadow-sm">
+                                {/* Header */}
+                                <div className="flex items-center justify-between border-b border-gray-200/50 p-5">
+                                    <div>
+                                        <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+                                        <p className="mt-1 text-sm text-gray-500">Refine your results</p>
+                                    </div>
+                                    <button
+                                        onClick={() => setIsPinned(false)}
+                                        className="group rounded-full p-2 hover:bg-gray-100 transition-colors"
+                                        title="Unpin filters"
+                                    >
+                                        <PinOff className="h-5 w-5 text-gray-400 group-hover:text-gray-600" />
+                                    </button>
+                                </div>
+
+                                {/* Filter Content */}
+                                <div className="p-5">
+                                    {/* Categories */}
+                                    <div className="space-y-3">
+                                        <h3 className="text-sm font-medium text-gray-900">Categories</h3>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <button
+                                                onClick={() => setFilters({...filters, category: ''})}
+                                                className={`flex items-center justify-center rounded-lg px-3 py-2.5 text-sm transition-all ${
+                                                    !filters.category
+                                                        ? 'bg-black text-white'
+                                                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                                                }`}
+                                            >
+                                                All Categories
+                                            </button>
+                                            {filterOptions.categories.map((category) => (
+                                                <button
+                                                    key={category.value}
+                                                    onClick={() => setFilters({...filters, category: category.value})}
+                                                    className={`flex items-center justify-center rounded-lg px-3 py-2.5 text-sm transition-all ${
+                                                        filters.category === category.value
+                                                            ? 'bg-black text-white'
+                                                            : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                                                    }`}
+                                                >
+                                                    {category.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Price Range */}
+                                    <div className="mt-6 space-y-3">
+                                        <h3 className="text-sm font-medium text-gray-900">Price Range</h3>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {filterOptions.priceRanges.map((range) => (
+                                                <button
+                                                    key={range.value}
+                                                    onClick={() => setFilters({...filters, priceRange: range.value})}
+                                                    className={`flex items-center justify-center rounded-lg px-3 py-2.5 text-sm transition-all ${
+                                                        filters.priceRange === range.value
+                                                            ? 'bg-black text-white'
+                                                            : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                                                    }`}
+                                                >
+                                                    {range.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Colors */}
+                                    <div className="mt-6 space-y-3">
+                                        <h3 className="text-sm font-medium text-gray-900">Colors</h3>
+                                        <div className="flex flex-wrap gap-3">
+                                            {filterOptions.colors.map((color) => (
+                                                <button
+                                                    key={color.value}
+                                                    onClick={() => setFilters({...filters, color: color.value})}
+                                                    className={`group relative h-12 w-12 overflow-hidden rounded-xl ${color.class} ${
+                                                        filters.color === color.value ? 'ring-2 ring-black ring-offset-2' : ''
+                                                    } transition-all hover:scale-105`}
+                                                    title={color.label}
+                                                >
+                                                    {filters.color === color.value && (
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                                                            <Check className="h-5 w-5 text-white drop-shadow" />
+                                                        </div>
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Sizes */}
+                                    <div className="mt-6 space-y-3">
+                                        <h3 className="text-sm font-medium text-gray-900">Sizes</h3>
+                                        <div className="flex flex-wrap gap-2">
+                                            {filterOptions.sizes.map((size) => (
+                                                <button
+                                                    key={size}
+                                                    onClick={() => setFilters({...filters, size})}
+                                                    className={`relative h-11 w-11 rounded-lg text-sm font-medium transition-all hover:scale-105 ${
+                                                        filters.size === size
+                                                            ? 'bg-black text-white'
+                                                            : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                                                    }`}
+                                                >
+                                                    {size}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Rating */}
+                                    <div className="mt-6 space-y-3">
+                                        <h3 className="text-sm font-medium text-gray-900">Rating</h3>
+                                        <div className="space-y-2">
+                                            {filterOptions.ratingOptions.map((rating) => (
+                                                <button
+                                                    key={rating.value}
+                                                    onClick={() => setFilters({...filters, rating: rating.value})}
+                                                    className={`flex w-full items-center justify-between rounded-lg px-4 py-3 text-sm transition-all ${
+                                                        filters.rating === rating.value
+                                                            ? 'bg-black text-white'
+                                                            : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                                                    }`}
+                                                >
+                                                    <span className="flex items-center gap-1.5">
+                                                        {rating.label.split(' ')[0]}
+                                                        <Star className={`h-4 w-4 ${
+                                                            filters.rating === rating.value ? 'fill-white text-white' : 'fill-yellow-400 text-yellow-400'
+                                                        }`} />
+                                                        & up
+                                                    </span>
+                                                    <span className={`text-xs ${
+                                                        filters.rating === rating.value ? 'text-white/60' : 'text-gray-500'
+                                                    }`}>
+                                                        ({rating.count?.toFixed(1)})
+                                                    </span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* In Stock Toggle */}
+                                    <div className="mt-6 space-y-3">
+                                        <h3 className="text-sm font-medium text-gray-900">Availability</h3>
+                                        <label className="flex cursor-pointer items-center justify-between rounded-lg bg-gray-50 px-4 py-3 hover:bg-gray-100">
+                                            <span className="text-sm text-gray-700">Show In-Stock Items Only</span>
+                                            <div className={`relative h-6 w-11 rounded-full transition-colors ${
+                                                filters.stockFilter === 'inStock' ? 'bg-black' : 'bg-gray-300'
+                                            }`}>
+                                                <div className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
+                                                    filters.stockFilter === 'inStock' ? 'translate-x-5' : 'translate-x-0'
+                                                }`} />
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only"
+                                                    checked={filters.stockFilter === 'inStock'}
+                                                    onChange={(e) => setFilters({...filters, stockFilter: e.target.checked ? 'inStock' : ''})}
+                                                />
+                                            </div>
+                                        </label>
+                                    </div>
+
+                                    {/* Action Buttons */}
+                                    <div className="mt-6 border-t border-gray-200/50 pt-4">
+                                        <button
+                                            onClick={() => setFilters({
+                                                category: '',
+                                                priceRange: '',
+                                                sortBy: 'newest',
+                                                stockFilter: '',
+                                                color: '',
+                                                size: '',
+                                                rating: ''
+                                            })}
+                                            className="w-full rounded-xl bg-gray-100 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
+                                        >
+                                            Clear All Filters
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -436,7 +650,7 @@ export default function StorePage() {
                                             category: '',
                                             priceRange: '',
                                             sortBy: 'newest',
-                                            inStock: false,
+                                            stockFilter: '',
                                             color: '',
                                             size: '',
                                             rating: ''
@@ -477,7 +691,7 @@ export default function StorePage() {
                                                         <Heart
                                                             className={`h-[18px] w-[18px] ${isInWishlist(product.id) ? 'fill-current' : ''}`}/>
                                                     </button>
-                                                    {product?.inStock && (
+                                                    {product.stockQuantity > 0 && (
                                                         <button
                                                             onClick={(e) => handleAddToCart(e, product)}
                                                             className="rounded-xl bg-white/90 p-2.5 text-gray-600 backdrop-blur-sm transition-all hover:scale-110 hover:bg-gray-50 hover:text-gray-900"
@@ -524,7 +738,7 @@ export default function StorePage() {
                                 </span>
                                                         )}
                                                     </div>
-                                                    {product.inStock ? (
+                                                    {product.stockQuantity > 0 ? (
                                                         <span className="text-xs font-medium text-green-600">In Stock</span>
                                                     ) : (
                                                         <span
@@ -599,19 +813,21 @@ export default function StorePage() {
                 {showFilters && !isPinned && (
                     <>
                         <motion.div
-                            initial={{opacity: 0}}
-                            animate={{opacity: 0.3}}
-                            exit={{opacity: 0}}
+                            transition={{ duration: 0.3 }}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 0.3 }}
+                            exit={{ opacity: 0 }}
                             onClick={() => setShowFilters(false)}
                             className="fixed inset-0 z-40 bg-black"
                         />
                         <motion.div
-                            initial={{x: '100%'}}
-                            animate={{x: 0}}
-                            exit={{x: '100%'}}
-                            className="fixed inset-y-0 right-0 z-50 w-full max-w-sm overflow-y-auto bg-white p-6 shadow-lg"
+                            initial={{ x: '100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '100%' }}
+                            transition={{ type: "just" }}
+                            className="fixed inset-y-0 right-0 z-50 w-full max-w-sm overflow-y-auto bg-white px-6 pt-6"
                         >
-                            <FilterContent/>
+                            <FilterContent />
                         </motion.div>
                     </>
                 )}

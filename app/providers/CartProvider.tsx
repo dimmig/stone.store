@@ -44,11 +44,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         console.error('Error fetching cart:', error);
         toast.error('Failed to load cart items');
+        setItems([]); // Set empty items on error
       } finally {
         setIsLoading(false);
       }
     };
 
+    // Reset loading state when session changes
+    setIsLoading(true);
+    setItems([]); // Clear items when session changes
     fetchCartItems();
   }, [session]);
 

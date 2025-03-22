@@ -1,11 +1,17 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import Image from 'next/image';
-import Link from 'next/link';
-import { ShoppingCart, Heart } from 'lucide-react';
-import { colors, typography, spacing, shadows, transitions } from '../styles/design-system';
+import { useState } from "react";
+import { motion } from "framer-motion";
+import Image from "next/image";
+import Link from "next/link";
+import { ShoppingCart, Heart } from "lucide-react";
+import {
+  colors,
+  typography,
+  spacing,
+  shadows,
+  transitions,
+} from "../styles/design-system";
 
 export default function ProductCard({ product }) {
   const [isHovered, setIsHovered] = useState(false);
@@ -20,7 +26,10 @@ export default function ProductCard({ product }) {
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Product Image */}
-      <Link href={`/product/${product.id}`} className="block relative aspect-square">
+      <Link
+        href={`/product/${product.id}`}
+        className="block relative aspect-square"
+      >
         <Image
           src={product.images[0]}
           alt={product.name}
@@ -30,7 +39,7 @@ export default function ProductCard({ product }) {
         />
         <div
           className={`absolute inset-0 bg-black/20 transition-opacity duration-300 ${
-            isHovered ? 'opacity-100' : 'opacity-0'
+            isHovered ? "opacity-100" : "opacity-0"
           }`}
         />
       </Link>
@@ -38,16 +47,16 @@ export default function ProductCard({ product }) {
       {/* Quick Actions */}
       <div
         className={`absolute top-4 right-4 flex flex-col gap-2 transition-transform duration-300 ${
-          isHovered ? 'translate-x-0' : 'translate-x-16'
+          isHovered ? "translate-x-0" : "translate-x-16"
         }`}
       >
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
-          className="p-2 bg-white rounded-full shadow-md hover:bg-accent-gold hover:text-white transition-colors duration-300"
+          className="p-2 bg-white rounded-full shadow-md hover:bg-gray-900 hover:text-white transition-colors duration-300"
           onClick={() => {
             // Add to cart functionality
-            console.log('Add to cart:', product.id);
+            console.log("Add to cart:", product.id);
           }}
         >
           <ShoppingCart className="h-5 w-5" />
@@ -55,10 +64,10 @@ export default function ProductCard({ product }) {
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
-          className="p-2 bg-white rounded-full shadow-md hover:bg-accent-gold hover:text-white transition-colors duration-300"
+          className="p-2 bg-white rounded-full shadow-md hover:bg-gray-900 hover:text-white transition-colors duration-300"
           onClick={() => {
             // Add to wishlist functionality
-            console.log('Add to wishlist:', product.id);
+            console.log("Add to wishlist:", product.id);
           }}
         >
           <Heart className="h-5 w-5" />
@@ -68,7 +77,9 @@ export default function ProductCard({ product }) {
       {/* Product Info */}
       <div className="p-4">
         <Link href={`/product/${product.id}`}>
-          <h3 className={`${typography.h4} text-gray-900 mb-1 group-hover:text-accent-gold transition-colors duration-300`}>
+          <h3
+            className={`${typography.h4} text-gray-900 mb-1 group-hover:text-accent-gold transition-colors duration-300`}
+          >
             {product.name}
           </h3>
         </Link>
@@ -80,7 +91,7 @@ export default function ProductCard({ product }) {
             ${product.price.toLocaleString()}
           </span>
           <span className={`${typography.body} text-gray-500`}>
-            {product.category?.name || 'Uncategorized'}
+            {product.category?.name || "Uncategorized"}
           </span>
         </div>
       </div>
@@ -93,11 +104,11 @@ export default function ProductCard({ product }) {
       >
         <Link
           href={`/product/${product.id}`}
-          className="block w-full text-center py-2 bg-accent-gold text-white rounded-lg hover:bg-accent-gold-dark transition-colors duration-300"
+          className="block w-full text-center py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors duration-300"
         >
           Quick View
         </Link>
       </motion.div>
     </motion.div>
   );
-} 
+}

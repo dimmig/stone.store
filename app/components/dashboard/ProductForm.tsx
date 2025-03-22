@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Upload, X, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Upload, X, Loader2, Minus } from 'lucide-react';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -23,6 +23,17 @@ interface Category {
   name: string;
 }
 
+interface ProductFormData {
+  name: string;
+  description: string;
+  price: string;
+  categoryId: string;
+  images: string[];
+  sizes: string[];
+  colors: string[];
+  stockQuantity: number;
+}
+
 interface ProductFormProps {
   productId: string | null;
   onClose: () => void;
@@ -33,15 +44,15 @@ export default function ProductForm({ productId, onClose, onSuccess }: ProductFo
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ProductFormData>({
     name: '',
     description: '',
     price: '',
     categoryId: '',
     images: [''],
-    sizes: [''],
+    sizes: [],
     colors: [''],
-    inStock: true,
+    stockQuantity: 0,
   });
 
   useEffect(() => {
@@ -78,9 +89,9 @@ export default function ProductForm({ productId, onClose, onSuccess }: ProductFo
         price: product.price.toString(),
         categoryId: product.categoryId,
         images: product.images.length > 0 ? product.images : [''],
-        sizes: product.sizes.length > 0 ? product.sizes : [''],
+        sizes: product.sizes.length > 0 ? product.sizes : [],
         colors: product.colors.length > 0 ? product.colors : [''],
-        inStock: product.inStock,
+        stockQuantity: product.stockQuantity || 0,
       });
     } catch (error) {
       console.error('Error fetching product:', error);
@@ -95,24 +106,35 @@ export default function ProductForm({ productId, onClose, onSuccess }: ProductFo
     setLoading(true);
 
     try {
-      const method = productId === 'new' ? 'POST' : 'PUT';
-      const url = productId === 'new' ? '/api/products' : `/api/products/${productId}`;
+      const data = {
+        name: formData.name,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        categoryId: formData.categoryId,
+        images: formData.images,
+        sizes: formData.sizes,
+        colors: formData.colors,
+        stockQuantity: formData.stockQuantity,
+      };
 
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          price: parseFloat(formData.price),
-          images: formData.images.filter(Boolean),
-          sizes: formData.sizes.filter(Boolean),
-          colors: formData.colors.filter(Boolean),
-        }),
-      });
+      const response = await fetch(
+        productId === 'new'
+          ? '/api/products'
+          : `/api/products/${productId}`,
+        {
+          method: productId === 'new' ? 'POST' : 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
+        }
+      );
 
-      if (!response.ok) throw new Error('Failed to save product');
+      if (!response.ok) {
+        throw new Error('Failed to save product');
+      }
 
-      toast.success(productId === 'new' ? 'Product created successfully' : 'Product updated successfully');
+      toast.success('Product saved successfully');
       onSuccess();
       onClose();
     } catch (error) {
@@ -337,45 +359,52 @@ export default function ProductForm({ productId, onClose, onSuccess }: ProductFo
                     Sizes
                   </label>
                   <div className="space-y-2">
-                    {formData.sizes.map((size, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ 
-                          duration: 0.15,
-                          delay: index * 0.03,
-                          ease: [0.16, 1, 0.3, 1]
-                        }}
-                        className="flex gap-2"
-                      >
-                        <input
-                          type="text"
-                          value={size}
-                          onChange={(e) => handleArrayInput('sizes', index, e.target.value)}
-                          placeholder="Size (e.g., S, M, L)"
-                          className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-colors"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeArrayItem('sizes', index)}
-                          className="p-2 text-red-600 hover:text-red-900 transition-colors"
-                        >
-                          <Trash2 className="h-5 w-5" />
-                        </button>
-                      </motion.div>
-                    ))}
-                    <motion.button
-                      type="button"
-                      onClick={() => handleArrayInput('sizes', formData.sizes.length, '')}
-                      className="flex items-center gap-2 text-black hover:text-gray-700 transition-colors"
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                      transition={{ duration: 0.1 }}
+                    <Select
+                      value={formData.sizes.join(',')}
+                      onValueChange={(value) => {
+                        const selectedSizes = value.split(',').filter(Boolean);
+                        setFormData(prev => ({ ...prev, sizes: selectedSizes }));
+                      }}
                     >
-                      <Plus className="h-4 w-4" />
-                      Add Size
-                    </motion.button>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select sizes" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="XS,S,M,L,XL,2XL">All Sizes</SelectItem>
+                        <SelectItem value="XS,S,M">Small to Medium</SelectItem>
+                        <SelectItem value="M,L,XL">Medium to XL</SelectItem>
+                        <SelectItem value="XS">Extra Small</SelectItem>
+                        <SelectItem value="S">Small</SelectItem>
+                        <SelectItem value="M">Medium</SelectItem>
+                        <SelectItem value="L">Large</SelectItem>
+                        <SelectItem value="XL">Extra Large</SelectItem>
+                        <SelectItem value="2XL">2X Large</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {formData.sizes.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {formData.sizes.map((size, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-lg text-sm"
+                          >
+                            <span>{size}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  sizes: prev.sizes.filter((_, i) => i !== index)
+                                }));
+                              }}
+                              className="text-gray-500 hover:text-gray-700"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -427,15 +456,36 @@ export default function ProductForm({ productId, onClose, onSuccess }: ProductFo
                 </div>
 
                 <div className="col-span-2">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={formData.inStock}
-                      onChange={(e) => setFormData(prev => ({ ...prev, inStock: e.target.checked }))}
-                      className="rounded border-gray-300 text-black focus:ring-black transition-colors"
-                    />
-                    <span className="text-sm font-medium text-gray-700">In Stock</span>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Stock Quantity
                   </label>
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      value={formData.stockQuantity}
+                      onChange={(e) => setFormData(prev => ({ ...prev, stockQuantity: parseInt(e.target.value) || 0 }))}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-colors"
+                      placeholder="Enter stock quantity"
+                    />
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, stockQuantity: Math.max(0, prev.stockQuantity - 1) }))}
+                        className="p-2 text-gray-600 hover:text-gray-900"
+                      >
+                        <Minus className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, stockQuantity: prev.stockQuantity + 1 }))}
+                        className="p-2 text-gray-600 hover:text-gray-900"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 

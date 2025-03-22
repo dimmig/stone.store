@@ -10,6 +10,8 @@ interface OrderItem {
     productId: string;
     quantity: number;
     price: number;
+    size?: string;
+    color?: string;
     product: {
         id: string;
         name: string;
@@ -69,7 +71,7 @@ export async function GET() {
 
         const orders = await prisma.order.findMany({
             where: isAdmin ? {} : {
-                userId: user.id, // Use the fetched user's ID instead of session.user.id
+                userId: user.id,
             },
             include: {
                 user: {

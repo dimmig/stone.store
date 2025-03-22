@@ -57,7 +57,7 @@ export async function GET(request: Request) {
     // Add stock filter
     if (stockFilter && stockFilter !== 'all') {
       whereClause.AND.push({
-        inStock: stockFilter === 'inStock',
+        stockQuantity: stockFilter === 'inStock' ? { gt: 0 } : { equals: 0 },
       });
     }
 
@@ -81,7 +81,7 @@ export async function GET(request: Request) {
 
     // Add rating filter
     if (rating && rating !== 'all') {
-      const minRating = parseInt(rating.split(' ')[0]);
+      const minRating = parseFloat(rating);
       whereClause.AND.push({
         rating: {
           gte: minRating,
@@ -160,7 +160,7 @@ export async function POST(request: Request) {
         images: data.images,
         sizes: data.sizes,
         colors: data.colors,
-        inStock: data.inStock,
+        stockQuantity: data.stockQuantity,
       },
     });
 

@@ -7,7 +7,6 @@ import {motion, AnimatePresence} from 'framer-motion';
 import {
     User,
     ShoppingBag,
-    Settings,
     ChevronDown,
     LogOut,
     Package,
@@ -16,6 +15,7 @@ import {
     Menu,
     X,
     Home,
+    Settings,
 } from 'lucide-react';
 import {typography} from '../styles/design-system';
 import {signOut, useSession} from "next-auth/react";
@@ -23,15 +23,15 @@ import {useUserStore} from "@/store/user-store";
 import {Role} from "@prisma/client";
 
 const adminNavigation = [
-    {name: 'Overview', href: '/dashboard', icon: BarChart},
+    {name: 'Analytics', href: '/dashboard', icon: BarChart},
     {name: 'Orders', href: '/dashboard/orders', icon: ShoppingBag},
-    {name: 'Products', href: '/dashboard/products', icon: Package},
-    {name: 'Customers', href: '/dashboard/customers', icon: Users},
+    {name: 'Inventory', href: '/dashboard/products', icon: Package},
+    {name: 'Customer Base', href: '/dashboard/customers', icon: Users},
     {name: 'Settings', href: '/dashboard/settings', icon: Settings},
 ];
 
 const userNavigation = [
-    {name: 'My Orders', href: '/dashboard/orders', icon: ShoppingBag},
+    {name: 'My Purchases', href: '/dashboard/orders', icon: ShoppingBag},
     {name: 'Settings', href: '/dashboard/settings', icon: Settings},
 ];
 
@@ -55,10 +55,9 @@ export default function DashboardLayout({children}) {
                         <div className="flex items-center gap-2">
                             <div className="flex-shrink-0">
                                 <Link href="/dashboard" className="flex items-center space-x-2">
-                                    <div className="w-8 h-8 rounded-lg bg-accent-gold flex items-center justify-center">
-                                        <ShoppingBag className="h-5 w-5 text-white"/>
-                                    </div>
-                                    <span className={`${typography.h4} text-gray-900`}>Dashboard</span>
+                                    <span className={`${typography.h4} text-gray-900`}>
+                                        {isAdmin ? 'Control Center' : 'My Account'}
+                                    </span>
                                 </Link>
                             </div>
 
@@ -80,7 +79,7 @@ export default function DashboardLayout({children}) {
                         </div>
 
                         {/* Desktop Navigation */}
-                        <nav className="hidden md:flex items-center space-x-1">
+                        <nav className="hidden md:flex items-center space-x-1 flex-1 justify-center">
                             {navigation.map((item) => {
                                 const isActive = pathname === item.href;
                                 return (
@@ -89,7 +88,7 @@ export default function DashboardLayout({children}) {
                                         href={item.href}
                                         className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 ${
                                             isActive
-                                                ? 'bg-accent-gold/10 text-accent-gold'
+                                                ? 'bg-black text-white'
                                                 : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                                         }`}
                                     >
@@ -107,7 +106,7 @@ export default function DashboardLayout({children}) {
                                 className="flex items-center space-x-2 px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200"
                             >
                                 <Home className="h-5 w-5"/>
-                                <span className={`${typography.body} font-medium`}>Store</span>
+                                <span className={`${typography.body} font-medium`}>Shop</span>
                             </Link>
 
                             <div className="relative">
@@ -120,10 +119,10 @@ export default function DashboardLayout({children}) {
                                     </div>
                                     <div className="hidden md:block text-right">
                                         <p className={`${typography.body} font-medium text-gray-900`}>
-                                            {user?.name || 'User'}
+                                            {user?.name || 'Guest'}
                                         </p>
                                         <p className="text-sm text-gray-500">
-                                            {isAdmin ? 'Administrator' : 'Customer'}
+                                            {isAdmin ? 'Store Manager' : 'Member'}
                                         </p>
                                     </div>
                                     <ChevronDown className="h-4 w-4 text-gray-400"/>
@@ -142,7 +141,7 @@ export default function DashboardLayout({children}) {
                                                 className="w-full px-4 py-2 text-left text-gray-600 hover:bg-gray-50 flex items-center space-x-2"
                                             >
                                                 <LogOut className="h-4 w-4"/>
-                                                <span>Sign out</span>
+                                                <span>Log Out</span>
                                             </button>
                                         </motion.div>
                                     )}
@@ -171,7 +170,7 @@ export default function DashboardLayout({children}) {
                                             onClick={() => setIsMobileMenuOpen(false)}
                                             className={`flex items-center space-x-2 px-4 py-3 rounded-lg transition-all duration-200 ${
                                                 isActive
-                                                    ? 'bg-accent-gold/10 text-accent-gold'
+                                                    ? 'bg-gray-900/10 text-gray-900'
                                                     : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                                             }`}
                                         >
@@ -183,12 +182,12 @@ export default function DashboardLayout({children}) {
 
                                 {/* Store Link in Mobile Menu */}
                                 <Link
-                                    href="/"
+                                    href="/store"
                                     onClick={() => setIsMobileMenuOpen(false)}
                                     className="flex items-center space-x-2 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-all duration-200"
                                 >
                                     <Home className="h-5 w-5"/>
-                                    <span className={`${typography.body} font-medium`}>Back to Store</span>
+                                    <span className={`${typography.body} font-medium`}>Return to Shop</span>
                                 </Link>
                             </div>
                         </motion.nav>

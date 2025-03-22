@@ -19,7 +19,7 @@ interface Product {
     };
     sizes: string[];
     colors: string[];
-    inStock: boolean;
+    stockQuantity: number;
     createdAt: string;
 }
 
@@ -174,11 +174,11 @@ export default function ProductPage({params}: { params: { id: string } }) {
                     <div>
                         <h2 className="text-xl font-semibold text-gray-900 mb-2">Stock Status</h2>
                         <span className={`px-3 py-1 inline-flex text-sm font-semibold rounded-full ${
-                            product.inStock
+                            product.stockQuantity > 0
                                 ? 'bg-green-100 text-green-800'
                                 : 'bg-red-100 text-red-800'
                         }`}>
-                            {product.inStock ? 'In Stock' : 'Out of Stock'}
+                            {product.stockQuantity > 0 ? `${product.stockQuantity} in Stock` : 'Out of Stock'}
                         </span>
                     </div>
 

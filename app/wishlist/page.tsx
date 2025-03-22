@@ -71,8 +71,7 @@ export default function WishlistPage() {
     }
 
     const handleAddToCart = async (item: WishlistItem) => {
-        await addToCart(item.product, 1);
-        await removeFromWishlist(item.id);
+        await router.push(`/products/${item.product.id}`);
     };
 
     return (
@@ -105,7 +104,7 @@ export default function WishlistPage() {
                                 />
                                 <div
                                     className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-4">
-                                    {item?.product?.inStock && (
+                                    {item?.product?.stockQuantity > 0 && (
                                         <button
                                             onClick={() => handleAddToCart(item)}
                                             className="p-2 bg-white rounded-full hover:scale-110 transition-transform"
@@ -128,8 +127,8 @@ export default function WishlistPage() {
                                 <div className="flex items-center justify-between mt-2">
                                     <p className="font-medium">${item.product.price.toFixed(2)}</p>
                                     <span
-                                        className={`text-sm ${item.product.inStock ? 'text-green-600' : 'text-red-500'}`}>
-                    {item.product.inStock ? 'In Stock' : 'Out of Stock'}
+                                        className={`text-sm ${item.product.stockQuantity > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                    {item.product.stockQuantity > 0 ? 'In Stock' : 'Out of Stock'}
                   </span>
                                 </div>
                             </div>

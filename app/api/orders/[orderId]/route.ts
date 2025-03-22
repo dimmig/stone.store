@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { sendEmail } from '@/lib/email';
+import { getOrderStatusEmailTemplate } from '@/lib/email-templates';
 
 // Get single order
 export async function GET(
@@ -137,6 +139,43 @@ export async function PATCH(
         shippingAddress: true,
       },
     });
+
+    // If status was updated, send email notification
+    if (body.status) {
+      // Create notification in database
+      await prisma.notification.create({
+        data: {
+          userId: updatedOrder.user.id,
+          type: 'ORDER_STATUS_UPDATED',
+          message: `Your order #${updatedOrder.id} status has been updated to ${body.status}.`
+        }
+      });
+
+      // Send email notification
+      await sendEmail({
+        to: updatedOrder.user.email!,
+        subject: `Order #${updatedOrder.id} Status Update`,
+        html: getOrderStatusEmailTemplate({
+          orderId: updatedOrder.id,
+          status: body.status,
+          trackingNumber: updatedOrder.trackingNumber || undefined,
+          appUrl: process.env.NEXT_PUBLIC_APP_URL!,
+          items: updatedOrder.items.map(item => ({
+            name: item.product.name,
+            quantity: item.quantity,
+            price: item.price
+          })),
+          total: updatedOrder.total,
+          shippingAddress: {
+            name: updatedOrder.shippingAddress.name,
+            street: updatedOrder.shippingAddress.street,
+            city: updatedOrder.shippingAddress.city,
+            state: updatedOrder.shippingAddress.state,
+            zip: updatedOrder.shippingAddress.zip
+          }
+        })
+      });
+    }
 
     return NextResponse.json(updatedOrder);
   } catch (error) {

@@ -55,7 +55,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
         images: data.images,
         sizes: data.sizes,
         colors: data.colors,
-        inStock: data.inStock,
+        stockQuantity: data.stockQuantity,
       },
     });
 

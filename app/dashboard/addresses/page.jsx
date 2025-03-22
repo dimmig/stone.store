@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { MapPin, Plus, Edit2, Trash2, Check } from "lucide-react";
 import {
-  MapPin,
-  Plus,
-  Edit2,
-  Trash2,
-  Check,
-} from 'lucide-react';
-import { colors, typography, spacing, shadows, transitions } from '../../styles/design-system';
+  colors,
+  typography,
+  spacing,
+  shadows,
+  transitions,
+} from "../../styles/design-system";
 
 export default function AddressesPage() {
   const [addresses, setAddresses] = useState([]);
@@ -17,11 +17,11 @@ export default function AddressesPage() {
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
-    name: '',
-    street: '',
-    city: '',
-    state: '',
-    zip: '',
+    name: "",
+    street: "",
+    city: "",
+    state: "",
+    zip: "",
     isDefault: false,
   });
 
@@ -32,16 +32,16 @@ export default function AddressesPage() {
   const fetchAddresses = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/user/addresses');
-      
+      const response = await fetch("/api/user/addresses");
+
       if (!response.ok) {
-        throw new Error('Failed to fetch addresses');
+        throw new Error("Failed to fetch addresses");
       }
 
       const data = await response.json();
       setAddresses(data);
     } catch (error) {
-      console.error('Error fetching addresses:', error);
+      console.error("Error fetching addresses:", error);
     } finally {
       setIsLoading(false);
     }
@@ -50,22 +50,24 @@ export default function AddressesPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/user/addresses', {
-        method: editingId ? 'PUT' : 'POST',
+      const response = await fetch("/api/user/addresses", {
+        method: editingId ? "PUT" : "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(editingId ? { ...formData, id: editingId } : formData),
+        body: JSON.stringify(
+          editingId ? { ...formData, id: editingId } : formData
+        ),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save address');
+        throw new Error("Failed to save address");
       }
 
       await fetchAddresses();
       resetForm();
     } catch (error) {
-      console.error('Error saving address:', error);
+      console.error("Error saving address:", error);
     }
   };
 
@@ -78,26 +80,26 @@ export default function AddressesPage() {
   const handleDelete = async (id) => {
     try {
       const response = await fetch(`/api/user/addresses/${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete address');
+        throw new Error("Failed to delete address");
       }
 
       await fetchAddresses();
     } catch (error) {
-      console.error('Error deleting address:', error);
+      console.error("Error deleting address:", error);
     }
   };
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      street: '',
-      city: '',
-      state: '',
-      zip: '',
+      name: "",
+      street: "",
+      city: "",
+      state: "",
+      zip: "",
       isDefault: false,
     });
     setEditingId(null);
@@ -121,7 +123,7 @@ export default function AddressesPage() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsAddingNew(true)}
-            className="flex items-center space-x-2 px-4 py-2 bg-accent-gold text-white rounded-full hover:bg-accent-gold-dark transition-colors duration-300"
+            className="flex items-center space-x-2 px-4 py-2 bg-gray-900 text-white rounded-full hover:bg-gray-800 transition-colors duration-300"
           >
             <Plus className="h-4 w-4" />
             <span>Add New Address</span>
@@ -137,7 +139,7 @@ export default function AddressesPage() {
           onSubmit={handleSubmit}
         >
           <h2 className={`${typography.h3} text-gray-900 mb-6`}>
-            {editingId ? 'Edit Address' : 'Add New Address'}
+            {editingId ? "Edit Address" : "Add New Address"}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -147,7 +149,9 @@ export default function AddressesPage() {
               <input
                 type="text"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-accent-gold focus:border-transparent"
                 required
               />
@@ -159,7 +163,9 @@ export default function AddressesPage() {
               <input
                 type="text"
                 value={formData.street}
-                onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, street: e.target.value })
+                }
                 className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-accent-gold focus:border-transparent"
                 required
               />
@@ -171,7 +177,9 @@ export default function AddressesPage() {
               <input
                 type="text"
                 value={formData.city}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, city: e.target.value })
+                }
                 className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-accent-gold focus:border-transparent"
                 required
               />
@@ -183,7 +191,9 @@ export default function AddressesPage() {
               <input
                 type="text"
                 value={formData.state}
-                onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, state: e.target.value })
+                }
                 className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-accent-gold focus:border-transparent"
                 required
               />
@@ -195,7 +205,9 @@ export default function AddressesPage() {
               <input
                 type="text"
                 value={formData.zip}
-                onChange={(e) => setFormData({ ...formData, zip: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, zip: e.target.value })
+                }
                 className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-accent-gold focus:border-transparent"
                 required
               />
@@ -205,7 +217,9 @@ export default function AddressesPage() {
                 type="checkbox"
                 id="isDefault"
                 checked={formData.isDefault}
-                onChange={(e) => setFormData({ ...formData, isDefault: e.target.checked })}
+                onChange={(e) =>
+                  setFormData({ ...formData, isDefault: e.target.checked })
+                }
                 className="rounded border-gray-300 text-accent-gold focus:ring-accent-gold"
               />
               <label
@@ -222,9 +236,9 @@ export default function AddressesPage() {
               type="submit"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-6 py-3 bg-accent-gold text-white rounded-full hover:bg-accent-gold-dark transition-colors duration-300"
+              className="px-6 py-3 bg-gray-900 text-white rounded-full hover:bg-gray-800 transition-colors duration-300"
             >
-              {editingId ? 'Save Changes' : 'Add Address'}
+              {editingId ? "Save Changes" : "Add Address"}
             </motion.button>
             <motion.button
               type="button"
@@ -260,7 +274,7 @@ export default function AddressesPage() {
                       {address.name}
                     </h3>
                     {address.isDefault && (
-                      <span className="px-2 py-1 bg-accent-gold/10 text-accent-gold text-xs rounded-full">
+                      <span className="px-2 py-1 bg-gray-900/10 text-gray-900 text-xs rounded-full">
                         Default
                       </span>
                     )}
@@ -270,7 +284,7 @@ export default function AddressesPage() {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => handleEdit(address)}
-                      className="p-2 text-gray-500 hover:text-accent-gold rounded-full hover:bg-accent-gold/10 transition-colors duration-300"
+                      className="p-2 text-gray-500 hover:text-gray-900 rounded-full hover:bg-gray-900/10 transition-colors duration-300"
                     >
                       <Edit2 className="h-4 w-4" />
                     </motion.button>
@@ -300,4 +314,4 @@ export default function AddressesPage() {
       )}
     </div>
   );
-} 
+}

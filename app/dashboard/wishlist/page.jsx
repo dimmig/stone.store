@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Heart, Trash2, ShoppingCart } from 'lucide-react';
-import { typography } from '../../styles/design-system';
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Heart, Trash2, ShoppingCart } from "lucide-react";
+import { typography } from "../../styles/design-system";
 
 export default function WishlistPage() {
   const [wishlistItems, setWishlistItems] = useState([]);
@@ -13,16 +13,16 @@ export default function WishlistPage() {
     const fetchWishlist = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('/api/wishlist');
-        
+        const response = await fetch("/api/wishlist");
+
         if (!response.ok) {
-          throw new Error('Failed to fetch wishlist');
+          throw new Error("Failed to fetch wishlist");
         }
 
         const data = await response.json();
         setWishlistItems(data);
       } catch (error) {
-        console.error('Error fetching wishlist:', error);
+        console.error("Error fetching wishlist:", error);
       } finally {
         setIsLoading(false);
       }
@@ -34,25 +34,27 @@ export default function WishlistPage() {
   const handleRemoveFromWishlist = async (productId) => {
     try {
       const response = await fetch(`/api/wishlist/${productId}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (!response.ok) {
-        throw new Error('Failed to remove from wishlist');
+        throw new Error("Failed to remove from wishlist");
       }
 
-      setWishlistItems(wishlistItems.filter(item => item.productId !== productId));
+      setWishlistItems(
+        wishlistItems.filter((item) => item.productId !== productId)
+      );
     } catch (error) {
-      console.error('Error removing from wishlist:', error);
+      console.error("Error removing from wishlist:", error);
     }
   };
 
   const handleAddToCart = async (productId) => {
     try {
-      const response = await fetch('/api/cart', {
-        method: 'POST',
+      const response = await fetch("/api/cart", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           productId,
@@ -61,13 +63,13 @@ export default function WishlistPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to add to cart');
+        throw new Error("Failed to add to cart");
       }
 
       // Optionally remove from wishlist after adding to cart
       await handleRemoveFromWishlist(productId);
     } catch (error) {
-      console.error('Error adding to cart:', error);
+      console.error("Error adding to cart:", error);
     }
   };
 
@@ -86,7 +88,9 @@ export default function WishlistPage() {
       {wishlistItems.length === 0 ? (
         <div className="text-center py-8">
           <Heart className="mx-auto h-12 w-12 text-gray-400" />
-          <p className={`${typography.body} text-gray-500 mt-2`}>Your wishlist is empty</p>
+          <p className={`${typography.body} text-gray-500 mt-2`}>
+            Your wishlist is empty
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -123,7 +127,7 @@ export default function WishlistPage() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => handleAddToCart(item.productId)}
-                    className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-accent-gold text-white rounded-full hover:bg-accent-gold-dark transition-colors duration-300"
+                    className="flex-1 flex items-center justify-center space-x-2 px-4 py-2 bg-gray-900 text-white rounded-full hover:bg-gray-800 transition-colors duration-300"
                   >
                     <ShoppingCart className="h-4 w-4" />
                     <span>Add to Cart</span>
@@ -145,4 +149,4 @@ export default function WishlistPage() {
       )}
     </div>
   );
-} 
+}

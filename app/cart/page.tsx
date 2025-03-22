@@ -38,6 +38,7 @@ export default function CartPage() {
   const { items, removeFromCart, updateQuantity, checkout, isLoading } = useCart();
   const router = useRouter();
 
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -46,7 +47,7 @@ export default function CartPage() {
     );
   }
 
-  if (items.length === 0) {
+  if (!isLoading && items.length === 0) {
     return (
       <motion.div
         initial="hidden"
@@ -71,7 +72,7 @@ export default function CartPage() {
     (total, item) => total + item.product.price * item.quantity,
     0
   );
-  const shipping = 10; // Fixed shipping cost
+  const shipping = 10; 
   const total = subtotal + shipping;
 
   return (

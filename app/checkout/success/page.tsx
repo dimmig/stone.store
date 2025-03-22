@@ -70,7 +70,7 @@ export default function CheckoutSuccessPage() {
                     <p className={`${typography.body} text-gray-500 mb-6`}>{error}</p>
                     <Link
                         href="/dashboard/orders"
-                        className="inline-block bg-accent-gold text-white px-6 py-3 rounded-full hover:bg-accent-gold-dark transition-colors duration-300"
+                        className="inline-block bg-gray-900 text-white px-6 py-3 rounded-full hover:bg-gray-800 transition-colors duration-300"
                     >
                         View Your Orders
                     </Link>
@@ -94,7 +94,7 @@ export default function CheckoutSuccessPage() {
                     </p>
                     <Link
                         href="/dashboard/orders"
-                        className="inline-block bg-accent-gold text-white px-6 py-3 rounded-full hover:bg-accent-gold-dark transition-colors duration-300"
+                        className="inline-block bg-gray-900 text-white px-6 py-3 rounded-full hover:bg-gray-800 transition-colors duration-300"
                     >
                         View Your Orders
                     </Link>
@@ -136,7 +136,7 @@ export default function CheckoutSuccessPage() {
                     </div>
                     <div className="flex justify-between mb-4">
                         <p className={`${typography.body} text-gray-500`}>Order Status:</p>
-                        <p className={`${typography.body} text-accent-gold font-medium`}>
+                        <p className={`${typography.body} text-gray-900 font-medium`}>
                             {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                         </p>
                     </div>
@@ -151,7 +151,7 @@ export default function CheckoutSuccessPage() {
                 <div className="flex justify-center">
                     <Link
                         href="/dashboard/orders"
-                        className="inline-block bg-black text-white px-6 py-3 rounded-full hover:bg-accent-gold-dark transition-colors duration-300"
+                        className="inline-block bg-gray-900 text-white px-6 py-3 rounded-full hover:bg-gray-800 transition-colors duration-300"
                     >
                         View Order Details
                     </Link>

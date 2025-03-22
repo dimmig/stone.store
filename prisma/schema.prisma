@@ -37,6 +37,11 @@ model User {
   notifications Notification[]
   role          Role
   checkoutSessions CheckoutSession[]
+  reviews       Review[]
+  emailNotifications Boolean   @default(true)
+  orderUpdates      Boolean   @default(true)
+  promotionalEmails Boolean   @default(false)
+  stockAlerts       Boolean   @default(false)
 }
 
 model Product {
@@ -50,13 +55,14 @@ model Product {
   sizes         String[]
   colors        String[]
   discount      Int            @default(0)
-  Rating        Float          @default(4.5)
-  inStock       Boolean        @default(true)
+  rating        Float          @default(4.5)
+  stockQuantity Int            @default(0)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   cartItems     CartItem[]
   wishlistItems WishlistItem[]
   orderItems    OrderItem[]
+  reviews       Review[]
 }
 
 model Category {
@@ -92,6 +98,8 @@ model OrderItem {
   product   Product @relation(fields: [productId], references: [id])
   quantity  Int
   price     Float
+  size      String?
+  color     String?
 }
 
 model Address {
@@ -149,4 +157,16 @@ model CheckoutSession {
   user      User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Float
+  comment   String
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
