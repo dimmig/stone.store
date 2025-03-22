@@ -1,16 +1,11 @@
 import { NextResponse } from 'next/server';
-import { headers } from 'next/headers';
 import { stripe } from '@/lib/stripe';
 import { prisma } from '@/lib/prisma';
-import Stripe from 'stripe';
-import { getServerSession } from "next-auth";
 import { Order } from "@/types";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 const handleDevCheckout = async (session: any) => {
   console.log('Processing development checkout session:', session.id);
 
-  // Get the user ID from our stored checkout session
   const checkoutSession = await prisma.checkoutSession.findUnique({
     where: { sessionId: session.id }
   });
@@ -22,7 +17,6 @@ const handleDevCheckout = async (session: any) => {
   const userId = checkoutSession.userId;
   console.log('Found user ID:', userId);
 
-  // Get cart items
   const cartItems = await prisma.cartItem.findMany({
     where: { userId },
     include: { product: true }
@@ -30,14 +24,11 @@ const handleDevCheckout = async (session: any) => {
 
   console.log('Found cart items:', cartItems.length);
 
-  // Calculate total
   const total = cartItems.reduce((acc, item) => {
     return acc + (item.product.price * item.quantity);
   }, 0);
 
-  console.log('Calculated total:', total);
 
-  // Create shipping address
   const shippingAddress = await prisma.address.create({
     data: {
       userId,
@@ -173,7 +164,10 @@ const handleCheckoutComplete = async (session: any) => {
 };
 
 export async function POST(req: Request) {
+  console.log('Webhook received');
+  
   if (!stripe) {
+    console.error('Stripe is not configured');
     return new Response('Stripe is not configured', { status: 500 });
   }
 
@@ -181,6 +175,7 @@ export async function POST(req: Request) {
   const signature = req.headers.get('stripe-signature') as string;
 
   if (!signature) {
+    console.error('No signature found in webhook request');
     return new Response('No signature found', { status: 400 });
   }
 
@@ -202,19 +197,24 @@ export async function POST(req: Request) {
       signature,
       webhookSecret
     );
+    console.log('Webhook event constructed successfully:', event.type);
   } catch (error: any) {
     console.error('Error verifying webhook signature:', error);
     return new Response(`Webhook Error: ${error.message}`, { status: 400 });
   }
 
   if (event.type === 'checkout.session.completed') {
+    console.log('Processing checkout.session.completed event');
     const session = event.data.object;
+    console.log('Session ID:', session.id);
+    console.log('Environment:', process.env.NODE_ENV);
 
     try {
       const order = process.env.NODE_ENV === 'development'
         ? await handleDevCheckout(session)
         : await handleCheckoutComplete(session);
 
+      console.log('Order created successfully:', order.id);
       return NextResponse.json({ order });
     } catch (error) {
       console.error('Error processing checkout:', error);

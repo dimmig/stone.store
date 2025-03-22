@@ -151,7 +151,7 @@ export default function CheckoutSuccessPage() {
                 <div className="flex justify-center">
                     <Link
                         href="/dashboard/orders"
-                        className="inline-block bg-accent-gold text-white px-6 py-3 rounded-full hover:bg-accent-gold-dark transition-colors duration-300"
+                        className="inline-block bg-black text-white px-6 py-3 rounded-full hover:bg-accent-gold-dark transition-colors duration-300"
                     >
                         View Order Details
                     </Link>

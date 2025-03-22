@@ -90,7 +90,7 @@ const OrderItems = ({items, isExpanded, formatCurrency}) => {
                     <span className="text-sm text-gray-500">{items.length} items</span>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-3 max-h-[300px] overflow-y-auto">
                     {items.map((item) => (
                         <div
                             key={item.id}
@@ -541,7 +541,6 @@ export default function OrdersPage() {
                   </div>
                 )}
 
-                {/* Expand/Collapse Button */}
                                     <button
                                         onClick={() => setExpandedOrderId(expandedOrderId === order.id ? null : order.id)}
                                         className="flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all duration-200"

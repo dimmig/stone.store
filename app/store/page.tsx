@@ -62,7 +62,7 @@ export default function StorePage() {
     });
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const productsPerPage = 10;
+    const productsPerPage = 12;
     const [totalProducts, setTotalProducts] = useState(0);
 
     const {addToCart} = useCart();

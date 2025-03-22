@@ -28,6 +28,8 @@ model User {
   birthday      DateTime?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+  resetToken    String?
+  resetTokenExpiry DateTime?
   orders        Order[]
   addresses     Address[]
   wishlist      WishlistItem[]

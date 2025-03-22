@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
 import { sendEmail } from '@/lib/email';
+import { getPasswordResetEmailTemplate } from '@/lib/email-templates';
 
 export async function POST(req: Request) {
   try {
@@ -19,15 +20,12 @@ export async function POST(req: Request) {
     });
 
     if (!user) {
-      // Return success even if user doesn't exist to prevent email enumeration
       return NextResponse.json({ message: 'If an account exists, a reset link has been sent' });
     }
 
-    // Generate reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
+    const resetTokenExpiry = new Date(Date.now() + 3600000);
 
-    // Save reset token to database
     await prisma.user.update({
       where: { id: user.id },
       data: {
@@ -36,18 +34,14 @@ export async function POST(req: Request) {
       },
     });
 
-    // Send reset email
     const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password?token=${resetToken}`;
     await sendEmail({
       to: email,
       subject: 'Reset your password',
-      html: `
-        <p>You requested a password reset.</p>
-        <p>Click the link below to reset your password:</p>
-        <a href="${resetUrl}">${resetUrl}</a>
-        <p>If you didn't request this, please ignore this email.</p>
-        <p>This link will expire in 1 hour.</p>
-      `,
+      html: getPasswordResetEmailTemplate({
+        resetUrl,
+        appUrl: process.env.NEXT_PUBLIC_APP_URL!,
+      }),
     });
 
     return NextResponse.json({ message: 'If an account exists, a reset link has been sent' });

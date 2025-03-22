@@ -6,8 +6,9 @@ import {Search, ShoppingCart, Heart, User} from 'lucide-react';
 import {useSession} from 'next-auth/react';
 import {SignInButton} from '../auth/SignInButton';
 import {UserAccountNav} from '../auth/UserAccountNav';
-import {useCart} from '../../../app/providers/CartProvider';
-import {useWishlist} from '../../../app/providers/WishlistProvider';
+import {useCart} from '@/app/providers/CartProvider';
+import {useWishlist} from '@/app/providers/WishlistProvider';
+import {Logo} from '../ui/logo';
 
 export function Header() {
     const {data: session} = useSession();
@@ -18,9 +19,7 @@ export function Header() {
         <header className="sticky top-0 z-50 w-full border-b bg-white">
             <div className="container mx-auto flex h-16 items-center justify-between px-4">
                 {/* Logo */}
-                <Link href="/" className="flex items-center space-x-2">
-                    <span className="text-xl font-bold">Stone.Store</span>
-                </Link>
+                <Logo className="flex-shrink-0"/>
 
                 {/* Search Bar */}
                 <div className="hidden flex-1 items-center justify-center px-20 lg:flex">

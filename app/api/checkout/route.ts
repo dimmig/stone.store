@@ -4,7 +4,10 @@ import { CartItem } from '@/types';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(req: Request) {
+  console.log('Checkout request received');
+  
   if (!stripe) {
+    console.error('Stripe is not configured');
     return NextResponse.json(
       { error: 'Stripe is not properly configured. Please check your environment variables.' },
       { status: 500 }
@@ -13,6 +16,8 @@ export async function POST(req: Request) {
 
   try {
     const { cartItems, userId } = await req.json();
+    console.log('Processing checkout for user:', userId);
+    console.log('Cart items:', cartItems.length);
 
     if (!cartItems?.length) {
       return NextResponse.json(
@@ -44,19 +49,23 @@ export async function POST(req: Request) {
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/cart`,
     });
 
+    console.log('Stripe session created:', session.id);
+
     // Store the checkout session in our database
-    await prisma.checkoutSession.create({
+    const checkoutSession = await prisma.checkoutSession.create({
       data: {
         sessionId: session.id,
         userId,
       },
     });
 
+    console.log('Checkout session stored in database:', checkoutSession.id);
+
     return NextResponse.json({ sessionId: session.id, url: session.url });
   } catch (error) {
     console.error('Error in checkout:', error);
     return NextResponse.json(
-      { error: 'Something went wrong with the checkout process.' },
+      { error: 'Failed to create checkout session' },
       { status: 500 }
     );
   }

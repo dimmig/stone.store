@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, CheckCircle2, Lock } from 'lucide-react';
+import { Logo } from "../../components/ui/logo";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -57,7 +58,7 @@ export default function ResetPasswordPage() {
       setSuccess(true);
       setTimeout(() => {
         router.push('/auth/signin');
-      }, 2000);
+      }, 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
@@ -87,11 +88,45 @@ export default function ResetPasswordPage() {
           <div className="mt-8">
             <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
               {success ? (
-                <div className="text-center">
-                  <div className="rounded-lg bg-green-50 p-4 text-sm text-green-600">
-                    Password reset successful! Redirecting to sign in...
-                  </div>
-                </div>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="text-center py-8"
+                >
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{
+                      delay: 0.2,
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 15
+                    }}
+                    className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-green-100"
+                  >
+                    <CheckCircle2 className="h-8 w-8 text-green-600" />
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                  >
+                    <h3 className="mb-2 text-xl font-semibold text-gray-900">Password reset successful!</h3>
+                    <p className="mb-6 text-sm text-gray-600">
+                      Your password has been successfully reset. You will be redirected to sign in shortly.
+                    </p>
+                    <div className="flex justify-center">
+                      <Link
+                        href="/auth/signin"
+                        className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-500"
+                      >
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to sign in
+                      </Link>
+                    </div>
+                  </motion.div>
+                </motion.div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {error && (
@@ -104,36 +139,42 @@ export default function ResetPasswordPage() {
                     <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                       New Password
                     </label>
-                    <input
-                      id="password"
-                      name="password"
-                      type="password"
-                      required
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                    />
+                    <div className="relative mt-1">
+                      <input
+                        id="password"
+                        name="password"
+                        type="password"
+                        required
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        className="block w-full rounded-lg border border-gray-300 px-3 py-2 pl-10 text-sm placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                      />
+                      <Lock className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                    </div>
                   </div>
 
                   <div>
                     <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
                       Confirm New Password
                     </label>
-                    <input
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      type="password"
-                      required
-                      value={formData.confirmPassword}
-                      onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                      className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                    />
+                    <div className="relative mt-1">
+                      <input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type="password"
+                        required
+                        value={formData.confirmPassword}
+                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                        className="block w-full rounded-lg border border-gray-300 px-3 py-2 pl-10 text-sm placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                      />
+                      <Lock className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                    </div>
                   </div>
 
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+                    className="flex w-full items-center justify-center rounded-lg bg-black px-4 py-2.5 text-sm font-medium text-white hover:bg-black/90 focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 disabled:opacity-50"
                   >
                     {loading ? (
                       <>
@@ -148,8 +189,9 @@ export default function ResetPasswordPage() {
                   <div className="text-center">
                     <Link
                       href="/auth/signin"
-                      className="text-sm text-gray-500 hover:text-gray-700"
+                      className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700"
                     >
+                      <ArrowLeft className="mr-2 h-4 w-4" />
                       Back to sign in
                     </Link>
                   </div>

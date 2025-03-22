@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import sgMail, {ResponseError} from '@sendgrid/mail';
 
 interface EmailOptions {
   to: string;
@@ -7,24 +7,46 @@ interface EmailOptions {
 }
 
 export async function sendEmail({ to, subject, html }: EmailOptions) {
-  const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_SERVER_HOST,
-    port: Number(process.env.EMAIL_SERVER_PORT),
-    auth: {
-      user: process.env.EMAIL_SERVER_USER,
-      pass: process.env.EMAIL_SERVER_PASSWORD,
-    },
-  });
+  const apiKey = process.env.SENDGRID_API_KEY;
+  const fromEmail = process.env.EMAIL_FROM;
+
+  if (!apiKey) {
+    console.error('SendGrid API key is not configured');
+    throw new Error('Email service is not configured properly');
+  }
+
+  if (!fromEmail) {
+    console.error('Sender email is not configured');
+    throw new Error('Email service is not configured properly');
+  }
+
+  sgMail.setApiKey(apiKey);
 
   try {
-    await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
+    if (process.env.NODE_ENV === "development") {
+      console.log('Attempting to send email:', {
+        to,
+        from: fromEmail,
+        subject,
+      });
+    }
+
+    return await sgMail.send({
       to,
+      from: fromEmail,
       subject,
       html,
     });
   } catch (error) {
-    console.error('Failed to send email:', error);
-    throw new Error('Failed to send email');
+    if (error instanceof ResponseError) {
+      console.error('SendGrid error details:', {
+        code: error.code,
+        message: error.message,
+        response: error.response?.body,
+      });
+    } else {
+      console.error('Unknown error:', error);
+    }
+    throw error;
   }
 } 

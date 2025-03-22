@@ -1,12 +1,28 @@
 import NextAuth, { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import {PrismaClient, User} from '@prisma/client';
+import GoogleProvider from 'next-auth/providers/google';
+import {PrismaClient} from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 const prisma = new PrismaClient();
 
+type UserRole = 'ADMIN' | 'USER';
+
+interface CustomUser {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  password?: string;
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
@@ -14,16 +30,15 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        console.log("CREDENTIALS: ", credentials)
         if (!credentials?.email || !credentials?.password) {
           throw new Error('Please enter an email and password');
         }
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
-        }) as User;
+        }) as CustomUser;
 
-        if (!user) {
+        if (!user || !user.password) {
           throw new Error('No user found with this email');
         }
 
@@ -46,19 +61,49 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider === 'google') {
+        try {
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email! },
+          });
+
+          if (!existingUser) {
+            // Generate a secure random password for Google users
+            const randomPassword = await bcrypt.hash(crypto.randomUUID(), 10);
+            
+            await prisma.user.create({
+              data: {
+                email: user.email!,
+                name: user.name!,
+                role: 'USER' as UserRole,
+                password: randomPassword,
+              },
+            });
+          }
+          return true;
+        } catch (error) {
+          console.error('Error during Google sign in:', error);
+          return false;
+        }
+      }
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
-        if ("role" in user) {
-          token.role = user.role;
+        const customUser = user as CustomUser;
+        if ("role" in customUser) {
+          token.role = customUser.role;
+        } else {
+          // For Google users, set default role
+          token.role = 'USER' as UserRole;
         }
       }
       return token;
     },
     async session({ session, token }) {
       if (session?.user) {
-        if ("role" in session.user) {
-        session.user.role = token.role;
-        }
+        session.user.role = token.role as UserRole;
       }
       return session;
     },
