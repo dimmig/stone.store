@@ -3,11 +3,39 @@
 @tailwind utilities;
 
 html {
-overflow-x: hidden;
+  overflow-x: hidden;
 }
 
 body {
   font-family: "Nunito" sans-serif;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.5s infinite linear;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
 }
 
 input::placeholder {
@@ -60,8 +88,6 @@ input::placeholder {
 .flex-around {
   @apply flex justify-around items-center;
 }
-
-
 
 @layer base {
   :root {
