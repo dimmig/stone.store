@@ -1,4 +1,3 @@
-
 import React, {useState, useEffect} from 'react';
 import {Plus, Trash2, Loader2, Minus} from 'lucide-react';
 import {toast} from 'sonner';
@@ -186,7 +185,7 @@ export default function ProductForm({productId, onClose, onSuccess}: ProductForm
 
       // Remove empty fields except the last one
       const filtered = newArray.filter((item, i) =>
-          item || i === newArray.length - 1
+        item || i === newArray.length - 1
       );
 
       return {...prev, [field]: filtered};
