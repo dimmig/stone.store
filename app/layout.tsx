@@ -1,6 +1,7 @@
 import React from 'react';
 import type {Metadata, Viewport} from 'next';
 import {Inter} from 'next/font/google';
+import { Analytics } from '@vercel/analytics/react';
 import '../styles/globals.css';
 import {HeaderWrapper} from './components/layout/HeaderWrapper';
 import {Providers} from './providers/Providers';
@@ -99,6 +100,7 @@ export default function RootLayout({
                     {children}
                 </main>
                 <Footer/>
+                <Analytics />
             </Providers>
         </ClientProviders>
         <Toaster position="top-center" richColors/>
