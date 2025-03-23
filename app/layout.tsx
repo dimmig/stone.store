@@ -17,17 +17,8 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-    title: 'STONE.STORE - Your Premium Shopping Destination',
-    description: 'Discover a curated collection of premium products at STONE.STORE. Shop the latest trends with fast delivery and excellent customer service.',
-    keywords: 'online shopping, premium products, fashion, lifestyle, home goods, accessories',
-    authors: [{ name: 'STONE.STORE Team' }],
-    creator: 'STONE.STORE',
-    publisher: 'STONE.STORE',
-    formatDetection: {
-        email: false,
-        address: false,
-        telephone: false,
-    },
+    title: 'STONE.STORE',
+    description: 'Your one-stop shop for all your needs',
     icons: {
         icon: [
             { url: '/favicon.svg', type: 'image/svg+xml' },
@@ -38,46 +29,19 @@ export const metadata: Metadata = {
         ]
     },
     manifest: '/site.webmanifest',
-    robots: {
-        index: true,
-        follow: true,
-        googleBot: {
-            index: true,
-            follow: true,
-            'max-video-preview': -1,
-            'max-image-preview': 'large',
-            'max-snippet': -1,
-        },
-    },
+    robots: 'index, follow',
     openGraph: {
         type: 'website',
         locale: 'en_US',
         url: 'https://stone.store',
         siteName: 'STONE.STORE',
-        title: 'STONE.STORE - Your Premium Shopping Destination',
-        description: 'Discover a curated collection of premium products at STONE.STORE. Shop the latest trends with fast delivery and excellent customer service.',
-        images: [
-            {
-                url: '/images/og-image.jpg',
-                width: 1200,
-                height: 630,
-                alt: 'STONE.STORE - Premium Shopping Destination',
-            },
-        ],
+        title: 'STONE.STORE',
+        description: 'Your one-stop shop for all your needs',
     },
     twitter: {
         card: 'summary_large_image',
-        title: 'STONE.STORE - Your Premium Shopping Destination',
-        description: 'Discover a curated collection of premium products at STONE.STORE. Shop the latest trends with fast delivery and excellent customer service.',
-        images: ['/images/twitter-image.jpg'],
-        creator: '@stonestore',
-    },
-    verification: {
-        google: 'your-google-site-verification',
-        yandex: 'your-yandex-verification',
-    },
-    alternates: {
-        canonical: 'https://stone.store',
+        title: 'STONE.STORE',
+        description: 'Your one-stop shop for all your needs',
     },
 };
 
