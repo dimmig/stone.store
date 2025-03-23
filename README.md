@@ -4,7 +4,6 @@
 
 The ultimate e-commerce application for selling clothes.
 
-
 ## Table of Contents
 - [Description](#description)
 - [Features](#features)
