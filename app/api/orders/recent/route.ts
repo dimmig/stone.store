@@ -16,7 +16,7 @@ export async function GET() {
       orderBy: {
         createdAt: 'desc'
       },
-      include: {
+        include: {
         user: {
           select: {
             name: true,

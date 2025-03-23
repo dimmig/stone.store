@@ -15,7 +15,7 @@ export async function uploadToGCS(file: File) {
   try {
     const buffer = await file.arrayBuffer();
     const filename = `${uuidv4()}-${file.name}`;
-    const blob = bucket.file(`products/${filename}`);
+    const blob = bucket.file(`${filename}`);
     const blobStream = blob.createWriteStream({
       metadata: {
         contentType: file.type,

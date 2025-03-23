@@ -1,27 +1,45 @@
-import { withAuth } from 'next-auth/middleware';
-import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { withAuth } from 'next-auth/middleware'
 
-export default withAuth(
-    function middleware(req) {
-        const token = req.nextauth.token;
-        const isAdminRoute = ['/dashboard', '/dashboard/customers', '/dashboard/products'].some(route => req.nextUrl.pathname.startsWith(route));
-        const settingsRoute = ['/dashboard/settings'];
+// Export the withAuth middleware with your config
+export default withAuth({
+  callbacks: {
+    authorized: ({ token }) => !!token,
+  },
+  pages: {
+    signIn: '/auth/signin',
+  },
+})
 
-        if (isAdminRoute && token?.role !== 'ADMIN' && !settingsRoute.includes(req.nextUrl.pathname)) {
-            if (req.nextUrl.pathname !== '/dashboard/orders') {
-                return NextResponse.redirect(new URL('/dashboard/orders', req.url));
-            }
-        }
+// Middleware function for CORS and other modifications
+export function middleware(request: NextRequest) {
+  // Get the response
+  const response = NextResponse.next()
 
-        return NextResponse.next();
-    },
-    {
-        callbacks: {
-            authorized: ({ token }) => !!token,
-        },
-    }
-);
+  // Add CORS headers
+  response.headers.set('Access-Control-Allow-Origin', '*')
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  response.headers.set('Access-Control-Max-Age', '86400')
 
+  return response
+}
+
+// Configure which routes to run middleware on
 export const config = {
-    matcher: ['/dashboard/:path*'],
-};
+  matcher: [
+    // Protected API routes (require authentication)
+    '/api/cart/:path*',
+    '/api/wishlist/:path*',
+    '/api/orders/:path*',
+    '/api/user/:path*',
+    '/api/checkout/:path*',
+    // Public API routes (no authentication required)
+    // '/api/products/:path*',
+    // '/api/categories/:path*',
+    // '/api/filters/:path*',
+    // Protected dashboard routes
+    '/dashboard/:path*',
+  ],
+}

@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { CheckCircle, Package } from 'lucide-react';
 import { typography } from '@/app/styles/design-system';
 import Link from 'next/link';
 
-export default function CheckoutSuccessPage() {
+function CheckoutSuccess() {
     const searchParams = useSearchParams();
     const [isLoading, setIsLoading] = useState(true);
     const [order, setOrder] = useState<any>(null);
@@ -159,5 +159,17 @@ export default function CheckoutSuccessPage() {
                 </div>
             </motion.div>
         </div>
+    );
+}
+
+export default function CheckoutSuccessPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-gray-900"></div>
+            </div>
+        }>
+            <CheckoutSuccess />
+        </Suspense>
     );
 }

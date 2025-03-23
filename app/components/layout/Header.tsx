@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import {Search, ShoppingCart, Heart, User} from 'lucide-react';
+import {ShoppingCart, Heart, User} from 'lucide-react';
 import {useSession} from 'next-auth/react';
 import {SignInButton} from '../auth/SignInButton';
 import {UserAccountNav} from '../auth/UserAccountNav';
@@ -23,6 +23,9 @@ export function Header() {
 
                 {/* Navigation */}
                 <nav className="flex items-center space-x-6">
+                    <Link href="/store" className="hidden lg:block text-gray-600 hover:text-gray-900">
+                        Store
+                    </Link>
                     <Link href="/collections" className="hidden lg:block text-gray-600 hover:text-gray-900">
                         Collections
                     </Link>

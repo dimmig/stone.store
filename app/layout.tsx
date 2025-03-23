@@ -1,5 +1,5 @@
 import React from 'react';
-import type {Metadata} from 'next';
+import type {Metadata, Viewport} from 'next';
 import {Inter} from 'next/font/google';
 import '../styles/globals.css';
 import {HeaderWrapper} from './components/layout/HeaderWrapper';
@@ -10,9 +10,39 @@ import Footer from './components/layout/Footer';
 
 const inter = Inter({subsets: ['latin']});
 
+export const viewport: Viewport = {
+    themeColor: '#ffffff',
+    width: 'device-width',
+    initialScale: 1,
+};
+
 export const metadata: Metadata = {
-    title: 'Stone.Store - Premium Clothing & Accessories',
-    description: 'Your premier destination for high-quality clothing and accessories.',
+    title: 'STONE.STORE',
+    description: 'Your one-stop shop for all your needs',
+    icons: {
+        icon: [
+            { url: '/favicon.svg', type: 'image/svg+xml' },
+            { url: '/favicon.ico', sizes: 'any' }
+        ],
+        apple: [
+            { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }
+        ]
+    },
+    manifest: '/site.webmanifest',
+    robots: 'index, follow',
+    openGraph: {
+        type: 'website',
+        locale: 'en_US',
+        url: 'https://stone.store',
+        siteName: 'STONE.STORE',
+        title: 'STONE.STORE',
+        description: 'Your one-stop shop for all your needs',
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'STONE.STORE',
+        description: 'Your one-stop shop for all your needs',
+    },
 };
 
 export default function RootLayout({
