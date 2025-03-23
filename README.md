@@ -1,6 +1,6 @@
 # Stone.Store-V2
 
-[![View Website Demo](https://img.shields.io/badge/View%20Website%20Demo-%E2%9C%94-blue)](https://stone-store-v2.vercel.app/)
+[![View Website Demo](https://img.shields.io/badge/View%20Website%20Demo-%E2%9C%94-blue)](https://stone-store.app)
 
 The ultimate e-commerce application for selling clothes.
 
@@ -36,11 +36,15 @@ The ultimate e-commerce application for selling clothes.
    ```bash
    npm install
    ```
+4 **Set up env variables**:
+   Create a `.env` file in the root directory and add the variables from .env.example.
+   
+   
 
 ## Usage
 1. **Start the development server**:
    ```bash
-   npm start
+   npm run dev
    ```
 2. **Open your browser** and go to `http://localhost:3000` to see the application.
 
@@ -59,7 +63,7 @@ We welcome contributions from the community! Please follow these steps:
    ```bash
    git push origin feature/your-feature-name
    ```
-5. **Open a pull request** to the `prod_features` branch.
+5. **Open a pull request** to the `dev` branch.
 
 
 ## Acknowledgements
