@@ -36,11 +36,10 @@ export const metadata: Metadata = {
         description: 'Discover a curated collection of premium products at STONE.STORE. Shop the latest trends with fast delivery and excellent customer service.',
         images: [
             {
-                url: 'https://stone-store.app/og-image.png',
+                url: '/og-image.jpg',
                 width: 1200,
                 height: 630,
                 alt: 'STONE.STORE - Premium Shopping Destination',
-                type: 'image/png',
             },
         ],
     },
@@ -48,19 +47,8 @@ export const metadata: Metadata = {
         card: 'summary_large_image',
         title: 'STONE.STORE - Premium Shopping Destination',
         description: 'Discover a curated collection of premium products at STONE.STORE. Shop the latest trends with fast delivery and excellent customer service.',
-        images: ['https://stone-store.app/og-image.png'],
+        images: ['/og-image.jpg'],
         creator: '@stonestore',
-    },
-    other: {
-        'og:site_name': 'STONE.STORE',
-        'og:image:width': '1200',
-        'og:image:height': '630',
-        'og:image:type': 'image/png',
-    },
-    formatDetection: {
-        email: false,
-        address: false,
-        telephone: false,
     },
     icons: {
         icon: [
