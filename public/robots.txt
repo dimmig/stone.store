@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://stone-store.app/sitemap.xml
+
+# Disallow admin and private routes
+Disallow: /admin/
+Disallow: /api/
+Disallow: /private/
+Disallow: /auth/ 
