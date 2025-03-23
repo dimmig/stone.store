@@ -17,9 +17,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-    title: 'STONE.STORE - Your Premium Shopping Destination',
-    description: 'Discover a curated collection of premium products at STONE.STORE. Shop the latest trends with fast delivery and excellent customer service.',
-    keywords: 'online shopping, premium products, fashion, lifestyle, home goods, accessories',
+    title: 'STONE.STORE - Premium Shopping Destination | Luxury Products & Fashion',
+    description: 'STONE.STORE - Your premium shopping destination for luxury products, fashion, and lifestyle items. Discover curated collections with fast delivery and exceptional service.',
+    keywords: 'stone store, premium shopping, luxury products, fashion, lifestyle, home goods, accessories, online store, premium brands',
     authors: [{ name: 'STONE.STORE Team' }],
     creator: 'STONE.STORE',
     publisher: 'STONE.STORE',
@@ -27,6 +27,33 @@ export const metadata: Metadata = {
         email: false,
         address: false,
         telephone: false,
+    },
+    metadataBase: new URL('https://stone-store.app'),
+    alternates: {
+        canonical: 'https://stone-store.app',
+    },
+    openGraph: {
+        type: 'website',
+        locale: 'en_US',
+        url: 'https://stone-store.app',
+        siteName: 'STONE.STORE',
+        title: 'STONE.STORE - Premium Shopping Destination',
+        description: 'Discover a curated collection of premium products at STONE.STORE. Shop the latest trends with fast delivery and excellent customer service.',
+        images: [
+            {
+                url: '/og-image.jpg',
+                width: 1200,
+                height: 630,
+                alt: 'STONE.STORE - Premium Shopping Destination',
+            },
+        ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'STONE.STORE - Premium Shopping Destination',
+        description: 'Discover a curated collection of premium products at STONE.STORE. Shop the latest trends with fast delivery and excellent customer service.',
+        images: ['/og-image.jpg'],
+        creator: '@stonestore',
     },
     icons: {
         icon: [
@@ -49,35 +76,9 @@ export const metadata: Metadata = {
             'max-snippet': -1,
         },
     },
-    openGraph: {
-        type: 'website',
-        locale: 'en_US',
-        url: 'https://stone.store',
-        siteName: 'STONE.STORE',
-        title: 'STONE.STORE - Your Premium Shopping Destination',
-        description: 'Discover a curated collection of premium products at STONE.STORE. Shop the latest trends with fast delivery and excellent customer service.',
-        images: [
-            {
-                url: '/images/og-image.jpg',
-                width: 1200,
-                height: 630,
-                alt: 'STONE.STORE - Premium Shopping Destination',
-            },
-        ],
-    },
-    twitter: {
-        card: 'summary_large_image',
-        title: 'STONE.STORE - Your Premium Shopping Destination',
-        description: 'Discover a curated collection of premium products at STONE.STORE. Shop the latest trends with fast delivery and excellent customer service.',
-        images: ['/images/twitter-image.jpg'],
-        creator: '@stonestore',
-    },
     verification: {
         google: 'your-google-site-verification',
         yandex: 'your-yandex-verification',
-    },
-    alternates: {
-        canonical: 'https://stone.store',
     },
 };
 
