@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
+Allow: /og-image.png
 
 # Sitemaps
 Sitemap: https://stone-store.app/sitemap.xml

@@ -17,18 +17,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+    metadataBase: new URL('https://stone-store.app'),
     title: 'STONE.STORE - Premium Shopping Destination | Luxury Products & Fashion',
     description: 'STONE.STORE - Your premium shopping destination for luxury products, fashion, and lifestyle items. Discover curated collections with fast delivery and exceptional service.',
     keywords: 'stone store, premium shopping, luxury products, fashion, lifestyle, home goods, accessories, online store, premium brands',
     authors: [{ name: 'STONE.STORE Team' }],
     creator: 'STONE.STORE',
     publisher: 'STONE.STORE',
-    formatDetection: {
-        email: false,
-        address: false,
-        telephone: false,
-    },
-    metadataBase: new URL('https://stone-store.app'),
     alternates: {
         canonical: 'https://stone-store.app',
     },
@@ -41,11 +36,11 @@ export const metadata: Metadata = {
         description: 'Discover a curated collection of premium products at STONE.STORE. Shop the latest trends with fast delivery and excellent customer service.',
         images: [
             {
-                url: 'https://stone-store.app/og-image.svg',
+                url: 'https://stone-store.app/og-image.png',
                 width: 1200,
                 height: 630,
                 alt: 'STONE.STORE - Premium Shopping Destination',
-                type: 'image/svg+xml',
+                type: 'image/png',
             },
         ],
     },
@@ -53,14 +48,19 @@ export const metadata: Metadata = {
         card: 'summary_large_image',
         title: 'STONE.STORE - Premium Shopping Destination',
         description: 'Discover a curated collection of premium products at STONE.STORE. Shop the latest trends with fast delivery and excellent customer service.',
-        images: ['https://stone-store.app/og-image.svg'],
+        images: ['https://stone-store.app/og-image.png'],
         creator: '@stonestore',
     },
     other: {
         'og:site_name': 'STONE.STORE',
         'og:image:width': '1200',
         'og:image:height': '630',
-        'og:image:type': 'image/svg+xml',
+        'og:image:type': 'image/png',
+    },
+    formatDetection: {
+        email: false,
+        address: false,
+        telephone: false,
     },
     icons: {
         icon: [
