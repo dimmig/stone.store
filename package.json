@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "concurrently \"next dev\" \"stripe listen --forward-to localhost:3000/api/webhook\"",
-    "build": "DISABLE_ESLINT_PLUGIN=true NODE_ENV=production next build",
+    "build": "prisma generate && DISABLE_ESLINT_PLUGIN=true NODE_ENV=production next build",
     "start": "next start",
     "lint": "next lint",
     "prisma:generate": "prisma generate",
