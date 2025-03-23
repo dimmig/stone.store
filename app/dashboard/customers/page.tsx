@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users,
   Search,
@@ -11,6 +11,9 @@ import {
   Mail,
   Phone,
   Calendar,
+  ShoppingBag,
+  DollarSign,
+  Package,
 } from 'lucide-react';
 import { typography } from '../../styles/design-system';
 
@@ -172,121 +175,161 @@ export default function CustomersPage() {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredCustomers.map((customer) => (
-              <>
-                <tr
-                  key={customer.id}
-                  className="hover:bg-gray-50 cursor-pointer"
-                  onClick={() => setExpandedCustomerId(
-                    expandedCustomerId === customer.id ? null : customer.id
-                  )}
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 flex-shrink-0">
-                        <div className="h-10 w-10 rounded-full bg-accent-gold/10 flex items-center justify-center">
-                          <Users className="h-6 w-6 text-accent-gold" />
-                        </div>
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          {customer.name}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {customer.phone}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{customer.email}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      {new Date(customer.createdAt).toLocaleDateString()}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      {customer.totalOrders}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      className="text-accent-gold hover:text-accent-gold-dark"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Handle view details
-                      }}
-                    >
-                      View Details
-                    </button>
-                  </td>
-                </tr>
-                {expandedCustomerId === customer.id && (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-4 bg-gray-50">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="space-y-4">
-                          <h3 className={`${typography.h4} text-gray-900`}>Contact Information</h3>
-                          <div className="space-y-2">
-                            <div className="flex items-center space-x-2 text-gray-600">
-                              <Mail className="h-4 w-4" />
-                              <span>{customer.email}</span>
-                            </div>
-                            {customer.phone && (
-                              <div className="flex items-center space-x-2 text-gray-600">
-                                <Phone className="h-4 w-4" />
-                                <span>{customer.phone}</span>
-                              </div>
-                            )}
-                            <div className="flex items-center space-x-2 text-gray-600">
-                              <Calendar className="h-4 w-4" />
-                              <span>Joined {new Date(customer.createdAt).toLocaleDateString()}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="space-y-4">
-                          <h3 className={`${typography.h4} text-gray-900`}>Order Statistics</h3>
-                          <div className="space-y-2">
-                            <div className="flex justify-between text-gray-600">
-                              <span>Total Orders</span>
-                              <span>{customer.totalOrders}</span>
-                            </div>
-                            <div className="flex justify-between text-gray-600">
-                              <span>Total Spent</span>
-                              <span>${customer.totalSpent.toFixed(2)}</span>
-                            </div>
-                            <div className="flex justify-between text-gray-600">
-                              <span>Average Order Value</span>
-                              <span>${(customer.totalSpent / customer.totalOrders || 0).toFixed(2)}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="space-y-4">
-                          <h3 className={`${typography.h4} text-gray-900`}>Recent Activity</h3>
-                          <div className="space-y-2">
-                            {customer.recentOrders.map((order) => (
-                              <div key={order.id} className="flex justify-between items-center text-sm">
-                                <div>
-                                  <span className="text-gray-900">Order #{order.id}</span>
-                                  <span className="text-gray-500 ml-2">
-                                    {new Date(order.createdAt).toLocaleDateString()}
-                                  </span>
-                                </div>
-                                <span className="text-gray-900">${order.total.toFixed(2)}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
+              <motion.tr
+                key={customer.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className={`cursor-pointer transition-colors ${
+                  expandedCustomerId === customer.id
+                    ? 'bg-blue-50 border-l-4 border-blue-500'
+                    : 'hover:bg-gray-50'
+                }`}
+                onClick={() => setExpandedCustomerId(
+                  expandedCustomerId === customer.id ? null : customer.id
                 )}
-              </>
+              >
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center">
+                    <div className="h-10 w-10 flex-shrink-0">
+                      <div className="h-10 w-10 rounded-full bg-accent-gold/10 flex items-center justify-center">
+                        <Users className="h-6 w-6 text-accent-gold" />
+                      </div>
+                    </div>
+                    <div className="ml-4">
+                      <div className="text-sm font-medium text-gray-900">
+                        {customer.name}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {customer.phone}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">{customer.email}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">
+                    {new Date(customer.createdAt).toLocaleDateString()}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">
+                    {customer.totalOrders}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="text-accent-gold hover:text-accent-gold-dark"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Handle view details
+                    }}
+                  >
+                    View Details
+                  </motion.button>
+                </td>
+              </motion.tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      <AnimatePresence>
+        {expandedCustomerId && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white rounded-lg shadow-sm overflow-hidden"
+          >
+            <div className="p-6">
+              {(() => {
+                const customer = customers.find(c => c.id === expandedCustomerId);
+                if (!customer) return null;
+
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 }}
+                      className="space-y-4"
+                    >
+                      <h3 className={`${typography.h4} text-gray-900 flex items-center gap-2`}>
+                        <Mail className="h-5 w-5 text-accent-gold" />
+                        Contact Information
+                      </h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-3 text-gray-600">
+                          <Mail className="h-4 w-4 text-accent-gold" />
+                          <span>{customer.email}</span>
+                        </div>
+                        {customer.phone && (
+                          <div className="flex items-center space-x-3 text-gray-600">
+                            <Phone className="h-4 w-4 text-accent-gold" />
+                            <span>{customer.phone}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center space-x-3 text-gray-600">
+                          <Calendar className="h-4 w-4 text-accent-gold" />
+                          <span>Joined {new Date(customer.createdAt).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    </motion.div>
+
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className="space-y-4"
+                    >
+                      <h3 className={`${typography.h4} text-gray-900 flex items-center gap-2`}>
+                        <ShoppingBag className="h-5 w-5 text-accent-gold" />
+                        Order Statistics
+                      </h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-3 text-gray-600">
+                          <Package className="h-4 w-4 text-accent-gold" />
+                          <span>Total Orders: {customer.totalOrders}</span>
+                        </div>
+                        <div className="flex items-center space-x-3 text-gray-600">
+                          <DollarSign className="h-4 w-4 text-accent-gold" />
+                          <span>Total Spent: ${customer.totalSpent.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </motion.div>
+
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 }}
+                      className="space-y-4"
+                    >
+                      <h3 className={`${typography.h4} text-gray-900 flex items-center gap-2`}>
+                        <Package className="h-5 w-5 text-accent-gold" />
+                        Recent Orders
+                      </h3>
+                      <div className="space-y-3">
+                        {customer.recentOrders.map((order: Order) => (
+                          <div key={order.id} className="flex items-center justify-between text-gray-600">
+                            <span>Order #{order.id.slice(-6)}</span>
+                            <span>${order.total.toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  </div>
+                );
+              })()}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 } 

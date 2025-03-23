@@ -27,6 +27,7 @@ import { useSession } from "next-auth/react";
 import { typography } from "../../styles/design-system";
 import { useUserStore } from "@/store/user-store";
 import { Role } from "@prisma/client";
+import Image from "next/image";
 
 const statusConfig = {
   processing: {
@@ -114,12 +115,15 @@ const OrderItems = ({ items, isExpanded, formatCurrency, onClose }) => {
             >
               {/* Product Image */}
               <div className="w-20 h-20 rounded-lg bg-white border border-gray-100 overflow-hidden flex-shrink-0">
-                {item.product?.images?.[0] ? (
-                  <img
-                    src={item.product.images[0]}
-                    alt={item.product.name}
-                    className="w-full h-full object-cover"
-                  />
+                {item.product?.imageUrls?.[0] ? (
+                  <div className="relative h-20 w-20 rounded-lg overflow-hidden">
+                    <Image
+                      src={item.product.imageUrls[0]}
+                      alt={item.product.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
                 ) : (
                   <div className="w-full h-full bg-gray-100 flex items-center justify-center">
                     <Package className="h-6 w-6 text-gray-400" />

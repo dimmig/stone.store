@@ -12,7 +12,7 @@ interface Product {
     name: string;
     description: string;
     price: number;
-    images: string[];
+    imageUrls: string[];
     categoryId: string;
     category: {
         name: string;
@@ -101,7 +101,7 @@ export default function ProductPage({params}: { params: { id: string } }) {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="space-y-4">
                     <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
-                        {product.images[selectedImage] && (
+                        {product.imageUrls[selectedImage] && (
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
@@ -109,7 +109,7 @@ export default function ProductPage({params}: { params: { id: string } }) {
                                 className="relative w-full h-full"
                             >
                                 <Image
-                                    src={product.images[selectedImage]}
+                                    src={product.imageUrls[selectedImage]}
                                     alt={product.name}
                                     fill
                                     className="object-cover"
@@ -134,7 +134,7 @@ export default function ProductPage({params}: { params: { id: string } }) {
                         )}
                     </div>
                     <div className="grid grid-cols-4 gap-2">
-                        {product.images.map((image, index) => (
+                        {product.imageUrls.map((image, index) => (
                             <motion.button
                                 key={index}
                                 onClick={() => setSelectedImage(index)}

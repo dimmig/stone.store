@@ -35,6 +35,7 @@ export default function ProductPage({params}: ProductPageProps) {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [imageLoading, setImageLoading] = useState(true);
+    const [mainImageLoaded, setMainImageLoaded] = useState(false);
 
     const [selectedSize, setSelectedSize] = useState('');
     const [selectedColor, setSelectedColor] = useState('');
@@ -80,10 +81,31 @@ export default function ProductPage({params}: ProductPageProps) {
                 setSelectedSize(data.sizes?.[0] || '');
                 setSelectedColor(data.colors?.[0] || '');
 
+                // Preload all product images
+                data.imageUrls.forEach((url: string) => {
+                    const link = document.createElement('link');
+                    link.rel = 'preload';
+                    link.as = 'image';
+                    link.href = url;
+                    document.head.appendChild(link);
+                });
+
                 const relatedResponse = await fetch(`/api/products?category=${data.categoryId}&limit=4`);
                 if (relatedResponse.ok) {
                     const relatedData = await relatedResponse.json();
-                    setRelatedProducts(relatedData.products?.filter((p: Product) => p.id !== data.id).slice(0, 4));
+                    const filteredProducts = relatedData.products?.filter((p: Product) => p.id !== data.id).slice(0, 4);
+                    setRelatedProducts(filteredProducts);
+                    
+                    // Preload related product images
+                    filteredProducts.forEach((product: Product) => {
+                        if (product.imageUrls?.[0]) {
+                            const link = document.createElement('link');
+                            link.rel = 'preload';
+                            link.as = 'image';
+                            link.href = product.imageUrls[0];
+                            document.head.appendChild(link);
+                        }
+                    });
                 }
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'An error occurred');
@@ -119,10 +141,13 @@ export default function ProductPage({params}: ProductPageProps) {
         fetchReviews();
     }, [params.id, session?.user]);
 
-    if (isLoading || imageLoading) {
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-accent-gold"></div>
+                <div className="flex flex-col items-center gap-4">
+                    <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-black" />
+                    <p className="text-sm text-gray-500">Loading product...</p>
+                </div>
             </div>
         );
     }
@@ -244,43 +269,55 @@ export default function ProductPage({params}: ProductPageProps) {
                             initial={{scale: 0.95, opacity: 0}}
                             animate={{scale: 1, opacity: 1}}
                             transition={{duration: 0.5}}
-                            className="aspect-[4/5] overflow-hidden rounded-2xl bg-gray-50"
+                            className="aspect-[4/5] overflow-hidden rounded-2xl bg-gray-50 relative"
                         >
+                            {imageLoading && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-gray-100/80 backdrop-blur-sm">
+                                    <div className="flex flex-col items-center gap-4">
+                                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-black" />
+                                    </div>
+                                </div>
+                            )}
                             <Image
-                                src={product.images[activeImage]}
+                                src={product.imageUrls[activeImage]}
                                 alt={product.name}
                                 width={800}
                                 height={1000}
-                                className="h-full w-full object-cover object-center"
-                                priority
+                                quality={85}
+                                priority={true}
+                                className={`h-full w-full object-cover object-center transition-all duration-300 ${imageLoading ? 'scale-105 blur-sm' : 'scale-100 blur-0'}`}
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
+                                placeholder="blur"
+                                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDABQODxIPDRQSEBIXFRQdHx4eHRoaHSQtJSEkMjU1LS0yMi4qQEBALkE6Oz5DRVlLT01RW2NhYGBtcW1+f5Hh4f/2wBDARUXFyAcIHxISHz4qIyk+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj7/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                                onLoadingComplete={() => setImageLoading(false)}
                             />
                         </motion.div>
+
+                        {/* Thumbnail Gallery */}
                         <motion.div
                             variants={staggerContainer}
                             className="mt-6 grid grid-cols-4 gap-4"
                         >
-                            {product.images.map((image, index) => (
+                            {product.imageUrls.map((image: string, index: number) => (
                                 <motion.button
-                                    key={image}
-                                    variants={fadeIn}
-                                    whileHover={{scale: 1.05}}
-                                    whileTap={{scale: 0.95}}
-                                    onClick={() => setActiveImage(index)}
-                                    className={`relative aspect-square overflow-hidden rounded-xl border-2 transition-all hover:opacity-75 ${
-                                        activeImage === index ? 'border-black' : 'border-transparent'
+                                    key={index}
+                                    onClick={() => {
+                                        setImageLoading(true);
+                                        setActiveImage(index);
+                                    }}
+                                    className={`relative aspect-square overflow-hidden rounded-lg ${
+                                        activeImage === index ? 'ring-2 ring-black' : ''
                                     }`}
                                 >
                                     <Image
                                         src={image}
-                                        alt={`${product.name} - View ${index + 1}`}
+                                        alt={`${product.name} - Image ${index + 1}`}
                                         fill
+                                        sizes="(max-width: 768px) 25vw, 10vw"
+                                        quality={60}
                                         className="object-cover"
-                                        loading="eager"
-                                        onError={(e) => {
-                                            console.error('Image failed to load:', e);
-                                            setImageLoading(false);
-                                        }}
-                                        onLoadingComplete={() => setImageLoading(false)}
+                                        placeholder="blur"
+                                        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDABQODxIPDRQSEBIXFRQdHx4eHRoaHSQtJSEkMjU1LS0yMi4qQEBALkE6Oz5DRVlLT01RW2NhYGBtcW1+f5Hh4f/2wBDARUXFyAcIHxISHz4qIyk+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj7/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                                     />
                                 </motion.button>
                             ))}
@@ -782,13 +819,20 @@ export default function ProductPage({params}: ProductPageProps) {
                                     href={`/products/${relatedProduct.id}`}
                                     className="group overflow-hidden rounded-3xl bg-white p-4 shadow-sm transition-all hover:shadow-md"
                                 >
-                                    <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-gray-50">
+                                    <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-gray-50 relative">
+                                        {imageLoading && (
+                                            <div className="absolute inset-0 bg-gray-100 animate-pulse" />
+                                        )}
                                         <Image
-                                            src={relatedProduct.images[0]}
+                                            src={relatedProduct.imageUrls[0]}
                                             alt={relatedProduct.name}
                                             width={500}
                                             height={600}
                                             className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
+                                            sizes="(max-width: 768px) 50vw, 25vw"
+                                            placeholder="blur"
+                                            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDABQODxIPDRQSEBIXFRQdHx4eHRoaHSQtJSEkMjU1LS0yMi4qQEBALkE6Oz5DRVlLT01RW2NhYGBtcW1+f5Hh4f/2wBDARUXFyAcIHxISHz4qIyk+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj7/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                                            onLoadingComplete={() => setImageLoading(false)}
                                         />
                                     </div>
                                     <div className="mt-4">

@@ -27,7 +27,7 @@ export async function GET(
       include: {
         items: {
           include: {
-            product: true,
+            product: true
           },
         },
         shippingAddress: true,
@@ -125,15 +125,7 @@ export async function PATCH(
         },
         items: {
           include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                price: true,
-                images: true,
-                description: true,
-              }
-            },
+            product: true
           },
         },
         shippingAddress: true,

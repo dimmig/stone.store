@@ -30,13 +30,16 @@ export default function ProductCard({ product }) {
         href={`/product/${product.id}`}
         className="block relative aspect-square"
       >
-        <Image
-          src={product.images[0]}
-          alt={product.name}
-          fill
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-        />
+        <div className="relative aspect-square overflow-hidden rounded-lg">
+          <Image
+            src={product.imageUrls[0]}
+            alt={product.name}
+            fill
+            className="object-cover hover:scale-105 transition-transform duration-300"
+            sizes="(min-width: 1024px) 20vw, (min-width: 768px) 25vw, (min-width: 640px) 33vw, 50vw"
+            priority={priority}
+          />
+        </div>
         <div
           className={`absolute inset-0 bg-black/20 transition-opacity duration-300 ${
             isHovered ? "opacity-100" : "opacity-0"

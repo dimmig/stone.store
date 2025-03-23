@@ -177,14 +177,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (!response.ok) throw new Error('Failed to initiate checkout');
 
       const data = await response.json();
-      if (!data.sessionId) throw new Error('No checkout session ID received');
+      if (!data.url) {
+        throw new Error('Invalid checkout response');
+      }
 
-      const stripe = await getStripe();
-      const { error } = await stripe!.redirectToCheckout({
-        sessionId: data.sessionId,
-      });
-
-      if (error) throw error;
+      if (data.url) {
+        window.location.href = data.url;
+      } 
     } catch (error) {
       console.error('Error during checkout:', error);
       toast.error('Failed to initiate checkout');

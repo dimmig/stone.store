@@ -20,7 +20,7 @@ interface Product {
     name: string;
     description: string;
     price: number;
-    images: string[];
+    imageUrls: string[];
     categoryId: string;
     category: {
         name: string;
@@ -253,14 +253,19 @@ export default function ProductsPage() {
                                         >
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
-                                                    {product.images[0] && (
+                                                    {product.imageUrls.length > 0 && (
                                                         <div className="relative h-10 w-10 rounded-lg overflow-hidden mr-3">
                                                             <Image
-                                                                src={product.images[0]}
+                                                                src={product.imageUrls[0]}
                                                                 alt={product.name}
                                                                 fill
-                                                                className="object-cover"
+                                                                className="object-cover rounded-lg"
                                                             />
+                                                            {product.imageUrls.length > 1 && (
+                                                                <div className="absolute bottom-0 right-0 bg-black bg-opacity-50 text-white text-xs px-1 rounded-tl">
+                                                                    +{product.imageUrls.length - 1}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
                                                     <div>

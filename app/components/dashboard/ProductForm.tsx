@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Upload, X, Loader2, Minus } from 'lucide-react';
+import { Plus, Trash2, Loader2, Minus } from 'lucide-react';
 import { toast } from 'sonner';
-import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
+import ImageUpload from '@/app/components/ui/image-upload';
 import {
   Dialog,
   DialogContent,
@@ -23,15 +23,17 @@ interface Category {
   name: string;
 }
 
-interface ProductFormData {
+interface FormData {
   name: string;
   description: string;
   price: string;
   categoryId: string;
-  images: string[];
   sizes: string[];
   colors: string[];
-  stockQuantity: number;
+  stockQuantity: string;
+  images: File[];
+  currentImageUrls: string[];
+  currentImageFilenames: string[];
 }
 
 interface ProductFormProps {
@@ -44,20 +46,39 @@ export default function ProductForm({ productId, onClose, onSuccess }: ProductFo
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [formData, setFormData] = useState<ProductFormData>({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     description: '',
     price: '',
     categoryId: '',
-    images: [''],
     sizes: [],
-    colors: [''],
-    stockQuantity: 0,
+    colors: [],
+    stockQuantity: '',
+    images: [],
+    currentImageUrls: [],
+    currentImageFilenames: [],
   });
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      description: '',
+      price: '',
+      categoryId: '',
+      sizes: [],
+      colors: [],
+      stockQuantity: '',
+      images: [],
+      currentImageUrls: [],
+      currentImageFilenames: [],
+    });
+  };
 
   useEffect(() => {
     fetchCategories();
-    if (productId && productId !== 'new') {
+    if (productId === 'new') {
+      resetForm();
+    } else {
       fetchProduct();
     }
   }, [productId]);
@@ -83,15 +104,18 @@ export default function ProductForm({ productId, onClose, onSuccess }: ProductFo
       const response = await fetch(`/api/products/${productId}`);
       if (!response.ok) throw new Error('Failed to fetch product');
       const product = await response.json();
+
       setFormData({
         name: product.name,
         description: product.description,
         price: product.price.toString(),
         categoryId: product.categoryId,
-        images: product.images.length > 0 ? product.images : [''],
-        sizes: product.sizes.length > 0 ? product.sizes : [],
-        colors: product.colors.length > 0 ? product.colors : [''],
-        stockQuantity: product.stockQuantity || 0,
+        sizes: product.sizes,
+        colors: product.colors,
+        stockQuantity: product.stockQuantity.toString(),
+        images: [],
+        currentImageUrls: product.imageUrls || [],
+        currentImageFilenames: product.imageFilenames || [],
       });
     } catch (error) {
       console.error('Error fetching product:', error);
@@ -105,48 +129,48 @@ export default function ProductForm({ productId, onClose, onSuccess }: ProductFo
     e.preventDefault();
     setLoading(true);
 
-    try {
-      const data = {
-        name: formData.name,
-        description: formData.description,
-        price: parseFloat(formData.price),
-        categoryId: formData.categoryId,
-        images: formData.images,
-        sizes: formData.sizes,
-        colors: formData.colors,
-        stockQuantity: formData.stockQuantity,
-      };
+    const formDataToSend = new FormData();
+    formDataToSend.append('name', formData.name);
+    formDataToSend.append('description', formData.description);
+    formDataToSend.append('price', formData.price);
+    formDataToSend.append('categoryId', formData.categoryId);
+    formDataToSend.append('sizes', formData.sizes.join(','));
+    formDataToSend.append('colors', formData.colors.join(','));
+    formDataToSend.append('stockQuantity', formData.stockQuantity);
+    formDataToSend.append('currentImageUrls', JSON.stringify(formData.currentImageUrls));
+    formDataToSend.append('currentImageFilenames', JSON.stringify(formData.currentImageFilenames));
 
-      const response = await fetch(
-        productId === 'new'
-          ? '/api/products'
-          : `/api/products/${productId}`,
-        {
-          method: productId === 'new' ? 'POST' : 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
-        }
-      );
+    formData.images.forEach((image) => {
+      formDataToSend.append('images', image);
+    });
+
+    try {
+      const url = productId === 'new' ? '/api/products' : `/api/products/${productId}`;
+      const method = productId === 'new' ? 'POST' : 'PUT';
+
+      const response = await fetch(url, {
+        method,
+        body: formDataToSend,
+      });
 
       if (!response.ok) {
-        throw new Error('Failed to save product');
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to save product');
       }
 
-      toast.success('Product saved successfully');
+      toast.success(`Product ${productId === 'new' ? 'created' : 'updated'} successfully`);
       onSuccess();
       onClose();
     } catch (error) {
       console.error('Error saving product:', error);
-      toast.error('Failed to save product');
+      toast.error(error instanceof Error ? error.message : 'Failed to save product');
     } finally {
       setLoading(false);
     }
   };
 
   const handleArrayInput = (
-    field: 'images' | 'sizes' | 'colors',
+    field: 'sizes' | 'colors',
     index: number,
     value: string
   ) => {
@@ -168,7 +192,7 @@ export default function ProductForm({ productId, onClose, onSuccess }: ProductFo
     });
   };
 
-  const removeArrayItem = (field: 'images' | 'sizes' | 'colors', index: number) => {
+  const removeArrayItem = (field: 'sizes' | 'colors', index: number) => {
     setFormData(prev => ({
       ...prev,
       [field]: prev[field].filter((_, i) => i !== index),
@@ -183,7 +207,7 @@ export default function ProductForm({ productId, onClose, onSuccess }: ProductFo
           animate={{ opacity: 1, scale: 1 }}
           transition={{ 
             duration: 0.2,
-            ease: [0.16, 1, 0.3, 1], // Custom spring-like easing
+            ease: [0.16, 1, 0.3, 1],
             opacity: { duration: 0.15 }
           }}
         >
@@ -252,9 +276,9 @@ export default function ProductForm({ productId, onClose, onSuccess }: ProductFo
                     required
                     value={formData.description}
                     onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    rows={3}
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-colors"
                     placeholder="Enter product description"
+                    rows={3}
                   />
                 </div>
 
@@ -265,12 +289,12 @@ export default function ProductForm({ productId, onClose, onSuccess }: ProductFo
                   <input
                     type="number"
                     required
-                    step="0.01"
                     min="0"
+                    step="0.01"
                     value={formData.price}
                     onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-colors"
-                    placeholder="0.00"
+                    placeholder="Enter price"
                   />
                 </div>
 
@@ -283,7 +307,7 @@ export default function ProductForm({ productId, onClose, onSuccess }: ProductFo
                     onValueChange={(value) => setFormData(prev => ({ ...prev, categoryId: value }))}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a category" />
+                      <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((category) => (
@@ -297,61 +321,21 @@ export default function ProductForm({ productId, onClose, onSuccess }: ProductFo
 
                 <div className="col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Images (URLs)
+                    Product Images
                   </label>
-                  <div className="space-y-2">
-                    {formData.images.map((url, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ 
-                          duration: 0.15,
-                          delay: index * 0.03,
-                          ease: [0.16, 1, 0.3, 1]
-                        }}
-                        className="flex gap-2"
-                      >
-                        <div className="flex-1 flex gap-2">
-                          <input
-                            type="url"
-                            value={url}
-                            onChange={(e) => handleArrayInput('images', index, e.target.value)}
-                            placeholder="Image URL"
-                            className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-colors"
-                          />
-                          {url && (
-                            <div className="relative h-10 w-10 rounded-lg overflow-hidden">
-                              <Image
-                                src={url}
-                                alt="Preview"
-                                fill
-                                className="object-cover"
-                              />
-                            </div>
-                          )}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeArrayItem('images', index)}
-                          className="p-2 text-red-600 hover:text-red-900 transition-colors"
-                        >
-                          <Trash2 className="h-5 w-5" />
-                        </button>
-                      </motion.div>
-                    ))}
-                    <motion.button
-                      type="button"
-                      onClick={() => handleArrayInput('images', formData.images.length, '')}
-                      className="flex items-center gap-2 text-black hover:text-gray-700 transition-colors"
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                      transition={{ duration: 0.1 }}
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add Image
-                    </motion.button>
-                  </div>
+                  <ImageUpload
+                    onImageSelect={(files: File[]) => setFormData(prev => ({ ...prev, images: [...prev.images, ...files] }))}
+                    onImageRemove={(index: number) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        currentImageUrls: prev.currentImageUrls.filter((_, i) => i !== index),
+                        currentImageFilenames: prev.currentImageFilenames.filter((_, i) => i !== index),
+                        images: prev.images.filter((_, i) => i !== index)
+                      }));
+                    }}
+                    currentImageUrls={formData.currentImageUrls}
+                    uploadedImages={formData.images}
+                  />
                 </div>
 
                 <div>
@@ -359,52 +343,24 @@ export default function ProductForm({ productId, onClose, onSuccess }: ProductFo
                     Sizes
                   </label>
                   <div className="space-y-2">
-                    <Select
-                      value={formData.sizes.join(',')}
-                      onValueChange={(value) => {
-                        const selectedSizes = value.split(',').filter(Boolean);
-                        setFormData(prev => ({ ...prev, sizes: selectedSizes }));
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select sizes" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="XS,S,M,L,XL,2XL">All Sizes</SelectItem>
-                        <SelectItem value="XS,S,M">Small to Medium</SelectItem>
-                        <SelectItem value="M,L,XL">Medium to XL</SelectItem>
-                        <SelectItem value="XS">Extra Small</SelectItem>
-                        <SelectItem value="S">Small</SelectItem>
-                        <SelectItem value="M">Medium</SelectItem>
-                        <SelectItem value="L">Large</SelectItem>
-                        <SelectItem value="XL">Extra Large</SelectItem>
-                        <SelectItem value="2XL">2X Large</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {formData.sizes.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {formData.sizes.map((size, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-lg text-sm"
-                          >
-                            <span>{size}</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setFormData(prev => ({
-                                  ...prev,
-                                  sizes: prev.sizes.filter((_, i) => i !== index)
-                                }));
-                              }}
-                              className="text-gray-500 hover:text-gray-700"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </div>
-                        ))}
+                    {formData.sizes.map((size, index) => (
+                      <div key={index} className="flex gap-2">
+                        <input
+                          type="text"
+                          value={size}
+                          onChange={(e) => handleArrayInput('sizes', index, e.target.value)}
+                          className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-colors"
+                          placeholder="Enter size"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeArrayItem('sizes', index)}
+                          className="p-2 text-red-500 hover:text-red-700 transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
-                    )}
+                    ))}
                   </div>
                 </div>
 
@@ -414,106 +370,66 @@ export default function ProductForm({ productId, onClose, onSuccess }: ProductFo
                   </label>
                   <div className="space-y-2">
                     {formData.colors.map((color, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ 
-                          duration: 0.15,
-                          delay: index * 0.03,
-                          ease: [0.16, 1, 0.3, 1]
-                        }}
-                        className="flex gap-2"
-                      >
+                      <div key={index} className="flex gap-2">
                         <input
                           type="text"
                           value={color}
                           onChange={(e) => handleArrayInput('colors', index, e.target.value)}
-                          placeholder="Color name"
                           className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-colors"
+                          placeholder="Enter color"
                         />
                         <button
                           type="button"
                           onClick={() => removeArrayItem('colors', index)}
-                          className="p-2 text-red-600 hover:text-red-900 transition-colors"
+                          className="p-2 text-red-500 hover:text-red-700 transition-colors"
                         >
-                          <Trash2 className="h-5 w-5" />
+                          <Trash2 className="h-4 w-4" />
                         </button>
-                      </motion.div>
+                      </div>
                     ))}
-                    <motion.button
-                      type="button"
-                      onClick={() => handleArrayInput('colors', formData.colors.length, '')}
-                      className="flex items-center gap-2 text-black hover:text-gray-700 transition-colors"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      transition={{ duration: 0.1 }}
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add Color
-                    </motion.button>
                   </div>
                 </div>
 
-                <div className="col-span-2">
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Stock Quantity
                   </label>
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="number"
-                      required
-                      min="0"
-                      value={formData.stockQuantity}
-                      onChange={(e) => setFormData(prev => ({ ...prev, stockQuantity: parseInt(e.target.value) || 0 }))}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-colors"
-                      placeholder="Enter stock quantity"
-                    />
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, stockQuantity: Math.max(0, prev.stockQuantity - 1) }))}
-                        className="p-2 text-gray-600 hover:text-gray-900"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, stockQuantity: prev.stockQuantity + 1 }))}
-                        className="p-2 text-gray-600 hover:text-gray-900"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    value={formData.stockQuantity}
+                    onChange={(e) => setFormData(prev => ({ ...prev, stockQuantity: e.target.value }))}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-colors"
+                    placeholder="Enter stock quantity"
+                  />
                 </div>
               </div>
 
               <DialogFooter className="px-6 py-4 border-t border-gray-100">
-                <motion.button
-                  type="button"
-                  onClick={onClose}
-                  className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ duration: 0.1 }}
-                >
-                  Cancel
-                </motion.button>
-                <motion.button
-                  type="submit"
-                  disabled={loading}
-                  className={`px-6 py-2.5 text-sm font-medium text-white rounded-lg shadow-sm transition-all duration-200 ${
-                    loading
-                      ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-black hover:bg-gray-800 hover:shadow-md'
-                  }`}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ duration: 0.1 }}
-                >
-                  {loading ? 'Saving...' : productId === 'new' ? 'Create Product' : 'Save Changes'}
-                </motion.button>
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-4 py-2 text-sm font-medium text-white bg-black rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Saving...
+                      </div>
+                    ) : (
+                      'Save Product'
+                    )}
+                  </button>
+                </div>
               </DialogFooter>
             </motion.form>
           )}

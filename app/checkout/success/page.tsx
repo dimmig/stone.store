@@ -25,6 +25,7 @@ export default function CheckoutSuccessPage() {
         setTimeout(async () => {
             try {
                 const response = await fetch('/api/orders/recent');
+                console.log("RESPONSE", response)
                 if (!response.ok) {
                     throw new Error('Failed to fetch order');
                 }

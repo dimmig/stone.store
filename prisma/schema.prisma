@@ -45,20 +45,21 @@ model User {
 }
 
 model Product {
-  id            String         @id @default(cuid())
+  id            String   @id @default(cuid())
   name          String
   description   String
   price         Float
-  images        String[]
+  imageUrls     String[]
+  imageFilenames String[]
   categoryId    String
-  category      Category       @relation(fields: [categoryId], references: [id])
+  category      Category @relation(fields: [categoryId], references: [id])
   sizes         String[]
   colors        String[]
   discount      Int            @default(0)
   rating        Float          @default(4.5)
-  stockQuantity Int            @default(0)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  stockQuantity Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   cartItems     CartItem[]
   wishlistItems WishlistItem[]
   orderItems    OrderItem[]

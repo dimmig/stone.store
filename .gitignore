@@ -2,6 +2,8 @@
 
 /prisma/migrations
 
+.service-account.json
+
 # dependencies
 /node_modules
 /.pnp

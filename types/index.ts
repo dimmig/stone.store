@@ -3,7 +3,8 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  images: string[];
+  imageUrls: string[];
+  imageFilenames: string[];
   sizes: string[];
   colors: string[];
   category: string;
@@ -39,7 +40,7 @@ export interface CartItem {
     id: string;
     name: string;
     price: number;
-    images: string[];
+    imageUrls: string[];
   };
 }
 
@@ -87,7 +88,7 @@ export interface OrderItem {
     id: string;
     name: string;
     price: number;
-    images: string[];
+    imageUrls: string[];
   };
 }
 

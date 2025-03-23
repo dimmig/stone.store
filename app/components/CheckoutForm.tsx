@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useCart } from '@/app/providers/CartProvider';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
+import Image from 'next/image';
 
 interface CustomerDetails {
   name: string;
@@ -124,17 +125,22 @@ export default function CheckoutForm() {
               {items.map((item) => (
                 <div key={`${item.product.id}-${item.size}-${item.color}`} className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <img
-                      src={item.product.images[0]}
-                      alt={item.product.name}
-                      className="h-16 w-16 rounded-lg object-cover"
-                    />
-                    <div>
-                      <p className="font-medium">{item.product.name}</p>
-                      <p className="text-sm text-gray-500">
-                        Size: {item.size} | Color: {item.color}
-                      </p>
-                      <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
+                    <div className="flex items-center gap-4">
+                      <div className="relative h-20 w-20 rounded-lg overflow-hidden">
+                        <Image
+                          src={item.product.imageUrls[0]}
+                          alt={item.product.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div>
+                        <p className="font-medium">{item.product.name}</p>
+                        <p className="text-sm text-gray-500">
+                          Size: {item.size} | Color: {item.color}
+                        </p>
+                        <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
+                      </div>
                     </div>
                   </div>
                   <p className="font-medium">${item.product.price * item.quantity}</p>

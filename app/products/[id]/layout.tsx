@@ -34,14 +34,16 @@ async function getRelatedProducts(categoryId: string, currentProductId: string) 
   const relatedProducts = await prisma.product.findMany({
     where: {
       categoryId,
-      id: { not: currentProductId },
+      id: {
+        not: currentProductId
+      }
     },
     take: 4,
     select: {
       id: true,
       name: true,
       price: true,
-      images: true,
+      imageUrls: true,
       rating: true,
     },
   });

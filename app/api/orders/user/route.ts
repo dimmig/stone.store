@@ -19,7 +19,7 @@ type OrderWithRelations = Prisma.OrderGetPayload<{
                         id: true;
                         name: true;
                         price: true;
-                        images: true;
+                        imageUrls: true;
                         description: true;
                     }
                 }
@@ -63,7 +63,7 @@ export async function GET() {
                                 id: true,
                                 name: true,
                                 price: true,
-                                images: true,
+                                imageUrls: true,
                                 description: true
                             }
                         }

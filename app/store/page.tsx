@@ -673,11 +673,10 @@ export default function StorePage() {
                                         >
                                             <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-gray-50">
                                                 <Image
-                                                    src={product.images[0]}
+                                                    src={product.imageUrls[0]}
                                                     alt={product.name}
-                                                    width={500}
-                                                    height={500}
-                                                    className="h-full w-full object-cover object-center transition-transform duration-500 will-change-transform group-hover:scale-105"
+                                                    fill
+                                                    className="object-cover rounded-lg"
                                                 />
                                                 <div className="absolute right-3 top-3 flex gap-2">
                                                     <button

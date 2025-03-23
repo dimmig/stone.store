@@ -16,7 +16,7 @@ interface OrderItem {
         id: string;
         name: string;
         price: number;
-        images: string[];
+        imageUrls: string[];
         description: string | null;
     };
 }
@@ -43,42 +43,19 @@ interface OrderWithItems {
 export async function GET() {
     try {
         const session: Session | null = await getServerSession(authOptions);
+        console.log(session?.user);
 
-        if (!session?.user?.email) {
-            return NextResponse.json(
-                {error: 'Unauthorized'},
-                {status: 401}
-            );
+        if (!session?.user || session.user.role !== 'ADMIN') {
+            return new NextResponse('Unauthorized', { status: 401 });
         }
-
-        // Fetch user with role from database
-        const user = await prisma.user.findUnique({
-            where: {email: session.user.email},
-            select: {
-                id: true,
-                role: true
-            }
-        }) as User;
-
-        if (!user) {
-            return NextResponse.json(
-                {error: 'User not fou   nd'},
-                {status: 404}
-            );
-        }
-        console.log(user)
-        const isAdmin = user.role === 'ADMIN';
 
         const orders = await prisma.order.findMany({
-            where: isAdmin ? {} : {
-                userId: user.id,
-            },
             include: {
                 user: {
                     select: {
                         id: true,
                         name: true,
-                        email: true,
+                        email: true
                     }
                 },
                 items: {
@@ -88,32 +65,22 @@ export async function GET() {
                                 id: true,
                                 name: true,
                                 price: true,
-                                images: true,
+                                imageUrls: true,
                                 description: true,
                             }
-                        },
-                    },
+                        }
+                    }
                 },
-                shippingAddress: true,
+                shippingAddress: true
             },
             orderBy: {
-                createdAt: 'desc',
-            },
+                createdAt: 'desc'
+            }
         });
 
-        const ordersWithTotal = orders.map((order: OrderWithItems) => ({
-            ...order,
-            total: order.items.reduce((sum: number, item: OrderItem) =>
-                sum + (Number(item.price) * Number(item.quantity)), 0
-            )
-        }));
-
-        return NextResponse.json(ordersWithTotal);
+        return NextResponse.json(orders);
     } catch (error) {
         console.error('Error fetching all orders:', error);
-        return NextResponse.json(
-            {error: 'Failed to fetch orders'},
-            {status: 500}
-        );
+        return new NextResponse('Internal error', { status: 500 });
     }
 } 

@@ -8,43 +8,39 @@ export async function GET() {
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
     const recentOrders = await prisma.order.findMany({
       take: 10,
       orderBy: {
-        createdAt: 'desc',
+        createdAt: 'desc'
       },
       include: {
         user: {
           select: {
             name: true,
-            email: true,
-          },
+            email: true
+          }
         },
         items: {
           include: {
             product: {
               select: {
                 name: true,
-                images: true,
-              },
-            },
-          },
-        },
-      },
+                imageUrls: true,
+                price: true,
+                description: true
+              }
+            }
+          }
+        }
+      }
     });
 
     return NextResponse.json(recentOrders);
   } catch (error) {
     console.error('Error fetching recent orders:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch recent orders' },
-      { status: 500 }
-    );
+    return new NextResponse('Internal error', { status: 500 });
   }
 } 
