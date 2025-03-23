@@ -14,10 +14,10 @@ export function SignInButton() {
       </Link>
       <Link
         href="/auth/signin"
-        className="flex items-center space-x-2 rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+        className="flex items-center justify-center rounded-lg bg-black px-3 py-2 text-sm font-medium text-white hover:opacity-90 min-w-[80px]"
       >
-        <User className="h-4 w-4" />
-        <span>Sign in</span>
+        <User className="h-4 w-4 mr-1" />
+        <span className="hidden sm:inline">Sign in</span>
       </Link>
     </div>
   );
