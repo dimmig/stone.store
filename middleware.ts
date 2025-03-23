@@ -1,45 +1,47 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { withAuth } from 'next-auth/middleware'
+import { getToken } from 'next-auth/jwt'
 
-// Export the withAuth middleware with your config
-export default withAuth({
-  callbacks: {
-    authorized: ({ token }) => !!token,
-  },
-  pages: {
-    signIn: '/auth/signin',
-  },
-})
+export async function middleware(request: NextRequest) {
+  const token = await getToken({ req: request });
 
-// Middleware function for CORS and other modifications
-export function middleware(request: NextRequest) {
-  // Get the response
-  const response = NextResponse.next()
+  const { pathname } = request.nextUrl;
 
-  // Add CORS headers
-  response.headers.set('Access-Control-Allow-Origin', '*')
-  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-  response.headers.set('Access-Control-Max-Age', '86400')
+  // If no token, redirect to sign-in
+  if (!token) {
+    const signInUrl = new URL('/auth/signin', request.url);
+    return NextResponse.redirect(signInUrl);
+  }
 
-  return response
+  // Role-based logic for dashboard routes
+  if (pathname.startsWith('/dashboard')) {
+    if (
+      pathname === '/dashboard/settings' ||
+      pathname === '/dashboard/orders' ||
+      pathname.startsWith('/dashboard/orders/')
+    ) {
+      return NextResponse.next(); // Allow access
+    }
+
+    // Non-admins attempting restricted routes → Redirect to /dashboard/orders
+    if (token.role !== 'ADMIN') {
+      const ordersUrl = new URL('/dashboard/orders', request.url);
+      return NextResponse.redirect(ordersUrl);
+    }
+  }
+
+  // Default: allow authenticated users
+  return NextResponse.next();
 }
 
-// Configure which routes to run middleware on
 export const config = {
   matcher: [
-    // Protected API routes (require authentication)
+    '/dashboard',
+    '/dashboard/:path*',
     '/api/cart/:path*',
     '/api/wishlist/:path*',
     '/api/orders/:path*',
     '/api/user/:path*',
     '/api/checkout/:path*',
-    // Public API routes (no authentication required)
-    // '/api/products/:path*',
-    // '/api/categories/:path*',
-    // '/api/filters/:path*',
-    // Protected dashboard routes
-    '/dashboard/:path*',
   ],
 }
