@@ -1,39 +1,13 @@
 import { Storage } from '@google-cloud/storage';
 import { v4 as uuidv4 } from 'uuid';
-import path from 'path';
-import fs from 'fs';
 
-interface ServiceAccountCredentials {
-  type: string;
-  project_id: string;
-  private_key_id: string;
-  private_key: string;
-  client_email: string;
-  client_id: string;
-  auth_uri: string;
-  token_uri: string;
-  auth_provider_x509_cert_url: string;
-  client_x509_cert_url: string;
-}
-
-// Load service account credentials
-const serviceAccountPath = path.join(process.cwd(), 'service-account.json');
-let credentials: ServiceAccountCredentials | null = null;
-
-try {
-  if (!fs.existsSync(serviceAccountPath)) {
-    throw new Error('Service account file not found');
-  }
-  credentials = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf-8')) as ServiceAccountCredentials;
-} catch (error) {
-  console.error('Error loading service account credentials:', error);
-  throw new Error('Failed to load Google Cloud credentials');
-}
-
-// Initialize storage with credentials
+// Initialize storage with credentials from environment variables
 const storage = new Storage({
   projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
-  credentials: credentials,
+  credentials: {
+    client_email: process.env.GOOGLE_CLOUD_CLIENT_EMAIL,
+    private_key: process.env.GOOGLE_CLOUD_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  },
 });
 
 const bucketName = process.env.GOOGLE_CLOUD_BUCKET_NAME || '';
@@ -42,10 +16,6 @@ export async function uploadToGCS(file: File): Promise<{ url: string; filename: 
   try {
     if (!bucketName) {
       throw new Error('Google Cloud Storage bucket name is not configured');
-    }
-
-    if (!credentials) {
-      throw new Error('Google Cloud credentials not properly loaded');
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -125,10 +95,6 @@ export async function testGCSConnection(): Promise<boolean> {
   try {
     if (!bucketName) {
       throw new Error('Google Cloud Storage bucket name is not configured');
-    }
-
-    if (!credentials) {
-      throw new Error('Google Cloud credentials not properly loaded');
     }
 
     const bucket = storage.bucket(bucketName);
