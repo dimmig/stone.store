@@ -1417,9 +1417,19 @@ export default function StorePage() {
                                                 handleAddToCart(e, quickViewProduct);
                                                 setIsQuickViewOpen(false);
                                             }}
-                                            className="flex-1 rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-900 transition-colors"
+                                            disabled={loadingStates[quickViewProduct.id]?.cart}
+                                            className={`flex-1 rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-900 transition-colors ${
+                                                loadingStates[quickViewProduct.id]?.cart ? 'cursor-not-allowed opacity-50' : ''
+                                            }`}
                                         >
-                                            Add to Cart
+                                            {loadingStates[quickViewProduct.id]?.cart ? (
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                    <span>Adding...</span>
+                                                </div>
+                                            ) : (
+                                                'Add to Cart'
+                                            )}
                                         </button>
                                         <button
                                             onClick={(e) => {
