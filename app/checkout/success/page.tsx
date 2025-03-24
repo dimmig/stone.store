@@ -12,6 +12,7 @@ function CheckoutSuccess() {
     const [isLoading, setIsLoading] = useState(true);
     const [order, setOrder] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
+    const [isCheckingWebhook, setIsCheckingWebhook] = useState(false);
 
     useEffect(() => {
         const sessionId = searchParams.get('session_id');
@@ -21,37 +22,61 @@ function CheckoutSuccess() {
             return;
         }
 
-        // Wait a bit to allow the webhook to process
-        setTimeout(async () => {
+        // Check if an order exists for this session
+        const checkOrder = async () => {
             try {
-                const response = await fetch('/api/orders/recent');
-                console.log("RESPONSE", response)
+                const response = await fetch(`/api/orders/check-session?session_id=${sessionId}`);
                 if (!response.ok) {
-                    throw new Error('Failed to fetch order');
+                    throw new Error('Failed to check order status');
                 }
 
-                const orders = await response.json();
-                if (orders.length > 0) {
-                    setOrder(orders[0]); // Get the most recent order
+                const data = await response.json();
+                if (data.exists && data.order) {
+                    setOrder(data.order);
+                    setIsLoading(false);
                 } else {
-                    setError('Order not found');
+                    // If no order exists, wait for webhook processing
+                    setIsCheckingWebhook(true);
+                    setTimeout(async () => {
+                        try {
+                            const recentResponse = await fetch('/api/orders/recent');
+                            if (!recentResponse.ok) {
+                                throw new Error('Failed to fetch order');
+                            }
+
+                            const orders = await recentResponse.json();
+                            if (orders.length > 0) {
+                                setOrder(orders[0]); // Get the most recent order
+                            } else {
+                                setError('Order not found');
+                            }
+                        } catch (error) {
+                            setError('Something went wrong');
+                            console.error('Error fetching order:', error);
+                        } finally {
+                            setIsLoading(false);
+                            setIsCheckingWebhook(false);
+                        }
+                    }, 2000); // Wait 2 seconds for webhook processing
+                    return;
                 }
             } catch (error) {
                 setError('Something went wrong');
-                console.error('Error fetching order:', error);
-            } finally {
+                console.error('Error checking order status:', error);
                 setIsLoading(false);
             }
-        }, 2000); // Wait 2 seconds
+        };
+
+        checkOrder();
     }, [searchParams]);
 
-    if (isLoading) {
+    if (isLoading || isCheckingWebhook) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent-gold mx-auto"></div>
                     <p className={`${typography.body} text-gray-500 mt-4`}>
-                        Processing your order...
+                        {isCheckingWebhook ? 'Processing your order...' : 'Loading...'}
                     </p>
                 </div>
             </div>
