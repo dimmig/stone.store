@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Loader2, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -37,6 +38,14 @@ const itemVariants = {
 export default function CartPage() {
   const { items, removeFromCart, updateQuantity, checkout, isLoading } = useCart();
   const router = useRouter();
+
+  const handleQuantityUpdate = async (itemId: string, newQuantity: number) => {
+    try {
+      await updateQuantity(itemId, newQuantity);
+    } catch (error) {
+      toast.error('Not enough stock available');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -114,7 +123,7 @@ export default function CartPage() {
                     <div className="flex items-center gap-4 mt-4">
                       <div className="flex items-center border rounded-lg">
                         <button
-                          onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                          onClick={() => handleQuantityUpdate(item.id, Math.max(1, item.quantity - 1))}
                           className="p-2 hover:bg-gray-100 rounded-l-lg transition-colors"
                           disabled={item.quantity <= 1}
                         >
@@ -122,8 +131,9 @@ export default function CartPage() {
                         </button>
                         <span className="px-4 py-2">{item.quantity}</span>
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => handleQuantityUpdate(item.id, item.quantity + 1)}
                           className="p-2 hover:bg-gray-100 rounded-r-lg transition-colors"
+                          disabled={item.quantity >= item.product.stockQuantity}
                         >
                           <Plus className="w-4 h-4" />
                         </button>
@@ -135,6 +145,9 @@ export default function CartPage() {
                         <Trash2 className="w-5 h-5" />
                       </button>
                     </div>
+                    <p className="text-sm text-gray-500 mt-2">
+                      {item.product.stockQuantity} available in stock
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="font-medium">

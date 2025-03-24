@@ -72,6 +72,9 @@ const OrderItems = ({ items, isExpanded, formatCurrency, onClose }) => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (event.target.closest(".order-items-button")) {
+        return;
+      }
       if (expandedRef.current && !expandedRef.current.contains(event.target)) {
         onClose();
       }
@@ -620,12 +623,13 @@ export default function OrdersPage() {
                 <div className="mt-4 pt-4 border-t border-gray-200">
                   <button
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
                       setExpandedOrderId(
                         expandedOrderId === order.id ? null : order.id
                       );
                     }}
-                    className="flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all duration-200"
+                    className="order-items-button flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all duration-200"
                   >
                     <span>Order Items</span>
                     {expandedOrderId === order.id ? (

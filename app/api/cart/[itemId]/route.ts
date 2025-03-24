@@ -23,16 +23,28 @@ export async function PATCH(
       return new NextResponse('Invalid quantity', { status: 400 });
     }
 
-    // Verify cart item belongs to user
+    // Verify cart item belongs to user and get product stock
     const cartItem = await prisma.cartItem.findFirst({
       where: {
         id: itemId,
         userId: session.user.id,
       },
+      include: {
+        product: {
+          select: {
+            stockQuantity: true,
+          },
+        },
+      },
     });
 
     if (!cartItem) {
       return new NextResponse('Cart item not found', { status: 404 });
+    }
+
+    // Check if there's enough stock available
+    if (cartItem.product.stockQuantity < quantity) {
+      return new NextResponse('Not enough stock available', { status: 400 });
     }
 
     const updatedCartItem = await prisma.cartItem.update({

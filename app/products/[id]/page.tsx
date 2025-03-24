@@ -167,14 +167,27 @@ export default function ProductPage({params}: ProductPageProps) {
 
     const handleAddToCart = () => {
         if (!selectedSize || !selectedColor) {
-            alert('Please select size and color');
+            toast.error('Please select size and color');
             return;
         }
+        if (!product) return;
+
         if (product.stockQuantity < quantity) {
-            alert('Not enough stock available');
+            toast.error(`Only ${product.stockQuantity} items available in stock`);
             return;
         }
-        addToCart(product, quantity, selectedSize, selectedColor);
+
+        addToCart(product, quantity, selectedSize, selectedColor)
+            .then(() => {
+                toast.success('Added to cart successfully');
+            })
+            .catch((error) => {
+                if (error instanceof Error) {
+                    toast.error(error.message);
+                } else {
+                    toast.error('Failed to add to cart');
+                }
+            });
     };
 
     const handleToggleWishlist = () => {
@@ -378,6 +391,28 @@ export default function ProductPage({params}: ProductPageProps) {
                             </motion.div>
                         </motion.div>
 
+                        {/* Stock Status */}
+                        <motion.div
+                            variants={fadeIn}
+                            className="mt-4"
+                        >
+                            <div className="flex items-center gap-2">
+                                {product.stockQuantity > 0 ? (
+                                    <>
+                                        <div className="h-2.5 w-2.5 rounded-full bg-green-500"></div>
+                                        <span className="text-sm text-gray-600">
+                                            {product.stockQuantity} items available in stock
+                                        </span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="h-2.5 w-2.5 rounded-full bg-red-500"></div>
+                                        <span className="text-sm text-gray-600">Out of stock</span>
+                                    </>
+                                )}
+                            </div>
+                        </motion.div>
+
                         {/* Options Card */}
                         <motion.div
                             variants={fadeIn}
@@ -459,7 +494,8 @@ export default function ProductPage({params}: ProductPageProps) {
                                         whileHover={{scale: 1.1}}
                                         whileTap={{scale: 0.9}}
                                         onClick={() => handleQuantityChange(quantity - 1)}
-                                        className="flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 text-gray-600 transition-colors hover:border-black"
+                                        className="flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 text-gray-600 transition-colors hover:border-black disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={quantity <= 1}
                                     >
                                         <Minus className="h-5 w-5"/>
                                     </motion.button>
@@ -467,7 +503,7 @@ export default function ProductPage({params}: ProductPageProps) {
                                         whileFocus={{scale: 1.05}}
                                         type="number"
                                         min="1"
-                                        max="10"
+                                        max={product.stockQuantity}
                                         value={quantity}
                                         onChange={(e) => handleQuantityChange(parseInt(e.target.value))}
                                         className="h-11 w-20 rounded-xl border border-gray-200 px-3 text-center text-base focus:border-black focus:outline-none focus:ring-0"
@@ -476,7 +512,8 @@ export default function ProductPage({params}: ProductPageProps) {
                                         whileHover={{scale: 1.1}}
                                         whileTap={{scale: 0.9}}
                                         onClick={() => handleQuantityChange(quantity + 1)}
-                                        className="flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 text-gray-600 transition-colors hover:border-black"
+                                        className="flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 text-gray-600 transition-colors hover:border-black disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={quantity >= product.stockQuantity}
                                     >
                                         <Plus className="h-5 w-5"/>
                                     </motion.button>

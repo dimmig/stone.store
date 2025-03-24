@@ -3,7 +3,7 @@
 import React, {useState, useEffect} from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import {Heart, ShoppingBag, Search, Filter, X, Star, Pin, PinOff, Check, ChevronDown, ChevronUp, Loader2, ChevronLeft, ChevronRight} from 'lucide-react';
+import {Heart, ShoppingBag, Search, Filter, X, Star, Pin, PinOff, Check, ChevronDown, ChevronUp, Loader2, ChevronLeft, ChevronRight, Eye, Clock, Trash2} from 'lucide-react';
 import {useCart} from '@/app/providers/CartProvider';
 import {useWishlist} from '@/app/providers/WishlistProvider';
 import {Product} from '@/types';
@@ -66,6 +66,7 @@ export default function StorePage() {
     const [loading, setLoading] = useState(true);
     const [showFilters, setShowFilters] = useState(false);
     const [isPinned, setIsPinned] = useState(false);
+    const [loadingStates, setLoadingStates] = useState<{[key: string]: {cart?: boolean, wishlist?: boolean}}>({});
     const [filters, setFilters] = useState({
         category: '',
         priceRange: '',
@@ -86,9 +87,15 @@ export default function StorePage() {
         priceRanges: [],
         ratingOptions: []
     });
+    const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+    const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
+    const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
+    const [showBackToTop, setShowBackToTop] = useState(false);
+    const [isRecentlyViewedLoading, setIsRecentlyViewedLoading] = useState(true);
+    const [isRecentlyViewedExpanded, setIsRecentlyViewedExpanded] = useState(false);
 
     const {addToCart} = useCart();
-    const {addToWishlist, removeFromWishlist, isInWishlist} = useWishlist();
+    const {addToWishlist, removeFromWishlist, isInWishlist, items} = useWishlist();
 
     useEffect(() => {
         const fetchProducts = async () => {
@@ -146,12 +153,42 @@ export default function StorePage() {
         fetchFilterOptions();
     }, []);
 
+    useEffect(() => {
+        // Load recently viewed products from localStorage
+        const viewed = localStorage.getItem('recentlyViewed');
+        if (viewed) {
+            setRecentlyViewed(JSON.parse(viewed));
+        }
+        setIsRecentlyViewedLoading(false);
+    }, []);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setShowBackToTop(window.scrollY > 300);
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const scrollToTop = () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    };
+
     const handleAddToCart = async (e: React.MouseEvent, product: Product) => {
         e.preventDefault();
         if (!session) {
             return router.push('auth/signin')
         }
-        await addToCart(product, 1, product.sizes[0], product.colors[0]);
+        setLoadingStates(prev => ({...prev, [product.id]: {...prev[product.id], cart: true}}));
+        try {
+            await addToCart(product, 1, product.sizes[0], product.colors[0]);
+        } finally {
+            setLoadingStates(prev => ({...prev, [product.id]: {...prev[product.id], cart: false}}));
+        }
     };
 
     const handleToggleWishlist = async (e: React.MouseEvent, product: Product) => {
@@ -159,16 +196,29 @@ export default function StorePage() {
         if (!session) {
             return router.push('auth/signin')
         }
-        if (isInWishlist(product.id)) {
-            const wishlistItemId = product.wishlistItems.find(wi => wi.userId === user?.id)?.id
-            if (wishlistItemId) {
-                await removeFromWishlist(wishlistItemId);
+        setLoadingStates(prev => ({...prev, [product.id]: {...prev[product.id], wishlist: true}}));
+        try {
+            if (isInWishlist(product.id)) {
+                const wishlistItem = items.find(item => item.productId === product.id);
+                if (wishlistItem) {
+                    await removeFromWishlist(wishlistItem.id);
+                }
+            } else {
+                await addToWishlist(product);
             }
-        } else {
-            await addToWishlist(product);
+        } finally {
+            setLoadingStates(prev => ({...prev, [product.id]: {...prev[product.id], wishlist: false}}));
         }
     };
 
+    const addToRecentlyViewed = (product: Product) => {
+        setRecentlyViewed(prev => {
+            const filtered = prev.filter(p => p.id !== product.id);
+            const updated = [product, ...filtered].slice(0, 4);
+            localStorage.setItem('recentlyViewed', JSON.stringify(updated));
+            return updated;
+        });
+    };
 
     const sortOptions = [
         {label: 'Newest', value: 'newest'},
@@ -433,6 +483,170 @@ export default function StorePage() {
             </div>
 
             <div className="mx-auto max-w-7xl px-4 py-6">
+                {/* Recently Viewed Section - Redesigned */}
+                {recentlyViewed.length > 0 && (
+                    <div className="mb-8">
+                        <button 
+                            onClick={() => setIsRecentlyViewedExpanded(!isRecentlyViewedExpanded)}
+                            className="flex w-full items-center justify-between rounded-xl bg-white p-4 shadow-sm transition-all hover:shadow-md"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="rounded-lg bg-black/5 p-2">
+                                    <Clock className="h-5 w-5 text-gray-600" />
+                                </div>
+                                <div className="text-left">
+                                    <h2 className="text-lg font-medium text-gray-900">Recently Viewed</h2>
+                                    <p className="text-sm text-gray-500">{recentlyViewed.length} items</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        localStorage.removeItem('recentlyViewed');
+                                        setRecentlyViewed([]);
+                                    }}
+                                    className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                    Clear
+                                </button>
+                                <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform ${isRecentlyViewedExpanded ? 'rotate-180' : ''}`} />
+                            </div>
+                        </button>
+                        
+                        <AnimatePresence>
+                            {isRecentlyViewedExpanded && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: "auto", opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="overflow-hidden"
+                                >
+                                    <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                                        {recentlyViewed.map((product, index) => (
+                                            <motion.div
+                                                key={product.id}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: index * 0.1 }}
+                                                className="group relative overflow-hidden rounded-2xl bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-gray-100/50"
+                                            >
+                                                <Link
+                                                    href={`/products/${product.id}`}
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        addToRecentlyViewed(product);
+                                                        router.push(`/products/${product.id}`);
+                                                    }}
+                                                    className="block"
+                                                >
+                                                    <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-gray-50">
+                                                        <div className="absolute inset-0 bg-black/[0.03] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                                                        <Image
+                                                            src={product.imageUrls[0]}
+                                                            alt={product.name}
+                                                            fill
+                                                            className="object-cover rounded-lg transition-transform duration-500 group-hover:scale-[1.02]"
+                                                        />
+                                                        <div className="absolute right-3 top-3 flex gap-2">
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    setQuickViewProduct(product);
+                                                                    setIsQuickViewOpen(true);
+                                                                }}
+                                                                className="rounded-xl bg-white/90 p-2.5 backdrop-blur-sm transition-all hover:scale-110 active:scale-95 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                                                            >
+                                                                <Eye className="h-[18px] w-[18px]" />
+                                                            </button>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    handleToggleWishlist(e, product);
+                                                                }}
+                                                                className={`rounded-xl bg-white/90 p-2.5 backdrop-blur-sm transition-all hover:scale-110 active:scale-95 ${
+                                                                    isInWishlist(product.id)
+                                                                        ? 'text-red-500 hover:bg-red-50'
+                                                                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                                                } ${loadingStates[product.id]?.wishlist ? 'cursor-not-allowed opacity-50' : ''}`}
+                                                                disabled={loadingStates[product.id]?.wishlist}
+                                                            >
+                                                                {loadingStates[product.id]?.wishlist ? (
+                                                                    <Loader2 className="h-[18px] w-[18px] animate-spin" />
+                                                                ) : (
+                                                                    <Heart className={`h-[18px] w-[18px] ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
+                                                                )}
+                                                            </button>
+                                                            {product.stockQuantity > 0 && (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.preventDefault();
+                                                                        e.stopPropagation();
+                                                                        handleAddToCart(e, product);
+                                                                    }}
+                                                                    className={`rounded-xl bg-white/90 p-2.5 backdrop-blur-sm transition-all hover:scale-110 active:scale-95 text-gray-600 hover:bg-gray-50 hover:text-gray-900 ${loadingStates[product.id]?.cart ? 'cursor-not-allowed opacity-50' : ''}`}
+                                                                    disabled={loadingStates[product.id]?.cart}
+                                                                >
+                                                                    {loadingStates[product.id]?.cart ? (
+                                                                        <Loader2 className="h-[18px] w-[18px] animate-spin" />
+                                                                    ) : (
+                                                                        <ShoppingBag className="h-[18px] w-[18px]" />
+                                                                    )}
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                        {product.discount > 0 && (
+                                                            <div className="absolute left-3 top-3">
+                                                                <div
+                                                                    className="rounded-lg bg-black px-2 py-1 text-xs font-medium text-white">
+                                                                    -{product.discount}%
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="mt-5 space-y-2">
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <h3 className="flex-1 text-sm font-medium text-gray-900 line-clamp-1">{product.name}</h3>
+                                                            <div className="flex items-center gap-1">
+                                                                <Star className="h-4 w-4 fill-current text-yellow-400"/>
+                                                                <span className="text-xs font-medium text-gray-600">
+                                                                    {product.rating || '4.5'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="space-x-2">
+                                                                <span className="text-sm font-medium text-gray-900">
+                                                                    ${product.price}
+                                                                </span>
+                                                                {product.discount > 0 && (
+                                                                    <span className="text-xs text-gray-500 line-through">
+                                                                        ${Math.round(product.price * (1 + product.discount / 100))}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            {product.stockQuantity > 0 ? (
+                                                                <span className="text-xs font-medium text-green-600">In Stock</span>
+                                                            ) : (
+                                                                <span
+                                                                    className="text-xs font-medium text-red-500">Out of Stock</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </Link>
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                )}
+
                 <div className="flex gap-6">
                     {/* Pinned Filters Sidebar */}
                     {isPinned && (
@@ -669,33 +883,67 @@ export default function StorePage() {
                                         <Link
                                             key={product.id}
                                             href={`/products/${product.id}`}
-                                            className="group relative overflow-hidden rounded-2xl bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-gray-100/50"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                addToRecentlyViewed(product);
+                                                router.push(`/products/${product.id}`);
+                                            }}
+                                            className="group relative overflow-hidden rounded-2xl bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-gray-100/50 active:scale-[0.99]"
                                         >
                                             <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-gray-50">
+                                                <div className="absolute inset-0 bg-black/[0.03] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                                                 <Image
                                                     src={product.imageUrls[0]}
                                                     alt={product.name}
                                                     fill
-                                                    className="object-cover rounded-lg"
+                                                    className="object-cover rounded-lg transition-transform duration-500 group-hover:scale-[1.02]"
                                                 />
                                                 <div className="absolute right-3 top-3 flex gap-2">
                                                     <button
-                                                        onClick={(e) => handleToggleWishlist(e, product)}
-                                                        className={`rounded-xl bg-white/90 p-2.5 backdrop-blur-sm transition-all hover:scale-110 ${
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            setQuickViewProduct(product);
+                                                            setIsQuickViewOpen(true);
+                                                        }}
+                                                        className="rounded-xl bg-white/90 p-2.5 backdrop-blur-sm transition-all hover:scale-110 active:scale-95 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                                                    >
+                                                        <Eye className="h-[18px] w-[18px]" />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            handleToggleWishlist(e, product);
+                                                        }}
+                                                        className={`rounded-xl bg-white/90 p-2.5 backdrop-blur-sm transition-all hover:scale-110 active:scale-95 ${
                                                             isInWishlist(product.id)
                                                                 ? 'text-red-500 hover:bg-red-50'
                                                                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                                                        }`}
+                                                        } ${loadingStates[product.id]?.wishlist ? 'cursor-not-allowed opacity-50' : ''}`}
+                                                        disabled={loadingStates[product.id]?.wishlist}
                                                     >
-                                                        <Heart
-                                                            className={`h-[18px] w-[18px] ${isInWishlist(product.id) ? 'fill-current' : ''}`}/>
+                                                        {loadingStates[product.id]?.wishlist ? (
+                                                            <Loader2 className="h-[18px] w-[18px] animate-spin" />
+                                                        ) : (
+                                                            <Heart className={`h-[18px] w-[18px] ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
+                                                        )}
                                                     </button>
                                                     {product.stockQuantity > 0 && (
                                                         <button
-                                                            onClick={(e) => handleAddToCart(e, product)}
-                                                            className="rounded-xl bg-white/90 p-2.5 text-gray-600 backdrop-blur-sm transition-all hover:scale-110 hover:bg-gray-50 hover:text-gray-900"
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                e.stopPropagation();
+                                                                handleAddToCart(e, product);
+                                                            }}
+                                                            className={`rounded-xl bg-white/90 p-2.5 backdrop-blur-sm transition-all hover:scale-110 active:scale-95 text-gray-600 hover:bg-gray-50 hover:text-gray-900 ${loadingStates[product.id]?.cart ? 'cursor-not-allowed opacity-50' : ''}`}
+                                                            disabled={loadingStates[product.id]?.cart}
                                                         >
-                                                            <ShoppingBag className="h-[18px] w-[18px]"/>
+                                                            {loadingStates[product.id]?.cart ? (
+                                                                <Loader2 className="h-[18px] w-[18px] animate-spin" />
+                                                            ) : (
+                                                                <ShoppingBag className="h-[18px] w-[18px]" />
+                                                            )}
                                                         </button>
                                                     )}
                                                 </div>
@@ -733,15 +981,14 @@ export default function StorePage() {
                               </span>
                                                         {product.discount > 0 && (
                                                             <span className="text-xs text-gray-500 line-through">
-                                  ${Math.round(product.price * (1 + product.discount / 100))}
-                                </span>
+                                                            ${Math.round(product.price * (1 + product.discount / 100))}
+                                                        </span>
                                                         )}
                                                     </div>
                                                     {product.stockQuantity > 0 ? (
                                                         <span className="text-xs font-medium text-green-600">In Stock</span>
                                                     ) : (
-                                                        <span
-                                                            className="text-xs font-medium text-red-500">Out of Stock</span>
+                                                        <span className="text-xs font-medium text-red-500">Out of Stock</span>
                                                     )}
                                                 </div>
                                             </div>
@@ -829,6 +1076,96 @@ export default function StorePage() {
                             <FilterContent />
                         </motion.div>
                     </>
+                )}
+            </AnimatePresence>
+
+            {/* Quick View Modal */}
+            <AnimatePresence>
+                {isQuickViewOpen && quickViewProduct && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+                        onClick={() => setIsQuickViewOpen(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="relative w-full max-w-2xl bg-white rounded-2xl shadow-xl overflow-hidden"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <button
+                                onClick={() => setIsQuickViewOpen(false)}
+                                className="absolute right-4 top-4 z-10 rounded-full bg-white/80 p-2 text-gray-500 hover:bg-white hover:text-gray-900 transition-colors"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2">
+                                <div className="relative aspect-square">
+                                    <Image
+                                        src={quickViewProduct.imageUrls[0]}
+                                        alt={quickViewProduct.name}
+                                        fill
+                                        className="object-cover"
+                                    />
+                                </div>
+                                <div className="p-6 space-y-4">
+                                    <h3 className="text-lg font-medium text-gray-900">{quickViewProduct.name}</h3>
+                                    <div className="flex items-center gap-1">
+                                        <Star className="h-4 w-4 fill-current text-yellow-400"/>
+                                        <span className="text-sm text-gray-600">{quickViewProduct.rating || '4.5'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-lg font-medium text-gray-900">${quickViewProduct.price}</span>
+                                        {quickViewProduct.discount > 0 && (
+                                            <span className="text-sm text-gray-500 line-through">
+                                                ${Math.round(quickViewProduct.price * (1 + quickViewProduct.discount / 100))}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-sm text-gray-600 line-clamp-3">{quickViewProduct.description}</p>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={(e) => {
+                                                handleAddToCart(e, quickViewProduct);
+                                                setIsQuickViewOpen(false);
+                                            }}
+                                            className="flex-1 rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-900 transition-colors"
+                                        >
+                                            Add to Cart
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                handleToggleWishlist(e, quickViewProduct);
+                                                setIsQuickViewOpen(false);
+                                            }}
+                                            className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                                        >
+                                            {isInWishlist(quickViewProduct.id) ? 'Remove from Wishlist' : 'Add to Wishlist'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Back to Top Button */}
+            <AnimatePresence>
+                {showBackToTop && (
+                    <motion.button
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 20 }}
+                        onClick={scrollToTop}
+                        className="fixed bottom-6 right-6 z-50 rounded-full bg-black p-3 text-white shadow-lg hover:bg-gray-900 transition-colors duration-200"
+                    >
+                        <ChevronUp className="h-5 w-5" />
+                    </motion.button>
                 )}
             </AnimatePresence>
         </div>
