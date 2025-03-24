@@ -93,6 +93,7 @@ export default function StorePage() {
     const [showBackToTop, setShowBackToTop] = useState(false);
     const [isRecentlyViewedLoading, setIsRecentlyViewedLoading] = useState(true);
     const [isRecentlyViewedExpanded, setIsRecentlyViewedExpanded] = useState(false);
+    const [loadingProductId, setLoadingProductId] = useState<string | null>(null);
 
     const {addToCart} = useCart();
     const {addToWishlist, removeFromWishlist, isInWishlist, items} = useWishlist();
@@ -537,18 +538,32 @@ export default function StorePage() {
                                                     href={`/products/${product.id}`}
                                                     onClick={(e) => {
                                                         e.preventDefault();
+                                                        setLoadingProductId(product.id);
                                                         addToRecentlyViewed(product);
                                                         router.push(`/products/${product.id}`);
                                                     }}
-                                                    className="block"
+                                                    className={`block ${
+                                                        loadingProductId === product.id ? 'cursor-wait pointer-events-none' : ''
+                                                    }`}
                                                 >
                                                     <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-gray-50">
-                                                        <div className="absolute inset-0 bg-black/[0.03] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                                                        <div className={`absolute inset-0 bg-black/[0.03] transition-opacity duration-300 ${
+                                                            loadingProductId === product.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                                        }`} />
+                                                        {loadingProductId === product.id && (
+                                                            <div className="absolute inset-0 flex items-center justify-center bg-black/5 backdrop-blur-[2px]">
+                                                                <div className="rounded-lg bg-white/90 p-3">
+                                                                    <Loader2 className="h-6 w-6 animate-spin text-gray-600" />
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                         <Image
                                                             src={product.imageUrls[0]}
                                                             alt={product.name}
                                                             fill
-                                                            className="object-cover rounded-lg transition-transform duration-500 group-hover:scale-[1.02]"
+                                                            className={`object-cover rounded-lg transition-all duration-500 ${
+                                                                loadingProductId === product.id ? 'scale-[1.02] blur-[2px]' : 'group-hover:scale-[1.02]'
+                                                            }`}
                                                         />
                                                         <div className="absolute right-3 top-3 flex gap-2">
                                                             <button
@@ -885,18 +900,32 @@ export default function StorePage() {
                                             href={`/products/${product.id}`}
                                             onClick={(e) => {
                                                 e.preventDefault();
+                                                setLoadingProductId(product.id);
                                                 addToRecentlyViewed(product);
                                                 router.push(`/products/${product.id}`);
                                             }}
-                                            className="group relative overflow-hidden rounded-2xl bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-gray-100/50 active:scale-[0.99]"
+                                            className={`group relative overflow-hidden rounded-2xl bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-gray-100/50 active:scale-[0.99] ${
+                                                loadingProductId === product.id ? 'cursor-wait pointer-events-none' : ''
+                                            }`}
                                         >
                                             <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-gray-50">
-                                                <div className="absolute inset-0 bg-black/[0.03] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                                                <div className={`absolute inset-0 bg-black/[0.03] transition-opacity duration-300 ${
+                                                    loadingProductId === product.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                                }`} />
+                                                {loadingProductId === product.id && (
+                                                    <div className="absolute inset-0 flex items-center justify-center bg-black/5 backdrop-blur-[2px]">
+                                                        <div className="rounded-lg bg-white/90 p-3">
+                                                            <Loader2 className="h-6 w-6 animate-spin text-gray-600" />
+                                                        </div>
+                                                    </div>
+                                                )}
                                                 <Image
                                                     src={product.imageUrls[0]}
                                                     alt={product.name}
                                                     fill
-                                                    className="object-cover rounded-lg transition-transform duration-500 group-hover:scale-[1.02]"
+                                                    className={`object-cover rounded-lg transition-all duration-500 ${
+                                                        loadingProductId === product.id ? 'scale-[1.02] blur-[2px]' : 'group-hover:scale-[1.02]'
+                                                    }`}
                                                 />
                                                 <div className="absolute right-3 top-3 flex gap-2">
                                                     <button
@@ -970,15 +999,15 @@ export default function StorePage() {
                                                     <div className="flex items-center gap-1">
                                                         <Star className="h-4 w-4 fill-current text-yellow-400"/>
                                                         <span className="text-xs font-medium text-gray-600">
-                                {product.rating || '4.5'}
-                              </span>
+                                                                    {product.rating || '4.5'}
+                                                                </span>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center justify-between">
                                                     <div className="space-x-2">
-                              <span className="text-sm font-medium text-gray-900">
-                                ${product.price}
-                              </span>
+                                                                <span className="text-sm font-medium text-gray-900">
+                                                                    ${product.price}
+                                                                </span>
                                                         {product.discount > 0 && (
                                                             <span className="text-xs text-gray-500 line-through">
                                                             ${Math.round(product.price * (1 + product.discount / 100))}
@@ -1059,21 +1088,276 @@ export default function StorePage() {
                 {showFilters && !isPinned && (
                     <>
                         <motion.div
-                            transition={{ duration: 0.3 }}
+                            transition={{ duration: 0.2 }}
                             initial={{ opacity: 0 }}
-                            animate={{ opacity: 0.3 }}
+                            animate={{ opacity: 0.4 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setShowFilters(false)}
-                            className="fixed inset-0 z-40 bg-black"
+                            className="fixed inset-0 z-40 bg-black/80 backdrop-blur-[2px]"
                         />
                         <motion.div
                             initial={{ x: '100%' }}
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
-                            transition={{ type: "just" }}
-                            className="fixed inset-y-0 right-0 z-50 w-full max-w-sm overflow-y-auto bg-white px-6 pt-6"
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            className="fixed inset-y-0 right-0 z-50 w-full max-w-sm overflow-y-auto bg-white shadow-2xl"
                         >
-                            <FilterContent />
+                            <div className="sticky top-0 z-10 border-b border-gray-100 bg-white/80 px-6 py-4 backdrop-blur-xl">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+                                        <p className="mt-1 text-sm text-gray-500">Refine your results</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => setIsPinned(!isPinned)}
+                                            className="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                                            title={isPinned ? "Unpin filters" : "Pin filters"}
+                                        >
+                                            {isPinned ? <PinOff className="h-5 w-5" /> : <Pin className="h-5 w-5" />}
+                                        </button>
+                                        <button
+                                            onClick={() => setShowFilters(false)}
+                                            className="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                                        >
+                                            <X className="h-5 w-5" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-8 px-6 py-6">
+                                {/* Categories */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-medium text-gray-900">Categories</h3>
+                                        {filters.category && (
+                                            <button
+                                                onClick={() => setFilters({...filters, category: ''})}
+                                                className="text-xs text-gray-500 hover:text-gray-700"
+                                            >
+                                                Clear
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            onClick={() => setFilters({...filters, category: ''})}
+                                            className={`flex items-center justify-center rounded-xl px-3 py-2.5 text-sm transition-all ${
+                                                !filters.category
+                                                    ? 'bg-black text-white shadow-sm'
+                                                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                                            }`}
+                                        >
+                                            All Categories
+                                        </button>
+                                        {filterOptions.categories.map((category) => (
+                                            <button
+                                                key={category.value}
+                                                onClick={() => setFilters({...filters, category: category.value})}
+                                                className={`flex items-center justify-center rounded-xl px-3 py-2.5 text-sm transition-all ${
+                                                    filters.category === category.value
+                                                        ? 'bg-black text-white shadow-sm'
+                                                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                                                }`}
+                                            >
+                                                {category.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Price Range */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-medium text-gray-900">Price Range</h3>
+                                        {filters.priceRange && (
+                                            <button
+                                                onClick={() => setFilters({...filters, priceRange: ''})}
+                                                className="text-xs text-gray-500 hover:text-gray-700"
+                                            >
+                                                Clear
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {filterOptions.priceRanges.map((range) => (
+                                            <button
+                                                key={range.value}
+                                                onClick={() => setFilters({...filters, priceRange: range.value})}
+                                                className={`flex items-center justify-center rounded-xl px-3 py-2.5 text-sm transition-all ${
+                                                    filters.priceRange === range.value
+                                                        ? 'bg-black text-white shadow-sm'
+                                                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                                                }`}
+                                            >
+                                                {range.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Colors */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-medium text-gray-900">Colors</h3>
+                                        {filters.color && (
+                                            <button
+                                                onClick={() => setFilters({...filters, color: ''})}
+                                                className="text-xs text-gray-500 hover:text-gray-700"
+                                            >
+                                                Clear
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="flex flex-wrap gap-3">
+                                        {filterOptions.colors.map((color) => (
+                                            <button
+                                                key={color.value}
+                                                onClick={() => setFilters({...filters, color: color.value})}
+                                                className={`group relative h-12 w-12 overflow-hidden rounded-xl ${color.class} ${
+                                                    filters.color === color.value ? 'ring-2 ring-black ring-offset-2' : ''
+                                                } transition-all hover:scale-105 active:scale-95`}
+                                                title={color.label}
+                                            >
+                                                {filters.color === color.value && (
+                                                    <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                                                        <Check className="h-5 w-5 text-white drop-shadow" />
+                                                    </div>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Sizes */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-medium text-gray-900">Sizes</h3>
+                                        {filters.size && (
+                                            <button
+                                                onClick={() => setFilters({...filters, size: ''})}
+                                                className="text-xs text-gray-500 hover:text-gray-700"
+                                            >
+                                                Clear
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {filterOptions.sizes.map((size) => (
+                                            <button
+                                                key={size}
+                                                onClick={() => setFilters({...filters, size})}
+                                                className={`relative h-11 w-11 rounded-xl text-sm font-medium transition-all hover:scale-105 active:scale-95 ${
+                                                    filters.size === size
+                                                        ? 'bg-black text-white shadow-sm'
+                                                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                                                }`}
+                                            >
+                                                {size}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Rating */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-medium text-gray-900">Rating</h3>
+                                        {filters.rating && (
+                                            <button
+                                                onClick={() => setFilters({...filters, rating: ''})}
+                                                className="text-xs text-gray-500 hover:text-gray-700"
+                                            >
+                                                Clear
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        {filterOptions.ratingOptions.map((rating) => (
+                                            <button
+                                                key={rating.value}
+                                                onClick={() => setFilters({...filters, rating: rating.value})}
+                                                className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm transition-all ${
+                                                    filters.rating === rating.value
+                                                        ? 'bg-black text-white shadow-sm'
+                                                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                                                }`}
+                                            >
+                                                <span className="flex items-center gap-1.5">
+                                                    {rating.label.split(' ')[0]}
+                                                    <Star className={`h-4 w-4 ${
+                                                        filters.rating === rating.value ? 'fill-white text-white' : 'fill-yellow-400 text-yellow-400'
+                                                    }`} />
+                                                    & up
+                                                </span>
+                                                <span className={`text-xs ${
+                                                    filters.rating === rating.value ? 'text-white/60' : 'text-gray-500'
+                                                }`}>
+                                                    ({rating.count?.toFixed(1)})
+                                                </span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* In Stock Toggle */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-medium text-gray-900">Availability</h3>
+                                        {filters.stockFilter && (
+                                            <button
+                                                onClick={() => setFilters({...filters, stockFilter: ''})}
+                                                className="text-xs text-gray-500 hover:text-gray-700"
+                                            >
+                                                Clear
+                                            </button>
+                                        )}
+                                    </div>
+                                    <label className="flex cursor-pointer items-center justify-between rounded-xl bg-gray-50 px-4 py-3 hover:bg-gray-100">
+                                        <span className="text-sm text-gray-700">Show In-Stock Items Only</span>
+                                        <div className={`relative h-6 w-11 rounded-full transition-colors ${
+                                            filters.stockFilter === 'inStock' ? 'bg-black' : 'bg-gray-300'
+                                        }`}>
+                                            <div className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                                                filters.stockFilter === 'inStock' ? 'translate-x-5' : 'translate-x-0'
+                                            }`} />
+                                            <input
+                                                type="checkbox"
+                                                className="sr-only"
+                                                checked={filters.stockFilter === 'inStock'}
+                                                onChange={(e) => setFilters({...filters, stockFilter: e.target.checked ? 'inStock' : ''})}
+                                            />
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="sticky bottom-0 border-t border-gray-100 bg-white/80 px-6 py-4 backdrop-blur-xl">
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setFilters({
+                                            category: '',
+                                            priceRange: '',
+                                            sortBy: 'newest',
+                                            stockFilter: '',
+                                            color: '',
+                                            size: '',
+                                            rating: ''
+                                        })}
+                                        className="flex-1 rounded-xl bg-gray-100 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 active:bg-gray-300"
+                                    >
+                                        Clear All
+                                    </button>
+                                    <button
+                                        onClick={() => setShowFilters(false)}
+                                        className="flex-1 rounded-xl bg-black py-3 text-sm font-medium text-white transition-all hover:bg-gray-900 active:bg-gray-800"
+                                    >
+                                        Apply Filters
+                                    </button>
+                                </div>
+                            </div>
                         </motion.div>
                     </>
                 )}
