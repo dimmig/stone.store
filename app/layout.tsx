@@ -8,6 +8,8 @@ import {Providers} from './providers/Providers';
 import {ClientProviders} from './providers/ClientProviders';
 import {Toaster} from "sonner";
 import Footer from './components/layout/Footer';
+import { LanguageProvider } from '@/contexts/LanguageContext';
+import { TranslationWrapper } from './components/TranslationWrapper';
 
 const inter = Inter({subsets: ['latin']});
 
@@ -95,12 +97,16 @@ export default function RootLayout({
         <body className={inter.className}>
         <ClientProviders>
             <Providers>
-                <HeaderWrapper />
-                <main className="min-h-screen">
-                    {children}
-                </main>
-                <Footer/>
-                <Analytics />
+                <LanguageProvider>
+                    <TranslationWrapper>
+                        <HeaderWrapper />
+                        <main className="min-h-screen">
+                            {children}
+                        </main>
+                        <Footer/>
+                        <Analytics />
+                    </TranslationWrapper>
+                </LanguageProvider>
             </Providers>
         </ClientProviders>
         <Toaster position="top-center" richColors/>

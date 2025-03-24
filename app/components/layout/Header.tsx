@@ -2,13 +2,19 @@
 
 import React from 'react';
 import Link from 'next/link';
-import {ShoppingCart, Heart, User} from 'lucide-react';
+import {ShoppingCart, Heart} from 'lucide-react';
 import {useSession} from 'next-auth/react';
 import {SignInButton} from '../auth/SignInButton';
 import {UserAccountNav} from '../auth/UserAccountNav';
 import {useCart} from '@/app/providers/CartProvider';
 import {useWishlist} from '@/app/providers/WishlistProvider';
 import {Logo} from '../ui/logo';
+import LanguageSelector from '@/components/LanguageSelector';
+
+const navigationLinks = [
+    { href: '/store', text: 'Store' },
+    { href: '/collections', text: 'Collections' },
+];
 
 export function Header() {
     const {data: session} = useSession();
@@ -23,17 +29,20 @@ export function Header() {
 
                 {/* Navigation */}
                 <nav className="flex items-center space-x-6">
-                    <Link href="/store" className="hidden lg:block text-gray-600 hover:text-gray-900">
-                        Store
-                    </Link>
-                    <Link href="/collections" className="hidden lg:block text-gray-600 hover:text-gray-900">
-                        Collections
-                    </Link>
+                    {navigationLinks.map((link) => (
+                        <Link 
+                            key={link.href}
+                            href={link.href} 
+                            className="hidden lg:block text-gray-600 hover:text-gray-900"
+                        >
+                            {link.text}
+                        </Link>
+                    ))}
+                    
                     <Link href={session?.user ? "/wishlist" : "/auth/signin"} className="relative hidden lg:block">
                         <Heart className="h-6 w-6"/>
                         {wishlistItemCount > 0 && (
-                            <span
-                                className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs text-white">
+                            <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs text-white">
                                 {wishlistItemCount}
                             </span>
                         )}
@@ -42,12 +51,13 @@ export function Header() {
                     <Link href={session?.user ? "/cart" : "/auth/signin"} className="relative">
                         <ShoppingCart className="h-6 w-6"/>
                         {cartItemCount > 0 && (
-                            <span
-                                className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs text-white">
-                {cartItemCount}
-              </span>
+                            <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs text-white">
+                                {cartItemCount}
+                            </span>
                         )}
                     </Link>
+
+                    <LanguageSelector />
 
                     {session ? (
                         <UserAccountNav/>
