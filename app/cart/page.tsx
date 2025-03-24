@@ -38,7 +38,6 @@ export default function CartPage() {
   const { items, removeFromCart, updateQuantity, checkout, isLoading } = useCart();
   const router = useRouter();
 
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">

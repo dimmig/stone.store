@@ -49,6 +49,27 @@ const stats = [
     { icon: Clock, value: '24/7', label: 'Support' }
 ];
 
+const teamMembers = [
+    {
+        name: 'John Doe',
+        role: 'Founder & CEO',
+        image: '/images/team/john-doe.jpg',
+        bio: 'With over 15 years of experience in sustainable fashion, John leads our mission to revolutionize the industry.'
+    },
+    {
+        name: 'Jane Smith',
+        role: 'Creative Director',
+        image: '/images/team/jane-smith.jpg',
+        bio: 'Jane brings her innovative design vision to create stunning, sustainable collections that make a difference.'
+    },
+    {
+        name: 'Michael Johnson',
+        role: 'Head of Sustainability',
+        image: '/images/team/michael-johnson.jpg',
+        bio: 'Michael ensures our commitment to environmental responsibility through sustainable practices and materials.'
+    }
+];
+
 export default function AboutPage() {
     return (
         <div className="min-h-screen">
@@ -157,7 +178,7 @@ export default function AboutPage() {
                     >
                         <h2 className={`${typography.h2} text-gray-900 mb-4`}>Our Team</h2>
                         <p className={`${typography.body} text-gray-500 max-w-2xl mx-auto`}>
-                            Meet the passionate individuals behind Stone Store.
+                            Meet the passionate individuals behind Stone Store who are dedicated to sustainable fashion.
                         </p>
                     </motion.div>
 
@@ -168,22 +189,23 @@ export default function AboutPage() {
                         whileInView="animate"
                         viewport={{ once: true }}
                     >
-                        {[1, 2, 3].map((member, index) => (
+                        {teamMembers.map((member, index) => (
                             <motion.div
                                 key={index}
                                 variants={fadeInUp}
-                                className="text-center"
+                                className="text-center bg-white rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all duration-300"
                             >
-                                <div className="relative w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden">
+                                <div className="relative w-48 h-48 mx-auto mb-6 rounded-full overflow-hidden ring-4 ring-purple-100">
                                     <Image
-                                        src={`https://images.unsplash.com/photo-${1500000000000 + index}?w=500&h=500&fit=crop`}
-                                        alt={`Team member ${index + 1}`}
+                                        src={member.image}
+                                        alt={member.name}
                                         fill
                                         className="object-cover"
                                     />
                                 </div>
-                                <h3 className={`${typography.h4} text-gray-900 mb-2`}>John Doe</h3>
-                                <p className={`${typography.body} text-gray-500`}>Founder & CEO</p>
+                                <h3 className={`${typography.h4} text-gray-900 mb-2`}>{member.name}</h3>
+                                <p className={`${typography.body} text-purple-600 mb-4`}>{member.role}</p>
+                                <p className={`${typography.body} text-gray-600`}>{member.bio}</p>
                             </motion.div>
                         ))}
                     </motion.div>
