@@ -3,7 +3,7 @@
 import React, {useState, useEffect} from 'react';
 import Image from 'next/image';
 import {motion} from 'framer-motion';
-import {Heart, Minus, Plus, ShoppingBag, ChevronRight, Star, Check, Ban} from 'lucide-react';
+import {Heart, Minus, Plus, ShoppingBag, ChevronRight, Star, Check, Ban, Loader2} from 'lucide-react';
 import {useCart} from '@/app/providers/CartProvider';
 import {useWishlist} from '@/app/providers/WishlistProvider';
 import {Product} from '@/types';
@@ -43,7 +43,7 @@ export default function ProductPage({params}: ProductPageProps) {
     const [activeImage, setActiveImage] = useState(0);
 
     const {addToCart} = useCart();
-    const {addToWishlist, removeFromWishlist, isInWishlist} = useWishlist();
+    const {addToWishlist, removeFromWishlist, isInWishlist, items} = useWishlist();
 
     const [activeTab, setActiveTab] = useState('details');
     const [reviews, setReviews] = useState<any[]>([]);
@@ -55,6 +55,7 @@ export default function ProductPage({params}: ProductPageProps) {
     const [newReview, setNewReview] = useState({rating: 5, comment: ''});
     const [userReview, setUserReview] = useState<any>(null);
     const [isReviewed, setIsReviewed] = useState(false);
+    const [isAddingToCart, setIsAddingToCart] = useState(false);
 
     const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
 
@@ -177,6 +178,7 @@ export default function ProductPage({params}: ProductPageProps) {
             return;
         }
 
+        setIsAddingToCart(true);
         addToCart(product, quantity, selectedSize, selectedColor)
             .then(() => {
                 toast.success('Added to cart successfully');
@@ -187,12 +189,18 @@ export default function ProductPage({params}: ProductPageProps) {
                 } else {
                     toast.error('Failed to add to cart');
                 }
+            })
+            .finally(() => {
+                setIsAddingToCart(false);
             });
     };
 
     const handleToggleWishlist = () => {
         if (isInWishlist(product.id)) {
-            removeFromWishlist(product.id);
+            const wishlistItem = items.find(item => item.productId === product.id);
+            if (wishlistItem) {
+                removeFromWishlist(wishlistItem.id);
+            }
         } else {
             addToWishlist(product);
         }
@@ -529,15 +537,24 @@ export default function ProductPage({params}: ProductPageProps) {
                                     whileHover={{scale: 1.02}}
                                     whileTap={{scale: 0.98}}
                                     onClick={handleAddToCart}
-                                    disabled={product.stockQuantity <= 0}
-                                    className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-black px-6 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:bg-white disabled:text-black disabled:border-2 disabled:pointer-events-none"
+                                    disabled={product.stockQuantity <= 0 || isAddingToCart}
+                                    className={`flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-black px-6 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:bg-white disabled:text-black disabled:border-2 disabled:pointer-events-none ${
+                                        isAddingToCart ? 'cursor-not-allowed opacity-50' : ''
+                                    }`}
                                 >
                                     <>
                                         {product.stockQuantity > 0 ? (
-                                            <>
-                                                <ShoppingBag className="h-5 w-5"/>
-                                                Add to Cart
-                                            </>
+                                            isAddingToCart ? (
+                                                <>
+                                                    <Loader2 className="h-5 w-5 animate-spin" />
+                                                    Adding...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <ShoppingBag className="h-5 w-5"/>
+                                                    Add to Cart
+                                                </>
+                                            )
                                         ) : (
                                             <>
                                                 <Ban className="h-5 w-5"/>
