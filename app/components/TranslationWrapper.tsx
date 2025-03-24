@@ -22,8 +22,7 @@ export function TranslationWrapper({ children }: { children: React.ReactNode }) 
 
             // Translate main content sections
             const elements = wrapperRef.current.querySelectorAll('main, header, footer, nav, [data-translate]');
-            console.log(`[TranslationWrapper] Found ${elements.length} elements to translate`);
-            
+
             // Translate all elements in parallel
             await Promise.all(Array.from(elements).map(element => 
                 translateElement(element as HTMLElement, language)
@@ -88,7 +87,6 @@ export function TranslationWrapper({ children }: { children: React.ReactNode }) 
     // Trigger translation when language changes
     useEffect(() => {
         if (typeof window === 'undefined') return;
-        console.log('[TranslationWrapper] Language changed to:', language);
         translateContent();
     }, [language]); // Re-run when language changes
 

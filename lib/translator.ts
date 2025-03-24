@@ -68,15 +68,8 @@ function saveToCache(texts: string[], translations: string[], targetLang: Suppor
 async function batchTranslate(texts: string[], targetLang: SupportedLanguages): Promise<string[]> {
     if (!texts.length || targetLang === 'EN') return texts;
 
-    console.log(`[Translator] Batch translating ${texts.length} texts to ${targetLang}`);
-    console.log('[Translator] Sample texts to translate:', texts.slice(0, 3));
-    
+
     try {
-        // Log the API request details
-        console.log('[Translator] Making API request:', {
-            texts: texts.length,
-            targetLang,
-        });
 
         const response = await fetch('/api/translate', {
             method: 'POST',
@@ -92,7 +85,6 @@ async function batchTranslate(texts: string[], targetLang: SupportedLanguages): 
         if (!response.ok) {
             const error = await response.json();
             if (response.status === 429) {
-                console.log('[Translator] Rate limited, using cached translations if available');
                 // Return cached translations if available, otherwise return original texts
                 return texts.map(text => window.__translations[text]?.[targetLang] || text);
             }
@@ -105,14 +97,11 @@ async function batchTranslate(texts: string[], targetLang: SupportedLanguages): 
             throw new Error('Empty translation response');
         }
 
-        console.log(`[Translator] Successfully received ${data.translations.length} translations`);
-        console.log('[Translator] Sample translations:', data.translations.slice(0, 3).map(t => t.text));
 
         const translations = data.translations.map(t => t.text);
         saveToCache(texts, translations, targetLang);
         return translations;
     } catch (error) {
-        console.error('[Translator] Translation error:', error);
         // Return cached translations if available, otherwise return original texts
         return texts.map(text => window.__translations[text]?.[targetLang] || text);
     }
@@ -138,11 +127,9 @@ export async function translateTexts(texts: string[], targetLang: SupportedLangu
         const uncachedTexts = uniqueTexts.filter(text => !window.__translations[text]?.[targetLang]);
 
         if (uncachedTexts.length === 0) {
-            console.log('[Translator] All texts found in cache');
             return texts.map(text => window.__translations[text]?.[targetLang] || text);
         }
 
-        console.log(`[Translator] Translating ${uncachedTexts.length} uncached texts`);
 
         // Translate all uncached texts in one request
         const translations = await batchTranslate(uncachedTexts, targetLang);
@@ -187,7 +174,6 @@ export function collectTranslatableText(element: HTMLElement): { node: Text; tex
                 // Only skip if text is in cache AND the node already has the translated content
                 const cachedTranslation = window.__translations[text]?.[window.__currentTargetLang];
                 if (cachedTranslation && node.textContent?.trim() === cachedTranslation.trim()) {
-                    console.log('[Translator] Skipping already translated text:', text);
                     return NodeFilter.FILTER_REJECT;
                 }
 
@@ -200,7 +186,6 @@ export function collectTranslatableText(element: HTMLElement): { node: Text; tex
     while ((node = walker.nextNode() as Text)) {
         const text = node.textContent?.trim() || '';
         if (text) {
-            console.log('[Translator] Collecting text for translation:', text);
             textPairs.push({ node, text });
         }
     }
@@ -247,8 +232,6 @@ function applyTranslations(textPairs: { node: Text; text: string }[], translatio
         if (newText.length > text.length * 1.5) {
             parent.classList.add('text-truncate-2');
         }
-
-        console.log('[Translator] Applied translation:', { from: text, to: newText });
     });
 }
 
@@ -290,12 +273,9 @@ export async function translateElement(element: HTMLElement, targetLang: Support
         // Store current target language globally for the collector to use
         window.__currentTargetLang = targetLang;
 
-        console.log(`[Translator] Translating element: ${element.tagName}#${element.id || 'no-id'}.${element.className}`);
-
         // Check for cached page translations first
         const cachedTranslations = getPageTranslations(element, targetLang);
         if (cachedTranslations) {
-            console.log('[Translator] Found cached page translations');
             // Apply cached translations directly
             const textPairs = collectTranslatableText(element);
             const translations = textPairs.map(pair => cachedTranslations.get(pair.text) || pair.text);
@@ -307,15 +287,12 @@ export async function translateElement(element: HTMLElement, targetLang: Support
         const textPairs = collectTranslatableText(element);
         
         if (!textPairs.length) {
-            console.log('[Translator] No untranslated text found in element');
             return;
         }
 
-        console.log(`[Translator] Found ${textPairs.length} text nodes to translate`);
-        
+
         // Extract unique texts for translation
         const uniqueTexts = Array.from(new Set(textPairs.map(pair => pair.text)));
-        console.log(`[Translator] ${uniqueTexts.length} unique texts to translate`);
 
         // Add translation loading state
         element.classList.add('translating');
@@ -333,14 +310,12 @@ export async function translateElement(element: HTMLElement, targetLang: Support
             // Map the translations back to the original order
             const orderedTranslations = textPairs.map(pair => translationMap.get(pair.text) || pair.text);
             
-            console.log('[Translator] Applying translations to DOM');
             applyTranslations(textPairs, orderedTranslations);
             
         } finally {
             element.classList.remove('translating');
         }
     } catch (error) {
-        console.error('[Translator] Error in translateElement:', error);
         element.classList.remove('translating');
     }
 }
