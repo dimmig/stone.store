@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import {PrismaClient} from "@prisma/client";
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma';
 
 // Get cart items
 export async function GET() {
@@ -53,45 +51,80 @@ export async function POST(req: Request) {
       return new NextResponse('Product ID is required', { status: 400 });
     }
 
-    // Check if product exists and has enough stock
-    const product = await prisma.product.findUnique({
-      where: {
-        id: productId,
-      },
-      select: {
-        id: true,
-        name: true,
-        price: true,
-        imageUrls: true,
-        stockQuantity: true,
-      },
-    });
-
-    if (!product) {
-      return new NextResponse('Product not found', { status: 404 });
-    }
-
-    if (product.stockQuantity < quantity) {
-      return new NextResponse('Not enough stock available', { status: 400 });
-    }
-
-    // Check if item already exists in cart
-    const existingCartItem = await prisma.cartItem.findFirst({
-      where: {
-        userId: session.user.id,
-        productId,
-        size,
-        color,
-      },
-    });
-
-    if (existingCartItem) {
-      const updatedCartItem = await prisma.cartItem.update({
+    // Use a transaction to prevent race conditions
+    const result = await prisma.$transaction(async (tx) => {
+      // Check if product exists and has enough stock
+      const product = await tx.product.findUnique({
         where: {
-          id: existingCartItem.id,
+          id: productId,
         },
+        select: {
+          id: true,
+          name: true,
+          price: true,
+          imageUrls: true,
+          stockQuantity: true,
+        },
+      });
+
+      if (!product) {
+        throw new Error('Product not found');
+      }
+
+      // Check if item already exists in cart
+      const existingCartItem = await tx.cartItem.findFirst({
+        where: {
+          userId: session.user.id,
+          productId,
+          size,
+          color,
+        },
+        include: {
+          product: {
+            select: {
+              stockQuantity: true,
+            },
+          },
+        },
+      });
+
+      const totalQuantity = existingCartItem 
+        ? existingCartItem.quantity + quantity 
+        : quantity;
+
+      if (product.stockQuantity < totalQuantity) {
+        throw new Error(`Only ${product.stockQuantity} items available in stock`);
+      }
+
+      if (existingCartItem) {
+        return await tx.cartItem.update({
+          where: {
+            id: existingCartItem.id,
+          },
+          data: {
+            quantity: totalQuantity,
+          },
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                price: true,
+                imageUrls: true,
+                stockQuantity: true,
+              },
+            },
+          },
+        });
+      }
+
+      return await tx.cartItem.create({
         data: {
-          quantity: existingCartItem.quantity + quantity,
+          userId: session.user.id,
+          productId,
+          quantity,
+          size,
+          color,
         },
         include: {
           product: {
@@ -105,34 +138,14 @@ export async function POST(req: Request) {
           },
         },
       });
-
-      return NextResponse.json(updatedCartItem);
-    }
-
-    const cartItem = await prisma.cartItem.create({
-      data: {
-        userId: session.user.id,
-        productId,
-        quantity,
-        size,
-        color,
-      },
-      include: {
-        product: {
-          select: {
-            id: true,
-            name: true,
-            price: true,
-            imageUrls: true,
-            stockQuantity: true,
-          },
-        },
-      },
     });
 
-    return NextResponse.json(cartItem);
+    return NextResponse.json(result);
   } catch (error) {
     console.error('[CART_POST]', error);
+    if (error instanceof Error) {
+      return new NextResponse(error.message, { status: 400 });
+    }
     return new NextResponse('Internal error', { status: 500 });
   }
 } 
