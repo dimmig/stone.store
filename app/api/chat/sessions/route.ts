@@ -38,12 +38,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { title } = await req.json();
-
     const chatSession = await prisma.chatSession.create({
       data: {
         userId: session.user.id,
-        title: title || 'New Chat',
       },
     });
 
