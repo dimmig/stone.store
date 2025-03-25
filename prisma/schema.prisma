@@ -44,7 +44,6 @@ model User {
   orderUpdates      Boolean   @default(true)
   promotionalEmails Boolean   @default(false)
   stockAlerts       Boolean   @default(false)
-  emailVerified   DateTime?
   image           String?
   chatSessions    ChatSession[]
 }
