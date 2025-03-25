@@ -102,6 +102,7 @@ export async function POST(req: Request) {
     const colors = (formData.get('colors') as string).split(',').filter(Boolean);
     const stockQuantity = parseInt(formData.get('stockQuantity') as string);
     const images = formData.getAll('images') as File[];
+    const colorImageMapping = JSON.parse(formData.get('colorImageMapping') as string || '{}');
 
     // Validate each field individually
     const errors = [];
@@ -150,6 +151,7 @@ export async function POST(req: Request) {
           stockQuantity,
           imageUrls,
           imageFilenames,
+          colorImageMapping,
         },
         include: {
           category: true,

@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { uploadToGCS, deleteFromGCS } from '@/app/lib/gcs';
 import { Prisma } from '@prisma/client';
+import { GCSUploadResult, uploadMultipleToGCS, deleteFromGCS } from '@/app/lib/gcs';
 
 interface RouteParams {
   params: {
@@ -28,7 +28,6 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     return NextResponse.json(product);
   } catch (error) {
-    console.error('Error fetching product:', error);
     return NextResponse.json(
       { error: 'Failed to fetch product' },
       { status: 500 }
@@ -56,6 +55,7 @@ export async function PUT(
     const stockQuantity = parseInt(formData.get('stockQuantity') as string);
     const currentImageUrls = JSON.parse(formData.get('currentImageUrls') as string) || [];
     const currentImageFilenames = JSON.parse(formData.get('currentImageFilenames') as string) || [];
+    const colorImageMapping = JSON.parse(formData.get('colorImageMapping') as string || '{}');
     const newImages = formData.getAll('images') as File[];
 
     // Validate each field individually
@@ -94,55 +94,56 @@ export async function PUT(
       (filename: string) => !currentImageFilenames.includes(filename)
     );
 
-    console.log('Images to delete:', imagesToDelete);
-
-    try {
-      for (const filename of imagesToDelete) {
-        await deleteFromGCS(filename);
-        console.log('Successfully deleted image from GCS:', filename);
-      }
-    } catch (error) {
-      console.error('Error deleting images from GCS:', error);
-      return NextResponse.json(
-        { error: 'Failed to delete images from storage' },
-        { status: 500 }
+    // Delete removed images in parallel
+    if (imagesToDelete.length > 0) {
+      await Promise.all(
+        imagesToDelete.map(async (filename) => {
+          try {
+            await deleteFromGCS(filename);
+          } catch (error) {
+            // Continue with the update even if image deletion fails
+          }
+        })
       );
     }
 
-    // Upload new images to GCS
-    const newImageUrls: string[] = [];
-    const newImageFilenames: string[] = [];
+    // Upload new images to GCS in parallel
+    let newImageUrls: string[] = [];
+    let newImageFilenames: string[] = [];
 
-    try {
-      for (const image of newImages) {
-        const { url, filename } = await uploadToGCS(image);
-        newImageUrls.push(url);
-        newImageFilenames.push(filename);
-        console.log('Successfully uploaded image:', url);
+    if (newImages.length > 0) {
+      try {
+        const uploadResults = await uploadMultipleToGCS(newImages);
+        newImageUrls = uploadResults.map((result: GCSUploadResult) => result.url);
+        newImageFilenames = uploadResults.map((result: GCSUploadResult) => result.filename);
+      } catch (error) {
+        return NextResponse.json(
+          { error: 'Failed to upload images to storage' },
+          { status: 500 }
+        );
       }
-    } catch (error) {
-      console.error('Error uploading images to GCS:', error);
-      return NextResponse.json(
-        { error: 'Failed to upload images to storage' },
-        { status: 500 }
-      );
     }
 
     // Update product with new data
+    const updateData = {
+      name,
+      description,
+      price,
+      category: {
+        connect: { id: categoryId }
+      },
+      sizes,
+      colors,
+      stockQuantity,
+      rating: 4.5,
+      imageUrls: [...currentImageUrls, ...newImageUrls],
+      imageFilenames: [...currentImageFilenames, ...newImageFilenames],
+      colorImageMapping,
+    };
+
     const updatedProduct = await prisma.product.update({
       where: { id: params.productId },
-      data: {
-        name,
-        description,
-        price,
-        categoryId,
-        sizes,
-        colors,
-        stockQuantity,
-        rating: 4.5,
-        imageUrls: [...currentImageUrls, ...newImageUrls],
-        imageFilenames: [...currentImageFilenames, ...newImageFilenames],
-      },
+      data: updateData as unknown as Prisma.ProductUpdateInput,
       include: {
         category: true,
       },
@@ -150,7 +151,6 @@ export async function PUT(
 
     return NextResponse.json(updatedProduct);
   } catch (error) {
-    console.error('Error updating product:', error);
     return NextResponse.json(
       { error: 'Failed to update product' },
       { status: 500 }
@@ -185,12 +185,16 @@ export async function DELETE(
 
     // Delete images from GCS
     try {
-      for (const filename of product.imageFilenames) {
-        await deleteFromGCS(filename);
-        console.log('Successfully deleted image from GCS:', filename);
-      }
+      await Promise.all(
+        product.imageFilenames.map(async (filename) => {
+          try {
+            await deleteFromGCS(filename);
+          } catch (error) {
+            // Continue if deletion fails
+          }
+        })
+      );
     } catch (error) {
-      console.error('Error deleting images from GCS:', error);
       return NextResponse.json(
         { error: 'Failed to delete images from storage' },
         { status: 500 }
@@ -226,14 +230,12 @@ export async function DELETE(
 
       return NextResponse.json({ success: true });
     } catch (error) {
-      console.error('Error deleting product and related records:', error);
       return NextResponse.json(
         { error: 'Failed to delete product and related records' },
         { status: 500 }
       );
     }
   } catch (error) {
-    console.error('Error deleting product:', error);
     return NextResponse.json(
       { error: 'Failed to delete product' },
       { status: 500 }

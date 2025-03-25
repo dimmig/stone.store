@@ -14,6 +14,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/app/components/ui/select";
+import {useRouter} from 'next/navigation';
 
 interface Product {
     id: string;
@@ -48,6 +49,7 @@ export default function ProductsPage() {
     const [totalPages, setTotalPages] = useState(1);
     const [totalProducts, setTotalProducts] = useState(0);
     const productsPerPage = 10;
+    const router = useRouter();
 
     const fetchProducts = useCallback(async () => {
         setLoading(true);
@@ -249,7 +251,8 @@ export default function ProductsPage() {
                                             initial={{opacity: 0, y: 20}}
                                             animate={{opacity: 1, y: 0}}
                                             exit={{opacity: 0, y: -20}}
-                                            className="hover:bg-gray-50"
+                                            className="hover:bg-gray-50 cursor-pointer"
+                                            onClick={() => router.push(`/products/${product.id}`)}
                                         >
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
@@ -292,7 +295,7 @@ export default function ProductsPage() {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <div className="flex items-center justify-end gap-2">
+                                                <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                                                     <button
                                                         onClick={() => setEditingProduct(product.id)}
                                                         className="text-gray-600 hover:text-gray-900"

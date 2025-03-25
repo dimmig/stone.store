@@ -7,6 +7,7 @@ export interface Product {
   imageFilenames: string[];
   sizes: string[];
   colors: string[];
+  colorImageMapping: { [key: string]: number };
   category: string;
   stockQuantity: number;
   discount: number;
