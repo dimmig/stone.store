@@ -16,7 +16,6 @@ import {
   X,
   Home,
   Settings,
-  MessageSquare,
 } from "lucide-react";
 import { typography } from "../styles/design-system";
 import { signOut, useSession } from "next-auth/react";
@@ -28,13 +27,11 @@ const adminNavigation = [
   { name: "Orders", href: "/dashboard/orders", icon: ShoppingBag },
   { name: "Inventory", href: "/dashboard/products", icon: Package },
   { name: "Customer Base", href: "/dashboard/customers", icon: Users },
-  { name: "Chat", href: "/chat", icon: MessageSquare },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
 const userNavigation = [
   { name: "My Purchases", href: "/dashboard/orders", icon: ShoppingBag },
-  { name: "Chat", href: "/chat", icon: MessageSquare },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
