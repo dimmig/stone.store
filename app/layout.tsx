@@ -8,6 +8,7 @@ import {Providers} from './providers/Providers';
 import {ClientProviders} from './providers/ClientProviders';
 import {Toaster} from "sonner";
 import Footer from './components/layout/Footer';
+import { ChatWidget } from '@/components/chat/ChatWidget';
 
 const inter = Inter({subsets: ['latin']});
 
@@ -103,6 +104,7 @@ export default function RootLayout({
                 <Analytics />
             </Providers>
         </ClientProviders>
+        <ChatWidget />
         <Toaster position="top-center" richColors/>
         </body>
         </html>
