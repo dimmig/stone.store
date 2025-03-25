@@ -41,6 +41,7 @@ export default function ProductPage({params}: ProductPageProps) {
     const [selectedColor, setSelectedColor] = useState('');
     const [quantity, setQuantity] = useState(1);
     const [activeImage, setActiveImage] = useState(0);
+    const [colorImages, setColorImages] = useState<{[key: string]: number}>({});
 
     const {addToCart} = useCart();
     const {addToWishlist, removeFromWishlist, isInWishlist, items} = useWishlist();
@@ -78,18 +79,34 @@ export default function ProductPage({params}: ProductPageProps) {
                     throw new Error('Failed to fetch product');
                 }
                 const data = await response.json();
-                setProduct(data);
+                console.log('Product data:', data);
+                
+                // Handle nested 'set' objects in the mapping
+                let mapping = data.colorImageMapping;
+                while (mapping?.set && typeof mapping.set === 'object') {
+                    mapping = mapping.set;
+                }
+                console.log('Processed color mapping:', mapping);
+                
+                setProduct({
+                    ...data,
+                    colorImageMapping: mapping
+                });
                 setSelectedSize(data.sizes?.[0] || '');
                 setSelectedColor(data.colors?.[0] || '');
 
+                // Set initial active image based on the first color's mapping
+                if (mapping && data.colors?.[0] && typeof mapping[data.colors[0]] === 'number') {
+                    setActiveImage(mapping[data.colors[0]]);
+                }
+
                 // Preload all product images
-                data.imageUrls.forEach((url: string) => {
-                    const link = document.createElement('link');
-                    link.rel = 'preload';
-                    link.as = 'image';
-                    link.href = url;
-                    document.head.appendChild(link);
-                });
+                if (data.imageUrls) {
+                    data.imageUrls.forEach((url: string) => {
+                        const img = document.createElement('img');
+                        img.src = url;
+                    });
+                }
 
                 const relatedResponse = await fetch(`/api/products?category=${data.categoryId}&limit=4`);
                 if (relatedResponse.ok) {
@@ -100,11 +117,8 @@ export default function ProductPage({params}: ProductPageProps) {
                     // Preload related product images
                     filteredProducts.forEach((product: Product) => {
                         if (product.imageUrls?.[0]) {
-                            const link = document.createElement('link');
-                            link.rel = 'preload';
-                            link.as = 'image';
-                            link.href = product.imageUrls[0];
-                            document.head.appendChild(link);
+                            const img = document.createElement('img');
+                            img.src = product.imageUrls[0];
                         }
                     });
                 }
@@ -260,6 +274,29 @@ export default function ProductPage({params}: ProductPageProps) {
         }
     };
 
+    const handleColorSelect = (color: string) => {
+        console.log('Selected color:', color);
+        console.log('Raw color mapping:', product?.colorImageMapping);
+        
+        setSelectedColor(color);
+        if (product?.colorImageMapping) {
+            // Handle nested 'set' objects in the mapping
+            let mapping = product.colorImageMapping;
+            while (mapping?.set && typeof mapping.set === 'object') {
+                mapping = mapping.set;
+            }
+            
+            console.log('Processed color mapping:', mapping);
+            if (mapping && typeof mapping[color] === 'number') {
+                setImageLoading(true);
+                setActiveImage(mapping[color]);
+                setTimeout(() => {
+                    setImageLoading(false);
+                }, 300);
+            }
+        }
+    };
+
     return (
         <motion.div
             initial="initial"
@@ -290,23 +327,22 @@ export default function ProductPage({params}: ProductPageProps) {
                             className="aspect-[4/5] overflow-hidden rounded-2xl bg-gray-50 relative"
                         >
                             {imageLoading && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-gray-100/80 backdrop-blur-sm">
+                                <div className="absolute inset-0 z-10 flex items-center justify-center bg-gray-100/80 backdrop-blur-sm">
                                     <div className="flex flex-col items-center gap-4">
                                         <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-black" />
                                     </div>
                                 </div>
                             )}
                             <Image
+                                key={`${activeImage}-${selectedColor}`}
                                 src={product.imageUrls[activeImage]}
-                                alt={product.name}
+                                alt={`${product.name} - ${selectedColor}`}
                                 width={800}
                                 height={1000}
                                 quality={85}
                                 priority={true}
                                 className={`h-full w-full object-cover object-center transition-all duration-300 ${imageLoading ? 'scale-105 blur-sm' : 'scale-100 blur-0'}`}
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
-                                placeholder="blur"
-                                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDABQODxIPDRQSEBIXFRQdHx4eHRoaHSQtJSEkMjU1LS0yMi4qQEBALkE6Oz5DRVlLT01RW2NhYGBtcW1+f5Hh4f/2wBDARUXFyAcIHxISHz4qIyk+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj7/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                                 onLoadingComplete={() => setImageLoading(false)}
                             />
                         </motion.div>
@@ -322,6 +358,13 @@ export default function ProductPage({params}: ProductPageProps) {
                                     onClick={() => {
                                         setImageLoading(true);
                                         setActiveImage(index);
+                                        // Find and set the color that maps to this image
+                                        const colorForImage = Object.entries(product.colorImageMapping || {}).find(
+                                            ([_, imgIndex]) => imgIndex === index
+                                        )?.[0];
+                                        if (colorForImage) {
+                                            setSelectedColor(colorForImage);
+                                        }
                                     }}
                                     className={`relative aspect-square overflow-hidden rounded-lg ${
                                         activeImage === index ? 'ring-2 ring-black' : ''
@@ -334,8 +377,6 @@ export default function ProductPage({params}: ProductPageProps) {
                                         sizes="(max-width: 768px) 25vw, 10vw"
                                         quality={60}
                                         className="object-cover"
-                                        placeholder="blur"
-                                        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDABQODxIPDRQSEBIXFRQdHx4eHRoaHSQtJSEkMjU1LS0yMi4qQEBALkE6Oz5DRVlLT01RW2NhYGBtcW1+f5Hh4f/2wBDARUXFyAcIHxISHz4qIyk+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj7/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                                     />
                                 </motion.button>
                             ))}
@@ -392,7 +433,7 @@ export default function ProductPage({params}: ProductPageProps) {
                                 transition={{delay: 0.3}}
                                 className="mt-6"
                             >
-                                <p className="text-sm leading-relaxed text-gray-500">{product.description}</p>
+                                <p className="text-sm leading-relaxed text-gray-500 whitespace-pre-wrap">{product.description}</p>
                             </motion.div>
                         </motion.div>
 
@@ -453,40 +494,31 @@ export default function ProductPage({params}: ProductPageProps) {
                                 </div>
                             </motion.div>
 
-                            <motion.div variants={staggerContainer} className="mt-6 space-y-4">
+                            {/* Color Selection */}
+                            <div className="mt-6 space-y-4">
                                 <h3 className="text-sm font-medium text-gray-900">Color</h3>
-                                <div className="grid grid-cols-4 gap-3">
+                                <div className="flex flex-wrap gap-2">
                                     {product.colors.map((color) => (
-                                        <motion.button
+                                        <button
                                             key={color}
-                                            whileHover={{scale: 1.02}}
-                                            whileTap={{scale: 0.98}}
-                                            onClick={() => setSelectedColor(color)}
-                                            className={`group relative h-12 w-full overflow-hidden rounded-xl ring-offset-2 transition-all duration-200 hover:shadow-lg ${
+                                            onClick={() => handleColorSelect(color)}
+                                            className={`relative h-12 w-20 rounded-xl transition-all ${
                                                 selectedColor === color
                                                     ? 'ring-2 ring-black ring-offset-2'
                                                     : 'ring-1 ring-gray-200'
                                             }`}
+                                            style={{ backgroundColor: color }}
                                         >
-                                            <div
-                                                className="absolute inset-0 transition-opacity"
-                                                style={{backgroundColor: color.toLowerCase()}}
-                                            />
+                                            <span className="sr-only">{color}</span>
                                             {selectedColor === color && (
-                                                <motion.div
-                                                    initial={{opacity: 0, scale: 0.5}}
-                                                    animate={{opacity: 1, scale: 1}}
-                                                    className="absolute inset-0 flex items-center justify-center"
-                                                >
-                                                    <div className="rounded-full bg-white p-1 shadow-sm">
-                                                        <Check className="h-3 w-3 text-black"/>
-                                                    </div>
-                                                </motion.div>
+                                                <span className="absolute inset-0 flex items-center justify-center">
+                                                    <Check className="h-4 w-4 text-white" />
+                                                </span>
                                             )}
-                                        </motion.button>
+                                        </button>
                                     ))}
                                 </div>
-                            </motion.div>
+                            </div>
 
                             {/* Quantity Selector */}
                             <motion.div
@@ -882,7 +914,7 @@ export default function ProductPage({params}: ProductPageProps) {
                                             className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
                                             sizes="(max-width: 768px) 50vw, 25vw"
                                             placeholder="blur"
-                                            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDABQODxIPDRQSEBIXFRQdHx4eHRoaHSQtJSEkMjU1LS0yMi4qQEBALkE6Oz5DRVlLT01RW2NhYGBtcW1+f5Hh4f/2wBDARUXFyAcIHxISHz4qIyk+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj7/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                                            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDABQODxIPDRQSEBIXFRQdHx4eHRoaHSQtJSEkMjU1LS0yMi4qQEBALkE6Oz5DRVlLT01RW2NhYGBtcW1+f5Hh4f/2wBDARUXFyAcIHxISHz4qIyk+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj7/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                                             onLoadingComplete={() => setImageLoading(false)}
                                         />
                                     </div>

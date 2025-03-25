@@ -58,6 +58,7 @@ model Product {
   category      Category @relation(fields: [categoryId], references: [id])
   sizes         String[]
   colors        String[]
+  colorImageMapping Json @default("{}")
   discount      Int            @default(0)
   rating        Float          @default(4.5)
   stockQuantity Int

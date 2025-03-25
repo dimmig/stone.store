@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, forwardRef, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import Image from 'next/image';
 import { X, Upload, Plus } from 'lucide-react';
@@ -11,18 +11,26 @@ interface ImageUploadProps {
   uploadedImages: File[];
   maxFiles?: number;
   className?: string;
+  onImageClick?: (e: React.MouseEvent<HTMLImageElement>, index: number) => void;
+  onImageMouseMove?: (e: React.MouseEvent<HTMLImageElement>) => void;
 }
 
-export default function ImageUpload({
+const ImageUpload = forwardRef<HTMLImageElement, ImageUploadProps>(({
   onImageSelect,
   onImageRemove,
   currentImageUrls,
   uploadedImages,
   maxFiles = 5,
   className,
-}: ImageUploadProps) {
-  const [previews, setPreviews] = useState<string[]>(currentImageUrls);
+  onImageClick,
+  onImageMouseMove,
+}, ref) => {
+  const [previews, setPreviews] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    setPreviews(currentImageUrls);
+  }, [currentImageUrls]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles = acceptedFiles.slice(0, maxFiles - previews.length);
@@ -109,13 +117,18 @@ export default function ImageUpload({
 
         {(currentImageUrls.length > 0 || uploadedImages.length > 0) && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {currentImageUrls.map((url, index) => (
+            {currentImageUrls
+              .filter(url => url && url.trim() !== '')
+              .map((url, index) => (
               <div key={url} className="relative aspect-square">
                 <Image
+                  ref={index === 0 ? ref : undefined}
                   src={url}
                   alt={`Product image ${index + 1}`}
                   fill
-                  className="object-cover rounded-lg"
+                  className="object-cover rounded-lg cursor-pointer"
+                  onClick={(e) => onImageClick?.(e, index)}
+                  onMouseMove={onImageMouseMove}
                 />
                 <button
                   type="button"
@@ -126,17 +139,21 @@ export default function ImageUpload({
                 </button>
               </div>
             ))}
-            {uploadedImages.map((file, index) => (
+            {uploadedImages
+              .filter(file => file && file.size > 0)
+              .map((file, index) => (
               <div key={URL.createObjectURL(file)} className="relative aspect-square">
                 <Image
                   src={URL.createObjectURL(file)}
                   alt={`New product image ${index + 1}`}
                   fill
-                  className="object-cover rounded-lg"
+                  className="object-cover rounded-lg cursor-pointer"
+                  onClick={(e) => onImageClick?.(e, currentImageUrls.filter(url => url && url.trim() !== '').length + index)}
+                  onMouseMove={onImageMouseMove}
                 />
                 <button
                   type="button"
-                  onClick={() => onImageRemove(currentImageUrls.length + index)}
+                  onClick={() => onImageRemove(currentImageUrls.filter(url => url && url.trim() !== '').length + index)}
                   className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
                 >
                   <X className="h-4 w-4" />
@@ -148,4 +165,8 @@ export default function ImageUpload({
       </div>
     </div>
   );
-} 
+});
+
+ImageUpload.displayName = 'ImageUpload';
+
+export default ImageUpload; 
