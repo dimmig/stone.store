@@ -22,14 +22,14 @@ export function Header() {
                 <Logo href='/' className="flex-shrink-0"/>
 
                 {/* Navigation */}
-                <nav className="flex items-center space-x-6">
-                    <Link href="/store" className="hidden lg:block text-gray-600 hover:text-gray-900">
+                <nav className="flex items-center space-x-4 md:space-x-6">
+                    <Link href="/store" className="hidden md:block text-gray-600 hover:text-gray-900">
                         Store
                     </Link>
-                    <Link href="/collections" className="hidden lg:block text-gray-600 hover:text-gray-900">
+                    <Link href="/collections" className="hidden md:block text-gray-600 hover:text-gray-900">
                         Collections
                     </Link>
-                    <Link href={session?.user ? "/wishlist" : "/auth/signin"} className="relative hidden lg:block">
+                    <Link href={session?.user ? "/wishlist" : "/auth/signin"} className="relative">
                         <Heart className="h-6 w-6"/>
                         {wishlistItemCount > 0 && (
                             <span
