@@ -1456,7 +1456,7 @@ export default function StorePage() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 20 }}
                         onClick={scrollToTop}
-                        className="fixed bottom-6 right-6 z-50 rounded-full bg-black p-3 text-white shadow-lg hover:bg-gray-900 transition-colors duration-200"
+                        className="fixed bottom-20 right-5 z-50 rounded-full bg-black p-3 text-white shadow-lg hover:bg-gray-900 transition-colors duration-200"
                     >
                         <ChevronUp className="h-5 w-5" />
                     </motion.button>

@@ -180,9 +180,6 @@ export default function ProductPage({params}: ProductPageProps) {
 
         setIsAddingToCart(true);
         addToCart(product, quantity, selectedSize, selectedColor)
-            .then(() => {
-                toast.success('Added to cart successfully');
-            })
             .catch((error) => {
                 if (error instanceof Error) {
                     toast.error(error.message);
