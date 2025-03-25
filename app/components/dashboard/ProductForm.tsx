@@ -51,8 +51,8 @@ export default function ProductForm({productId, onClose, onSuccess}: ProductForm
     description: '',
     price: '',
     categoryId: '',
-    sizes: [],
-    colors: [],
+    sizes: [''],
+    colors: [''],
     stockQuantity: '',
     images: [],
     currentImageUrls: [],
@@ -65,8 +65,8 @@ export default function ProductForm({productId, onClose, onSuccess}: ProductForm
       description: '',
       price: '',
       categoryId: '',
-      sizes: [],
-      colors: [],
+      sizes: [''],
+      colors: [''],
       stockQuantity: '',
       images: [],
       currentImageUrls: [],
@@ -110,8 +110,8 @@ export default function ProductForm({productId, onClose, onSuccess}: ProductForm
         description: product.description,
         price: product.price.toString(),
         categoryId: product.categoryId,
-        sizes: product.sizes,
-        colors: product.colors,
+        sizes: product.sizes?.length > 0 ? product.sizes : [''],
+        colors: product.colors?.length > 0 ? product.colors : [''],
         stockQuantity: product.stockQuantity.toString(),
         images: [],
         currentImageUrls: product.imageUrls || [],
@@ -129,13 +129,23 @@ export default function ProductForm({productId, onClose, onSuccess}: ProductForm
     e.preventDefault();
     setLoading(true);
 
+    // Filter out empty values from sizes and colors arrays
+    const validSizes = formData.sizes.filter(size => size.trim() !== '');
+    const validColors = formData.colors.filter(color => color.trim() !== '');
+
+    if (validSizes.length === 0 || validColors.length === 0) {
+      toast.error('Please add at least one size and one color');
+      setLoading(false);
+      return;
+    }
+
     const formDataToSend = new FormData();
     formDataToSend.append('name', formData.name);
     formDataToSend.append('description', formData.description);
     formDataToSend.append('price', formData.price);
     formDataToSend.append('categoryId', formData.categoryId);
-    formDataToSend.append('sizes', formData.sizes.join(','));
-    formDataToSend.append('colors', formData.colors.join(','));
+    formDataToSend.append('sizes', validSizes.join(','));
+    formDataToSend.append('colors', validColors.join(','));
     formDataToSend.append('stockQuantity', formData.stockQuantity);
     formDataToSend.append('currentImageUrls', JSON.stringify(formData.currentImageUrls));
     formDataToSend.append('currentImageFilenames', JSON.stringify(formData.currentImageFilenames));
