@@ -319,24 +319,62 @@ export default function ProductPage({params}: ProductPageProps) {
                         variants={fadeIn}
                         className="overflow-hidden rounded-3xl bg-white p-6 shadow-sm"
                     >
-                        <ImageCarousel
-                            images={product.imageUrls}
-                            aspectRatio="portrait"
-                            className="w-full"
-                            showArrows={true}
-                            showDots={true}
-                            onImageChange={(index) => {
-                                setImageLoading(true);
-                                setActiveImage(index);
-                                // Find and set the color that maps to this image
-                                const colorForImage = Object.entries(product.colorImageMapping || {}).find(
-                                    ([_, imgIndex]) => imgIndex === index
-                                )?.[0];
-                                if (colorForImage) {
-                                    setSelectedColor(colorForImage);
-                                }
-                            }}
-                        />
+                        <div className="grid gap-4 lg:grid-cols-5">
+                            {/* Main Image Carousel */}
+                            <div className="lg:col-span-4">
+                                <ImageCarousel
+                                    images={product.imageUrls}
+                                    aspectRatio="portrait"
+                                    className="w-full"
+                                    showArrows={true}
+                                    showDots={true}
+                                    currentIndex={activeImage}
+                                    onImageChange={(index) => {
+                                        setActiveImage(index);
+                                        // Find and set the color that maps to this image
+                                        const colorForImage = Object.entries(product.colorImageMapping || {}).find(
+                                            ([_, imgIndex]) => imgIndex === index
+                                        )?.[0];
+                                        if (colorForImage) {
+                                            setSelectedColor(colorForImage);
+                                        }
+                                    }}
+                                />
+                            </div>
+
+                            {/* Thumbnail Gallery - Desktop Only */}
+                            <div className="hidden lg:flex lg:flex-col gap-4">
+                                {product.imageUrls.map((image, index) => (
+                                    <motion.button
+                                        key={index}
+                                        onClick={() => {
+                                            setActiveImage(index);
+                                            const colorForImage = Object.entries(product.colorImageMapping || {}).find(
+                                                ([_, imgIndex]) => imgIndex === index
+                                            )?.[0];
+                                            if (colorForImage) {
+                                                setSelectedColor(colorForImage);
+                                            }
+                                        }}
+                                        className={`relative aspect-square overflow-hidden rounded-xl border-2 transition-all ${
+                                            activeImage === index
+                                                ? 'border-black ring-2 ring-black ring-offset-2'
+                                                : 'border-transparent hover:border-gray-200'
+                                        }`}
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                    >
+                                        <Image
+                                            src={image}
+                                            alt={`Product image ${index + 1}`}
+                                            fill
+                                            className="object-cover"
+                                            sizes="(max-width: 768px) 100vw, 20vw"
+                                        />
+                                    </motion.button>
+                                ))}
+                            </div>
+                        </div>
                     </motion.div>
 
                     {/* Product Info */}
