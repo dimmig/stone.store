@@ -10,6 +10,7 @@ import {Product} from '@/types';
 import {useSession} from 'next-auth/react';
 import {toast} from 'sonner';
 import { useUserStore } from '@/store/user-store';
+import { ImageCarousel } from '@/app/components/ui/image-carousel';
 
 interface ProductPageProps {
     params: { id: string };
@@ -275,8 +276,6 @@ export default function ProductPage({params}: ProductPageProps) {
     };
 
     const handleColorSelect = (color: string) => {
-        console.log('Selected color:', color);
-        console.log('Raw color mapping:', product?.colorImageMapping);
         
         setSelectedColor(color);
         if (product?.colorImageMapping) {
@@ -320,67 +319,24 @@ export default function ProductPage({params}: ProductPageProps) {
                         variants={fadeIn}
                         className="overflow-hidden rounded-3xl bg-white p-6 shadow-sm"
                     >
-                        <motion.div
-                            initial={{scale: 0.95, opacity: 0}}
-                            animate={{scale: 1, opacity: 1}}
-                            transition={{duration: 0.5}}
-                            className="aspect-[4/5] overflow-hidden rounded-2xl bg-gray-50 relative"
-                        >
-                            {imageLoading && (
-                                <div className="absolute inset-0 z-10 flex items-center justify-center bg-gray-100/80 backdrop-blur-sm">
-                                    <div className="flex flex-col items-center gap-4">
-                                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-black" />
-                                    </div>
-                                </div>
-                            )}
-                            <Image
-                                key={`${activeImage}-${selectedColor}`}
-                                src={product.imageUrls[activeImage]}
-                                alt={`${product.name} - ${selectedColor}`}
-                                width={800}
-                                height={1000}
-                                quality={85}
-                                priority={true}
-                                className={`h-full w-full object-cover object-center transition-all duration-300 ${imageLoading ? 'scale-105 blur-sm' : 'scale-100 blur-0'}`}
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 800px"
-                                onLoadingComplete={() => setImageLoading(false)}
-                            />
-                        </motion.div>
-
-                        {/* Thumbnail Gallery */}
-                        <motion.div
-                            variants={staggerContainer}
-                            className="mt-6 grid grid-cols-4 gap-4"
-                        >
-                            {product.imageUrls.map((image: string, index: number) => (
-                                <motion.button
-                                    key={index}
-                                    onClick={() => {
-                                        setImageLoading(true);
-                                        setActiveImage(index);
-                                        // Find and set the color that maps to this image
-                                        const colorForImage = Object.entries(product.colorImageMapping || {}).find(
-                                            ([_, imgIndex]) => imgIndex === index
-                                        )?.[0];
-                                        if (colorForImage) {
-                                            setSelectedColor(colorForImage);
-                                        }
-                                    }}
-                                    className={`relative aspect-square overflow-hidden rounded-lg ${
-                                        activeImage === index ? 'ring-2 ring-black' : ''
-                                    }`}
-                                >
-                                    <Image
-                                        src={image}
-                                        alt={`${product.name} - Image ${index + 1}`}
-                                        fill
-                                        sizes="(max-width: 768px) 25vw, 10vw"
-                                        quality={60}
-                                        className="object-cover"
-                                    />
-                                </motion.button>
-                            ))}
-                        </motion.div>
+                        <ImageCarousel
+                            images={product.imageUrls}
+                            aspectRatio="portrait"
+                            className="w-full"
+                            showArrows={true}
+                            showDots={true}
+                            onImageChange={(index) => {
+                                setImageLoading(true);
+                                setActiveImage(index);
+                                // Find and set the color that maps to this image
+                                const colorForImage = Object.entries(product.colorImageMapping || {}).find(
+                                    ([_, imgIndex]) => imgIndex === index
+                                )?.[0];
+                                if (colorForImage) {
+                                    setSelectedColor(colorForImage);
+                                }
+                            }}
+                        />
                     </motion.div>
 
                     {/* Product Info */}

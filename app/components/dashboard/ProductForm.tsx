@@ -76,32 +76,17 @@ const validateColorMapping = (mapping: ColorMappingType, colors: string[], image
   
   // Handle nested structure
   const actualMapping = 'set' in mapping ? mapping.set : mapping;
-  const mappedColors = Object.keys(actualMapping);
   
-  // All colors should have a mapping
-  if (validColors.length !== mappedColors.length) {
-    console.log('Color count mismatch:', { validColors, mappedColors });
-    return false;
-  }
-  
-  // All mapped colors should exist in the colors array
-  if (!mappedColors.every(color => validColors.includes(color))) {
-    console.log('Invalid mapped colors:', { mappedColors, validColors });
-    return false;
-  }
-  
-  // All image indices should be valid
-  if (!Object.values(actualMapping).every(index => {
-    const isValid = index >= 0 && index < imageCount;
+  // Only validate that image indices are valid numbers within range
+  const hasInvalidIndex = Object.values(actualMapping).some(index => {
+    const isValid = typeof index === 'number' && index >= 0 && index < imageCount;
     if (!isValid) {
       console.log('Invalid image index:', { index, imageCount });
     }
-    return isValid;
-  })) {
-    return false;
-  }
+    return !isValid;
+  });
   
-  return true;
+  return !hasInvalidIndex;
 };
 
 // Add helper function to update color mapping
@@ -113,21 +98,18 @@ const updateColorMapping = (
 ): ColorMapping => {
   // Handle nested structure
   const actualMapping = 'set' in currentMapping ? currentMapping.set : currentMapping;
+  
+  // Create new mapping object
   const newMapping: ColorMapping = {};
   
-  // Copy existing mappings
-  Object.entries(actualMapping).forEach(([key, value]) => {
-    newMapping[key] = value;
-  });
-  
-  // Remove any existing mapping for this color
-  Object.keys(newMapping).forEach(key => {
-    if (newMapping[key] === imageIndex) {
-      delete newMapping[key];
+  // Copy only mappings that don't point to the current image index
+  Object.entries(actualMapping).forEach(([existingColor, mappedIndex]) => {
+    if (typeof mappedIndex === 'number' && mappedIndex !== imageIndex) {
+      newMapping[existingColor] = mappedIndex;
     }
   });
   
-  // Add new mapping
+  // Add the new color mapping
   newMapping[color] = imageIndex;
   
   return newMapping;
