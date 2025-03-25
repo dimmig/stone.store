@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import {ShoppingCart, Heart, User, MessageSquare} from 'lucide-react';
+import {ShoppingCart, Heart, User} from 'lucide-react';
 import {useSession} from 'next-auth/react';
 import {SignInButton} from '../auth/SignInButton';
 import {UserAccountNav} from '../auth/UserAccountNav';
@@ -29,11 +29,6 @@ export function Header() {
                     <Link href="/collections" className="hidden lg:block text-gray-600 hover:text-gray-900">
                         Collections
                     </Link>
-                    {session?.user && (
-                        <Link href="/chat" className="hidden lg:block text-gray-600 hover:text-gray-900">
-                            <MessageSquare className="h-6 w-6" />
-                        </Link>
-                    )}
                     <Link href={session?.user ? "/wishlist" : "/auth/signin"} className="relative hidden lg:block">
                         <Heart className="h-6 w-6"/>
                         {wishlistItemCount > 0 && (

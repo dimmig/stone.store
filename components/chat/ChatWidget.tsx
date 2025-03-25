@@ -52,7 +52,7 @@ export function ChatWidget() {
       const response = await fetch('/api/chat/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: 'New Chat' }),
+        body: JSON.stringify({}),
       });
       if (!response.ok) return null;
       const data = await response.json();
