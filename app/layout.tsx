@@ -29,6 +29,9 @@ export const metadata: Metadata = {
     alternates: {
         canonical: 'https://stone-store.app',
     },
+    other: {
+        'fl-verify': 'a6c47674034a632b9efd21d8e889d253',
+    },
     openGraph: {
         type: 'website',
         locale: 'en_US',
@@ -52,12 +55,6 @@ export const metadata: Metadata = {
         description: 'Discover a curated collection of premium products at STONE.STORE. Shop the latest trends with fast delivery and excellent customer service.',
         images: ['https://stone-store.app/images/hero.jpg'],
         creator: '@stonestore',
-    },
-    other: {
-        'og:site_name': 'STONE.STORE',
-        'og:image:width': '1200',
-        'og:image:height': '630',
-        'og:image:type': 'image/jpeg',
     },
     icons: {
         icon: [
