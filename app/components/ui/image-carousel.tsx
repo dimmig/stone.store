@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -11,13 +11,9 @@ interface ImageCarouselProps {
   className?: string;
   showArrows?: boolean;
   showDots?: boolean;
+  currentIndex?: number;
   onImageChange?: (index: number) => void;
 }
-
-const swipeConfidenceThreshold = 10000;
-const swipePower = (offset: number, velocity: number) => {
-  return Math.abs(offset) * velocity;
-};
 
 export function ImageCarousel({
   images,
@@ -25,17 +21,36 @@ export function ImageCarousel({
   className = '',
   showArrows = true,
   showDots = true,
+  currentIndex,
   onImageChange
 }: ImageCarouselProps) {
-  const [[page, direction], setPage] = useState([0, 0]);
-  const [isDragging, setIsDragging] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(currentIndex || 0);
+  const [isAnimating, setIsAnimating] = useState(false);
 
-  const imageIndex = Math.abs(page % images.length);
+  useEffect(() => {
+    if (currentIndex !== undefined && currentIndex !== activeIndex) {
+      setActiveIndex(currentIndex);
+    }
+  }, [currentIndex]);
 
-  const paginate = (newDirection: number) => {
-    const newPage = page + newDirection;
-    setPage([newPage, newDirection]);
-    onImageChange?.(Math.abs(newPage % images.length));
+  const goToImage = (index: number) => {
+    if (isAnimating) return;
+    setIsAnimating(true);
+    setActiveIndex(index);
+    onImageChange?.(index);
+    setTimeout(() => setIsAnimating(false), 500);
+  };
+
+  const nextImage = () => {
+    if (isAnimating) return;
+    const nextIndex = (activeIndex + 1) % images.length;
+    goToImage(nextIndex);
+  };
+
+  const previousImage = () => {
+    if (isAnimating) return;
+    const prevIndex = (activeIndex - 1 + images.length) % images.length;
+    goToImage(prevIndex);
   };
 
   const aspectRatioClasses = {
@@ -44,81 +59,46 @@ export function ImageCarousel({
     landscape: 'aspect-[4/3]'
   };
 
-  const variants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 1000 : -1000,
-      opacity: 0
-    }),
-    center: {
-      zIndex: 1,
-      x: 0,
-      opacity: 1
-    },
-    exit: (direction: number) => ({
-      zIndex: 0,
-      x: direction < 0 ? 1000 : -1000,
-      opacity: 0
-    })
-  };
-
-  const swipeConfidenceThreshold = 10000;
-  const swipePower = (offset: number, velocity: number) => {
-    return Math.abs(offset) * velocity;
-  };
-
   return (
-    <div className={`relative overflow-hidden rounded-2xl ${aspectRatioClasses[aspectRatio]} ${className}`}>
-      <AnimatePresence initial={false} custom={direction}>
-        <motion.div
-          key={page}
-          custom={direction}
-          variants={variants}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          transition={{
-            x: { type: "spring", stiffness: 300, damping: 30 },
-            opacity: { duration: 0.2 }
-          }}
-          drag="x"
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={1}
-          onDragStart={() => setIsDragging(true)}
-          onDragEnd={(e, { offset, velocity }) => {
-            setIsDragging(false);
-            const swipe = swipePower(offset.x, velocity.x);
-
-            if (swipe < -swipeConfidenceThreshold) {
-              paginate(1);
-            } else if (swipe > swipeConfidenceThreshold) {
-              paginate(-1);
-            }
-          }}
-          className="absolute inset-0 w-full h-full"
-        >
-          <Image
-            src={images[imageIndex]}
-            alt={`Image ${imageIndex + 1}`}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            priority={imageIndex === 0}
-          />
-        </motion.div>
-      </AnimatePresence>
+    <div 
+      className={`group relative overflow-hidden rounded-2xl ${aspectRatioClasses[aspectRatio]} ${className}`}
+    >
+      <div className="relative h-full w-full">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeIndex}
+            initial={{ opacity: 0, x: 0 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 0 }}
+            transition={{ duration: 0.3 }}
+            className="absolute inset-0"
+          >
+            <Image
+              src={images[activeIndex]}
+              alt={`Image ${activeIndex + 1}`}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              priority={activeIndex === 0}
+            />
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
       {/* Navigation Arrows */}
       {showArrows && images.length > 1 && (
         <>
           <button
-            className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 text-gray-900 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
-            onClick={() => !isDragging && paginate(-1)}
+            onClick={previousImage}
+            className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-gray-900 opacity-0 shadow-md transition-all hover:bg-white hover:shadow-lg group-hover:opacity-100 md:opacity-100"
+            disabled={isAnimating}
           >
             <ChevronLeft className="h-6 w-6" />
           </button>
           <button
-            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/80 text-gray-900 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
-            onClick={() => !isDragging && paginate(1)}
+            onClick={nextImage}
+            className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-gray-900 opacity-0 shadow-md transition-all hover:bg-white hover:shadow-lg group-hover:opacity-100 md:opacity-100"
+            disabled={isAnimating}
           >
             <ChevronRight className="h-6 w-6" />
           </button>
@@ -127,20 +107,17 @@ export function ImageCarousel({
 
       {/* Navigation Dots */}
       {showDots && images.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
+        <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-black/20 px-3 py-1.5 backdrop-blur-sm">
           {images.map((_, index) => (
             <button
               key={index}
-              className={`w-2 h-2 rounded-full transition-all ${
-                index === imageIndex
-                  ? 'bg-white w-4'
-                  : 'bg-white/50 hover:bg-white/75'
+              onClick={() => goToImage(index)}
+              disabled={isAnimating}
+              className={`h-2 rounded-full transition-all ${
+                index === activeIndex
+                  ? 'w-4 bg-white'
+                  : 'w-2 bg-white/50 hover:bg-white/75'
               }`}
-              onClick={() => {
-                const direction = index - imageIndex;
-                setPage([index, direction]);
-                onImageChange?.(index);
-              }}
             />
           ))}
         </div>
