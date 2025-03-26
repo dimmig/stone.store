@@ -17,6 +17,11 @@ import {
   LineChart,
   ChevronRight,
   Minus,
+  Target,
+  Clock,
+  RefreshCw,
+  UserPlus,
+  Percent,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -54,79 +59,92 @@ export default function DashboardPage() {
     revenueTrend: 0,
     customerTrend: 0,
     aovTrend: 0,
+    conversionRate: 0,
+    conversionRateTrend: 0,
+    customerRetentionRate: 0,
+    customerRetentionTrend: 0,
+    topProducts: [],
+    recentCustomers: 0,
+    recentCustomersTrend: 0,
+    averageOrderProcessingTime: 0,
+    orderProcessingTimeTrend: 0,
   });
   const [recentOrders, setRecentOrders] = useState([]);
   const [recentCustomers, setRecentCustomers] = useState([]);
   const [timeRange, setTimeRange] = useState("week"); // 'day', 'week', 'month', 'year'
   const [revenueData, setRevenueData] = useState([]);
   const [orderStatusData, setOrderStatusData] = useState([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const fetchDashboardData = async () => {
+    try {
+      setIsLoading(true);
+      const [
+        statsResponse,
+        ordersResponse,
+        customersResponse,
+        revenueResponse,
+      ] = await Promise.all([
+        fetch("/api/dashboard/stats"),
+        fetch("/api/orders/recent"),
+        fetch("/api/users/recent"),
+        fetch(`/api/dashboard/revenue?timeRange=${timeRange}`),
+      ]);
+
+      if (
+        !statsResponse.ok ||
+        !ordersResponse.ok ||
+        !customersResponse.ok ||
+        !revenueResponse.ok
+      ) {
+        throw new Error("Failed to fetch dashboard data");
+      }
+
+      const statsData = await statsResponse.json();
+      const ordersData = await ordersResponse.json();
+      const customersData = await customersResponse.json();
+      const revenueData = await revenueResponse.json();
+
+      console.log("CUSTOMERS ---------", customersData);
+
+      setStats(statsData);
+      setRecentOrders(ordersData);
+      setRecentCustomers(customersData);
+
+      // Process revenue data for the chart
+      setRevenueData(revenueData);
+
+      // Process order status data for the pie chart
+      const orderStatuses = ordersData.reduce((acc, order) => {
+        acc[order.status] = (acc[order.status] || 0) + 1;
+        return acc;
+      }, {});
+
+      const totalOrders = ordersData.length;
+      const processedOrderStatusData = Object.entries(orderStatuses).map(
+        ([status, count]) => ({
+          name: status.charAt(0).toUpperCase() + status.slice(1),
+          value: Math.round((count / totalOrders) * 100),
+          count: count,
+        })
+      );
+      setOrderStatusData(processedOrderStatusData);
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setIsLoading(true);
-        const [
-          statsResponse,
-          ordersResponse,
-          customersResponse,
-          revenueResponse,
-        ] = await Promise.all([
-          fetch("/api/dashboard/stats"),
-          fetch("/api/orders/recent"),
-          fetch("/api/users/recent"),
-          fetch(`/api/dashboard/revenue?timeRange=${timeRange}`),
-        ]);
-
-        if (
-          !statsResponse.ok ||
-          !ordersResponse.ok ||
-          !customersResponse.ok ||
-          !revenueResponse.ok
-        ) {
-          throw new Error("Failed to fetch dashboard data");
-        }
-
-        const statsData = await statsResponse.json();
-        const ordersData = await ordersResponse.json();
-        const customersData = await customersResponse.json();
-        const revenueData = await revenueResponse.json();
-
-        console.log("CUSTOMERS ---------", customersData);
-
-        setStats(statsData);
-        setRecentOrders(ordersData);
-        setRecentCustomers(customersData);
-
-        // Process revenue data for the chart
-        const processedRevenueData = revenueData.map((item) => ({
-          name: item.date,
-          value: item.revenue,
-        }));
-        setRevenueData(processedRevenueData);
-
-        // Process order status data for the pie chart
-        const orderStatuses = ordersData.reduce((acc, order) => {
-          acc[order.status] = (acc[order.status] || 0) + 1;
-          return acc;
-        }, {});
-
-        const totalOrders = ordersData.length;
-        const processedOrderStatusData = Object.entries(orderStatuses).map(
-          ([status, count]) => ({
-            name: status.charAt(0).toUpperCase() + status.slice(1),
-            value: Math.round((count / totalOrders) * 100),
-          })
-        );
-        setOrderStatusData(processedOrderStatusData);
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchDashboardData();
   }, [timeRange]);
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    fetchDashboardData();
+  };
 
   const COLORS = ["#FFB800", "#4F46E5", "#10B981", "#EF4444"];
 
@@ -150,7 +168,16 @@ export default function DashboardPage() {
             Welcome back, {session?.user?.name}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+          >
+            <RefreshCw
+              className={`h-5 w-5 ${isRefreshing ? "animate-spin" : ""}`}
+            />
+          </button>
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
@@ -168,31 +195,79 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Total Revenue"
-          value={`$${stats.totalRevenue.toLocaleString()}`}
+          value={stats.totalRevenue.toLocaleString("en-US", {
+            style: "currency",
+            currency: "USD",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
           trend={stats.revenueTrend}
           icon={DollarSign}
           color="accent-gold"
         />
         <MetricCard
           title="Total Orders"
-          value={stats.totalOrders.toString()}
+          value={stats.totalOrders.toLocaleString()}
           trend={stats.orderTrend}
           icon={ShoppingBag}
           color="accent-silver"
+          suffix=" orders"
         />
         <MetricCard
           title="Total Customers"
-          value={stats.totalCustomers.toString()}
+          value={stats.totalCustomers.toLocaleString()}
           trend={stats.customerTrend}
           icon={Users}
           color="accent-bronze"
+          suffix=" customers"
         />
         <MetricCard
           title="Average Order Value"
-          value={`$${stats.averageOrderValue.toFixed(2)}`}
+          value={stats.averageOrderValue.toLocaleString("en-US", {
+            style: "currency",
+            currency: "USD",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
           trend={stats.aovTrend}
           icon={TrendingUp}
           color="accent-gold"
+        />
+      </div>
+
+      {/* Performance Metrics */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <MetricCard
+          title="Conversion Rate"
+          value={`${stats.conversionRate.toFixed(2)}`}
+          trend={stats.conversionRateTrend}
+          icon={Percent}
+          color="accent-gold"
+          suffix="%"
+        />
+        <MetricCard
+          title="Customer Retention"
+          value={`${stats.customerRetentionRate.toFixed(2)}`}
+          trend={stats.customerRetentionTrend}
+          icon={Target}
+          color="accent-silver"
+          suffix="%"
+        />
+        <MetricCard
+          title="Recent Customers"
+          value={stats.recentCustomers.toLocaleString()}
+          trend={stats.recentCustomersTrend}
+          icon={UserPlus}
+          color="accent-bronze"
+          suffix=" customers"
+        />
+        <MetricCard
+          title="Avg. Processing Time"
+          value={stats.averageOrderProcessingTime.toLocaleString()}
+          trend={stats.orderProcessingTimeTrend}
+          icon={Clock}
+          color="accent-gold"
+          suffix=" days"
         />
       </div>
 
@@ -228,10 +303,11 @@ export default function DashboardPage() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
                 <XAxis
-                  dataKey="name"
+                  dataKey="date"
                   stroke="#6B7280"
                   fontSize={12}
                   tick={{ fill: "#6B7280" }}
+                  interval={timeRange === "day" ? 2 : 0}
                 />
                 <YAxis
                   stroke="#6B7280"
@@ -255,7 +331,7 @@ export default function DashboardPage() {
                   }}
                 />
                 <Bar
-                  dataKey="value"
+                  dataKey="revenue"
                   fill="url(#colorRevenue)"
                   radius={[4, 4, 0, 0]}
                 />
@@ -319,7 +395,10 @@ export default function DashboardPage() {
                       boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                       padding: "0.75rem",
                     }}
-                    formatter={(value) => [`${Math.round(value)}%`, "Orders"]}
+                    formatter={(value, name, props) => [
+                      `${props.payload.count} orders (${Math.round(value)}%)`,
+                      name,
+                    ]}
                     labelStyle={{
                       color: "#1F2937",
                       fontWeight: 500,
@@ -351,7 +430,7 @@ export default function DashboardPage() {
                         {entry.name}
                       </span>
                       <span className="text-sm font-medium text-gray-600">
-                        {Math.round(entry.value)}%
+                        {entry.count} orders ({Math.round(entry.value)}%)
                       </span>
                     </div>
                     <div className="w-full bg-gray-100 rounded-full h-2">
@@ -373,54 +452,47 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Recent Activity & Alerts */}
+      {/* Top Products & Recent Activity */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Recent Orders */}
+        {/* Top Products */}
         <div className="rounded-2xl bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="text-lg font-semibold text-gray-900">
-                Recent Orders
+                Top Products
               </h3>
               <p className="mt-1 text-sm text-gray-500">
-                Latest customer orders
+                Best performing products
               </p>
             </div>
             <Link
-              href="/dashboard/orders"
+              href="/dashboard/products"
               className="text-sm font-medium text-gray-600 hover:text-gray-900 flex items-center gap-1"
             >
-              View All Orders
+              View All Products
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
           <div className="space-y-4">
-            {recentOrders.map((order) => (
+            {stats.topProducts.map((product, index) => (
               <motion.div
-                key={order.id}
+                key={product.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
                 className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
               >
-                <div className="flex items-center space-x-4">
-                  <div className="p-2 bg-gray-900/10 rounded-full">
-                    <ShoppingBag className="h-5 w-5 text-gray-900" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Order #{order.id}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(order.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">
+                    {product.name}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {product.quantitySold} units sold
+                  </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">
-                    ${order.total.toFixed(2)}
-                  </p>
-                  <p className={`text-xs ${getStatusColor(order.status)}`}>
-                    {order.status}
+                  <p className="text-sm font-medium text-accent-gold">
+                    ${product.totalSales.toLocaleString()}
                   </p>
                 </div>
               </motion.div>
@@ -428,7 +500,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Alerts & Notifications */}
+        {/* Recent Activity & Alerts */}
         <div className="space-y-6">
           {/* Pending Orders Alert */}
           <div className="rounded-2xl bg-white p-6 shadow-sm">
@@ -455,31 +527,36 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="space-y-4">
-              {recentOrders
-                .filter((order) => order.status === "processing")
-                .slice(0, 3)
-                .map((order) => (
-                  <motion.div
-                    key={order.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Order #{order.id}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {new Date(order.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-gray-900">
-                        ${order.total.toFixed(2)}
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
+              {recentOrders.slice(0, 5).map((order) => (
+                <motion.div
+                  key={order.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      Order #{order.id.slice(0, 8)}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p
+                      className={`text-sm font-medium ${getStatusColor(
+                        order.status
+                      )}`}
+                    >
+                      {order.status.charAt(0).toUpperCase() +
+                        order.status.slice(1)}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      ${order.total.toFixed(2)}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </div>
 
@@ -538,9 +615,7 @@ export default function DashboardPage() {
                       <p className="text-sm font-medium text-gray-900">
                         {product.name}
                       </p>
-                      <p className="text-xs text-gray-500">
-                        SKU: {product.sku}
-                      </p>
+                      <p className="text-xs text-gray-500">SKU: {product.id}</p>
                     </div>
                     <div className="text-right">
                       <p className={`text-sm font-medium ${statusColor}`}>
@@ -561,7 +636,15 @@ export default function DashboardPage() {
   );
 }
 
-function MetricCard({ title, value, trend, icon: Icon, color }) {
+function MetricCard({
+  title,
+  value,
+  trend = 0,
+  icon: Icon,
+  color,
+  prefix = "",
+  suffix = "",
+}) {
   const isPositive = trend > 0;
   const isZero = trend === 0;
   const trendColor = isZero
@@ -591,11 +674,15 @@ function MetricCard({ title, value, trend, icon: Icon, color }) {
         >
           <TrendIcon className={`h-4 w-4 ${trendColor}`} />
           <span className={`text-xs font-medium ${trendColor}`}>
-            {Math.abs(trend)}%
+            {trend ? `${Math.abs(trend).toFixed(1)}%` : "0%"}
           </span>
         </div>
       </div>
-      <h3 className="text-2xl font-bold text-gray-900 mb-1">{value}</h3>
+      <h3 className="text-2xl font-bold text-gray-900 mb-1">
+        {prefix}
+        {value}
+        {suffix}
+      </h3>
       <p className="text-sm text-gray-500">{title}</p>
     </motion.div>
   );

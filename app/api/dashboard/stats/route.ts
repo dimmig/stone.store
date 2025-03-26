@@ -21,6 +21,20 @@ interface DashboardStats {
   revenueTrend: number;
   customerTrend: number;
   aovTrend: number;
+  conversionRate: number;
+  conversionRateTrend: number;
+  customerRetentionRate: number;
+  customerRetentionTrend: number;
+  topProducts: Array<{
+    id: string;
+    name: string;
+    totalSales: number;
+    quantitySold: number;
+  }>;
+  recentCustomers: number;
+  recentCustomersTrend: number;
+  averageOrderProcessingTime: number;
+  orderProcessingTimeTrend: number;
 }
 
 export async function GET() {
@@ -59,7 +73,7 @@ export async function GET() {
     const lowStockProducts = await prisma.product.findMany({
       where: {
         stockQuantity: {
-          lte: 5, // Consider items with 5 or fewer units as low stock
+          lte: 5,
         },
       },
       select: {
@@ -73,12 +87,22 @@ export async function GET() {
     // Calculate trends (comparing with previous period)
     const now = new Date();
     const currentPeriodStart = new Date();
-    currentPeriodStart.setDate(now.getDate() - 30); // Last 30 days
+    currentPeriodStart.setDate(now.getDate() - 30);
     
     const previousPeriodStart = new Date(currentPeriodStart);
-    previousPeriodStart.setDate(previousPeriodStart.getDate() - 30); // 30 days before that
+    previousPeriodStart.setDate(previousPeriodStart.getDate() - 30);
 
-    const [currentPeriodOrders, previousPeriodOrders, currentPeriodCustomers, previousPeriodCustomers] = await Promise.all([
+    const [
+      currentPeriodOrders,
+      previousPeriodOrders,
+      currentPeriodCustomers,
+      previousPeriodCustomers,
+      currentPeriodVisitors,
+      previousPeriodVisitors,
+      topProducts,
+      recentCustomers,
+      orderProcessingTimes
+    ] = await Promise.all([
       // Current period orders
       prisma.order.findMany({
         where: {
@@ -86,6 +110,9 @@ export async function GET() {
             gte: currentPeriodStart,
             lte: now,
           },
+        },
+        include: {
+          items: true,
         },
       }),
       // Previous period orders
@@ -95,6 +122,9 @@ export async function GET() {
             gte: previousPeriodStart,
             lt: currentPeriodStart,
           },
+        },
+        include: {
+          items: true,
         },
       }),
       // Current period customers
@@ -117,8 +147,51 @@ export async function GET() {
           },
         },
       }),
+      // Current period visitors (simulated)
+      Promise.resolve(1000),
+      // Previous period visitors (simulated)
+      Promise.resolve(800),
+      // Top products by sales
+      prisma.orderItem.groupBy({
+        by: ['productId'],
+        _sum: {
+          quantity: true,
+          price: true,
+        },
+        orderBy: {
+          _sum: {
+            price: 'desc',
+          },
+        },
+        take: 5,
+      }),
+      // Recent customers (last 7 days)
+      prisma.user.count({
+        where: {
+          role: 'USER',
+          createdAt: {
+            gte: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
+            lte: now,
+          },
+        },
+      }),
+      // Order processing times
+      prisma.order.findMany({
+        where: {
+          status: 'delivered',
+          createdAt: {
+            gte: currentPeriodStart,
+            lte: now,
+          },
+        },
+        select: {
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
     ]);
 
+    // Calculate basic trends
     const currentPeriodRevenue = currentPeriodOrders.reduce((sum, order) => sum + order.total, 0);
     const previousPeriodRevenue = previousPeriodOrders.reduce((sum, order) => sum + order.total, 0);
     const currentPeriodAOV = currentPeriodOrders.length > 0 ? currentPeriodRevenue / currentPeriodOrders.length : 0;
@@ -140,6 +213,104 @@ export async function GET() {
       ? ((currentPeriodAOV - previousPeriodAOV) / previousPeriodAOV) * 100
       : currentPeriodAOV > 0 ? 100 : 0;
 
+    // Calculate conversion rates
+    const currentConversionRate = (currentPeriodOrders.length / currentPeriodVisitors) * 100;
+    const previousConversionRate = (previousPeriodOrders.length / previousPeriodVisitors) * 100;
+    const conversionRateTrend = previousConversionRate > 0
+      ? ((currentConversionRate - previousConversionRate) / previousConversionRate) * 100
+      : currentConversionRate > 0 ? 100 : 0;
+
+    // Calculate customer retention
+    const currentPeriodReturningCustomers = await prisma.order.groupBy({
+      by: ['userId'],
+      where: {
+        createdAt: {
+          gte: currentPeriodStart,
+          lte: now,
+        },
+      },
+      having: {
+        userId: {
+          _count: {
+            gt: 1,
+          },
+        },
+      },
+    });
+
+    const previousPeriodReturningCustomers = await prisma.order.groupBy({
+      by: ['userId'],
+      where: {
+        createdAt: {
+          gte: previousPeriodStart,
+          lt: currentPeriodStart,
+        },
+      },
+      having: {
+        userId: {
+          _count: {
+            gt: 1,
+          },
+        },
+      },
+    });
+
+    const currentRetentionRate = (currentPeriodReturningCustomers.length / currentPeriodCustomers) * 100;
+    const previousRetentionRate = (previousPeriodReturningCustomers.length / previousPeriodCustomers) * 100;
+    const retentionRateTrend = previousRetentionRate > 0
+      ? ((currentRetentionRate - previousRetentionRate) / previousRetentionRate) * 100
+      : currentRetentionRate > 0 ? 100 : 0;
+
+    // Calculate average order processing time
+    const processingTimes = orderProcessingTimes.map(order => 
+      new Date(order.updatedAt).getTime() - new Date(order.createdAt).getTime()
+    );
+    const averageProcessingTime = processingTimes.length > 0
+      ? processingTimes.reduce((a, b) => a + b, 0) / processingTimes.length
+      : 0;
+
+    // Previous period processing time
+    const previousProcessingTimes = await prisma.order.findMany({
+      where: {
+        status: 'delivered',
+        createdAt: {
+          gte: previousPeriodStart,
+          lt: currentPeriodStart,
+        },
+      },
+      select: {
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    const previousProcessingTimeValues = previousProcessingTimes.map(order =>
+      new Date(order.updatedAt).getTime() - new Date(order.createdAt).getTime()
+    );
+    const previousAverageProcessingTime = previousProcessingTimeValues.length > 0
+      ? previousProcessingTimeValues.reduce((a, b) => a + b, 0) / previousProcessingTimeValues.length
+      : 0;
+
+    const processingTimeTrend = previousAverageProcessingTime > 0
+      ? ((previousAverageProcessingTime - averageProcessingTime) / previousAverageProcessingTime) * 100
+      : averageProcessingTime > 0 ? -100 : 0;
+
+    // Get product details for top products
+    const topProductDetails = await Promise.all(
+      topProducts.map(async (product) => {
+        const productDetails = await prisma.product.findUnique({
+          where: { id: product.productId },
+          select: { name: true },
+        });
+        return {
+          id: product.productId,
+          name: productDetails?.name || 'Unknown Product',
+          totalSales: product._sum.price || 0,
+          quantitySold: product._sum.quantity || 0,
+        };
+      })
+    );
+
     const stats: DashboardStats = {
       totalOrders,
       totalRevenue,
@@ -152,6 +323,15 @@ export async function GET() {
       revenueTrend: Math.round(revenueTrend),
       customerTrend: Math.round(customerTrend),
       aovTrend: Math.round(aovTrend),
+      conversionRate: Math.round(currentConversionRate * 100) / 100,
+      conversionRateTrend: Math.round(conversionRateTrend),
+      customerRetentionRate: Math.round(currentRetentionRate * 100) / 100,
+      customerRetentionTrend: Math.round(retentionRateTrend),
+      topProducts: topProductDetails,
+      recentCustomers,
+      recentCustomersTrend: Math.round(((recentCustomers - previousPeriodCustomers) / previousPeriodCustomers) * 100),
+      averageOrderProcessingTime: Math.round(averageProcessingTime / (1000 * 60 * 60 * 24)), // Convert to days
+      orderProcessingTimeTrend: Math.round(processingTimeTrend),
     };
 
     return NextResponse.json(stats);
