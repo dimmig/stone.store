@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { HfInference } from '@huggingface/inference';
 import { getRelevantContent, generateContext } from '@/lib/rag';
-import { Product, Category, Review } from '@prisma/client';
+import { Product, Category, Review, Order, User, Address, CartItem, WishlistItem, OrderItem } from '@prisma/client';
 
 const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
 
@@ -16,6 +16,18 @@ type ChatMessageWithRole = {
 type ProductWithRelations = Product & {
   category: Category;
   reviews: Review[];
+  cartItems: CartItem[];
+  wishlistItems: WishlistItem[];
+};
+
+type CategoryWithRelations = Category & {
+  products: Product[];
+};
+
+type OrderWithRelations = Order & {
+  items: OrderItem[];
+  user: User;
+  shippingAddress: Address;
 };
 
 // Helper function to retry API calls
@@ -160,10 +172,14 @@ export async function POST(req: Request) {
     // Get relevant content based on the user's query
     let context = '';
     let relevantProducts: ProductWithRelations[] = [];
+    let relevantCategories: CategoryWithRelations[] = [];
+    let relevantOrders: OrderWithRelations[] = [];
     try {
-      const { products } = await getRelevantContent(lastMessage.content);
+      const { products, categories, orders } = await getRelevantContent(lastMessage.content);
       relevantProducts = products;
-      context = await generateContext(products);
+      relevantCategories = categories;
+      relevantOrders = orders;
+      context = await generateContext(products, categories, orders);
     } catch (error) {
       console.error('Error getting relevant content:', error);
       // Continue with empty context if retrieval fails
@@ -172,24 +188,26 @@ export async function POST(req: Request) {
     // Translate context to user's language if needed
     const translatedContext = context ? await translateText(context, userLanguage) : '';
 
-    // Create a language-specific prompt that emphasizes using only the provided product data
-    const prompt = `You are a helpful AI assistant for Stone Store. Your responses MUST be based ONLY on the product information provided below. You are NOT allowed to make up or hallucinate any products or information.
+    // Create a language-specific prompt that emphasizes using only the provided data
+    const prompt = `You are a helpful AI assistant for Stone Store. Your responses MUST be based ONLY on the information provided below. You are NOT allowed to make up or hallucinate any information.
 
 CRITICAL RULES:
-1. ONLY use information from the provided product data
-2. NEVER mention products that are not in the provided data
-3. If asked about a product not in the data, respond with "I don't have information about that product"
-4. If asked about shipping, returns, or other policies, respond with "I can only provide information about our products"
-5. If no product information is available, say "I don't have any product information available at the moment"
-6. Be precise with prices, stock levels, and other specific details
-7. If the information is not available in the data, say "I don't have that specific information"
-8. When listing products, include their prices and stock status
+1. ONLY use information from the provided data
+2. NEVER mention products, categories, or orders that are not in the provided data
+3. If asked about something not in the data, respond with "I don't have information about that"
+4. Be precise with prices, stock levels, and other specific details
+5. If the information is not available in the data, say "I don't have that specific information"
+6. When listing products, include their prices and stock status
+7. When discussing categories, mention the number of products in each category
+8. When discussing orders, include relevant details like status and total amount
+9. If no information is available, say "I don't have any information available at the moment"
+10. For shipping, returns, or other policies, respond with "I can only provide information about our products, categories, and orders"
 
 Previous conversation:
 ${formattedHistory}
 
-${translatedContext ? `Available product information:
-${translatedContext}` : 'No product information available.'}
+${translatedContext ? `Available information:
+${translatedContext}` : 'No information available.'}
 
 ===
 Your response (without any prefix):`;
@@ -216,7 +234,7 @@ Your response (without any prefix):`;
       .replace(/\\"/g, '"')
       .trim();
 
-    // Validate the response against actual product data
+    // Validate the response against actual data
     aiResponse = validateResponse(aiResponse, relevantProducts);
 
     if (!aiResponse) {

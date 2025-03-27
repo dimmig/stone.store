@@ -4,12 +4,6 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { GCSUploadResult, uploadMultipleToGCS, deleteFromGCS } from '@/app/lib/gcs';
-import { updateProductEmbeddings } from '@/lib/rag';
-import { Pinecone } from '@pinecone-database/pinecone';
-
-const pinecone = new Pinecone({
-  apiKey: process.env.PINECONE_API_KEY || '',
-});
 
 interface RouteParams {
   params: {
@@ -155,14 +149,6 @@ export async function PUT(
       },
     });
 
-    // Update embeddings for the updated product
-    try {
-      await updateProductEmbeddings(params.productId);
-    } catch (error) {
-      console.error('Error updating product embeddings:', error);
-      // Continue even if embedding update fails
-    }
-
     return NextResponse.json(updatedProduct);
   } catch (error) {
     return NextResponse.json(
@@ -241,15 +227,6 @@ export async function DELETE(
       await prisma.product.delete({
         where: { id: params.productId },
       });
-
-      // Delete the product's embeddings from Pinecone
-      try {
-        const pineconeIndex = pinecone.index(process.env.PINECONE_INDEX_NAME || 'stone-store');
-        await pineconeIndex.deleteOne(`product_${params.productId}`);
-      } catch (error) {
-        console.error('Error deleting product embeddings:', error);
-        // Continue even if embedding deletion fails
-      }
 
       return NextResponse.json({ success: true });
     } catch (error) {
