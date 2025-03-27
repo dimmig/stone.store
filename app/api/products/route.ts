@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { uploadToGCS } from '@/lib/gcs';
+import { updateProductEmbeddings } from '@/lib/rag';
 
 const prismaClient = new PrismaClient();
 
@@ -157,6 +158,14 @@ export async function POST(req: Request) {
           category: true,
         },
       });
+
+      // Update embeddings for the new product
+      try {
+        await updateProductEmbeddings(product.id);
+      } catch (error) {
+        console.error('Error updating product embeddings:', error);
+        // Continue even if embedding update fails
+      }
 
       return NextResponse.json(product);
     } catch (error) {
