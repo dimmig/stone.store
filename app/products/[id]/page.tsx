@@ -322,24 +322,31 @@ export default function ProductPage({params}: ProductPageProps) {
                         <div className="grid gap-4 lg:grid-cols-5">
                             {/* Main Image Carousel */}
                             <div className="lg:col-span-4">
-                                <ImageCarousel
-                                    images={product.imageUrls}
-                                    aspectRatio="portrait"
-                                    className="w-full"
-                                    showArrows={true}
-                                    showDots={true}
-                                    currentIndex={activeImage}
-                                    onImageChange={(index) => {
-                                        setActiveImage(index);
-                                        // Find and set the color that maps to this image
-                                        const colorForImage = Object.entries(product.colorImageMapping || {}).find(
-                                            ([_, imgIndex]) => imgIndex === index
-                                        )?.[0];
-                                        if (colorForImage) {
-                                            setSelectedColor(colorForImage);
-                                        }
-                                    }}
-                                />
+                                <motion.div
+                                    initial={{ scale: 0.95, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    transition={{ duration: 0.5, ease: "easeOut" }}
+                                    className="relative aspect-[4/5] rounded-2xl overflow-hidden"
+                                >
+                                    <ImageCarousel
+                                        images={product.imageUrls}
+                                        aspectRatio="portrait"
+                                        className="w-full"
+                                        showArrows={true}
+                                        showDots={true}
+                                        currentIndex={activeImage}
+                                        onImageChange={(index) => {
+                                            setActiveImage(index);
+                                            // Find and set the color that maps to this image
+                                            const colorForImage = Object.entries(product.colorImageMapping || {}).find(
+                                                ([_, imgIndex]) => imgIndex === index
+                                            )?.[0];
+                                            if (colorForImage) {
+                                                setSelectedColor(colorForImage);
+                                            }
+                                        }}
+                                    />
+                                </motion.div>
                             </div>
 
                             {/* Thumbnail Gallery - Desktop Only */}
@@ -361,6 +368,9 @@ export default function ProductPage({params}: ProductPageProps) {
                                                 ? 'border-black ring-2 ring-black ring-offset-2'
                                                 : 'border-transparent hover:border-gray-200'
                                         }`}
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ delay: 0.1 * index, duration: 0.3 }}
                                         whileHover={{ scale: 1.05 }}
                                         whileTap={{ scale: 0.95 }}
                                     >

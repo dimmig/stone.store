@@ -226,8 +226,18 @@ export default function OrdersPage() {
   const [editingOrder, setEditingOrder] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [noteText, setNoteText] = useState("");
+  const [activeTab, setActiveTab] = useState("active");
   const ordersPerPage = 6;
   const isAdmin = user?.role === Role.ADMIN;
+
+  // Add effect to handle status filter changes when switching tabs
+  useEffect(() => {
+    if (activeTab === "active") {
+      setStatusFilter("all");
+    } else {
+      setStatusFilter("all");
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     fetchOrders();
@@ -328,7 +338,13 @@ export default function OrdersPage() {
       const matchesStatus =
         statusFilter === "all" || order.status === statusFilter;
 
-      return matchesSearch && matchesStatus;
+      // Add tab filtering
+      const matchesTab =
+        activeTab === "active"
+          ? order.status !== "delivered" && order.status !== "cancelled"
+          : order.status === "delivered" || order.status === "cancelled";
+
+      return matchesSearch && matchesStatus && matchesTab;
     })
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
@@ -376,6 +392,30 @@ export default function OrdersPage() {
         <h1 className={`${typography.h2} text-gray-900`}>
           {isAdmin ? "All Orders" : "My Orders"}
         </h1>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-gray-200">
+        <button
+          onClick={() => setActiveTab("active")}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${
+            activeTab === "active"
+              ? "border-accent-gold text-accent-gold"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Active Orders
+        </button>
+        <button
+          onClick={() => setActiveTab("history")}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors duration-200 ${
+            activeTab === "history"
+              ? "border-accent-gold text-accent-gold"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Order History
+        </button>
       </div>
 
       {/* Filters */}
@@ -444,245 +484,356 @@ export default function OrdersPage() {
       </div>
 
       {/* Orders Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {paginatedOrders.map((order) => (
-          <motion.div
-            key={order.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-100 relative"
-            style={{ position: "relative" }}
-          >
-            <div className="flex flex-col h-full">
-              {/* Order Header */}
-              <div className="p-4 border-b border-gray-100">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm text-gray-500 mb-1">Order ID</p>
-                    <p
-                      className={`${typography.body} font-medium text-gray-900 truncate`}
-                    >
-                      #{order.id}
-                    </p>
-                  </div>
-                  <div className="flex-shrink-0">
-                    <div
-                      className={`px-3 py-1.5 rounded-lg flex items-center gap-2 whitespace-nowrap
-                                            ${
-                                              statusConfig[order.status].bgColor
-                                            } ${
-                        statusConfig[order.status].color
-                      }`}
-                    >
-                      {React.createElement(statusConfig[order.status].icon, {
-                        className: "h-4 w-4 flex-shrink-0",
-                      })}
-                      <span>{statusConfig[order.status].label}</span>
+      {activeTab === "active" ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {paginatedOrders.map((order) => (
+            <motion.div
+              key={order.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="bg-white rounded-xl shadow-sm border border-gray-100 relative"
+              style={{ position: "relative" }}
+            >
+              <div className="flex flex-col h-full">
+                {/* Order Header */}
+                <div className="p-4 border-b border-gray-100">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-gray-500 mb-1">Order ID</p>
+                      <p
+                        className={`${typography.body} font-medium text-gray-900 truncate`}
+                      >
+                        #{order.id}
+                      </p>
+                    </div>
+                    <div className="flex-shrink-0">
+                      <div
+                        className={`px-3 py-1.5 rounded-lg flex items-center gap-2 whitespace-nowrap ${
+                          statusConfig[order.status].bgColor
+                        } ${statusConfig[order.status].color}`}
+                      >
+                        {React.createElement(statusConfig[order.status].icon, {
+                          className: "h-4 w-4 flex-shrink-0",
+                        })}
+                        <span>{statusConfig[order.status].label}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Order Details */}
-              <div className="p-4 flex-1 flex flex-col">
-                <div className="space-y-4 flex-1">
-                  {isAdmin && (
-                    /* Customer Info - Only visible to admin */
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        <User className="h-4 w-4 text-gray-600" />
+                {/* Order Details */}
+                <div className="p-4 flex-1 flex flex-col">
+                  <div className="space-y-4 flex-1">
+                    {isAdmin && (
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                          <User className="h-4 w-4 text-gray-600" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p
+                            className={`${typography.body} text-gray-900 truncate`}
+                          >
+                            {order.user?.name || "Guest"}
+                          </p>
+                          <p className="text-sm text-gray-500 truncate">
+                            {order.user?.email || "No email provided"}
+                          </p>
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
+                    )}
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 text-gray-500 mb-1">
+                          <Calendar className="h-4 w-4 flex-shrink-0" />
+                          <p className="text-sm truncate">Order Date</p>
+                        </div>
                         <p
                           className={`${typography.body} text-gray-900 truncate`}
                         >
-                          {order.user?.name || "Guest"}
+                          {formatDate(order.createdAt)}
                         </p>
-                        <p className="text-sm text-gray-500 truncate">
-                          {order.user?.email || "No email provided"}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 text-gray-500 mb-1">
+                          <DollarSign className="h-4 w-4 flex-shrink-0" />
+                          <p className="text-sm truncate">Total</p>
+                        </div>
+                        <p
+                          className={`${typography.body} text-gray-900 truncate`}
+                        >
+                          {formatCurrency(order.total)}
                         </p>
                       </div>
                     </div>
-                  )}
 
-                  {/* Order Info */}
-                  <div className="grid grid-cols-2 gap-4">
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2 text-gray-500 mb-1">
-                        <Calendar className="h-4 w-4 flex-shrink-0" />
-                        <p className="text-sm truncate">Order Date</p>
+                      <div className="flex items-center gap-2 text-gray-500 mb-2">
+                        <MapPin className="h-4 w-4 flex-shrink-0" />
+                        <p className="text-sm truncate">Shipping Address</p>
                       </div>
                       <p
                         className={`${typography.body} text-gray-900 truncate`}
                       >
+                        {order.shippingAddress.street}
+                      </p>
+                      <p className="text-sm text-gray-500 truncate">
+                        {order.shippingAddress.city},{" "}
+                        {order.shippingAddress.state}{" "}
+                        {order.shippingAddress.zip}
+                      </p>
+                    </div>
+
+                    {order.note && (
+                      <div className="min-w-0 bg-gray-50 p-3 rounded-lg">
+                        <div className="flex items-center gap-2 text-gray-500 mb-2">
+                          <MessageSquare className="h-4 w-4 flex-shrink-0" />
+                          <p className="text-sm">Admin Note</p>
+                        </div>
+                        <p className="text-sm text-gray-600">{order.note}</p>
+                      </div>
+                    )}
+
+                    {isAdmin && (
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                          <button
+                            onClick={() =>
+                              setActiveDropdown(
+                                activeDropdown === `status-${order.id}`
+                                  ? null
+                                  : `status-${order.id}`
+                              )
+                            }
+                            className="w-full px-4 py-2 rounded-lg bg-gray-900/10 text-gray-900 hover:bg-gray-900/20 transition-all duration-200 flex items-center justify-center gap-2"
+                          >
+                            <span>Update Status</span>
+                            <ChevronDown className="h-4 w-4" />
+                          </button>
+
+                          <AnimatePresence>
+                            {activeDropdown === `status-${order.id}` && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 8 }}
+                                className="absolute left-0 right-0 mt-2 rounded-xl bg-white shadow-lg border border-gray-100 py-1 z-10"
+                              >
+                                {Object.entries(statusConfig).map(
+                                  ([status, config]) => (
+                                    <button
+                                      key={status}
+                                      onClick={() => {
+                                        handleStatusUpdate(order.id, status);
+                                        setActiveDropdown(null);
+                                      }}
+                                      className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2"
+                                    >
+                                      <config.icon
+                                        className={`h-4 w-4 ${config.color}`}
+                                      />
+                                      <span className="text-gray-700">
+                                        {config.label}
+                                      </span>
+                                    </button>
+                                  )
+                                )}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+
+                        <button
+                          onClick={() => setEditingOrder(order.id)}
+                          className="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all duration-200 flex items-center gap-2"
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                          <span>Note</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setExpandedOrderId(
+                          expandedOrderId === order.id ? null : order.id
+                        );
+                      }}
+                      className="order-items-button flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all duration-200"
+                    >
+                      <span>Order Items</span>
+                      {expandedOrderId === order.id ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <AnimatePresence mode="wait">
+                {expandedOrderId === order.id && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className={`absolute left-0 right-0 ${
+                      Math.ceil(
+                        (paginatedOrders.findIndex((o) => o.id === order.id) +
+                          1) /
+                          3
+                      ) === Math.ceil(paginatedOrders.length / 3)
+                        ? "bottom-20"
+                        : "top-full mt-2"
+                    } bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden z-[100]`}
+                  >
+                    <div className="sticky top-0 right-0 p-2 flex justify-end bg-white border-b border-gray-100">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExpandedOrderId(null);
+                        }}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      >
+                        <ChevronUp className="h-5 w-5 text-gray-500" />
+                      </button>
+                    </div>
+                    <OrderItems
+                      items={order.items}
+                      isExpanded={expandedOrderId === order.id}
+                      formatCurrency={formatCurrency}
+                      onClose={() => setExpandedOrderId(null)}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {paginatedOrders.map((order) => (
+            <motion.div
+              key={order.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="bg-white rounded-xl shadow-sm border border-gray-100"
+            >
+              <div className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={`p-2 rounded-lg ${
+                        statusConfig[order.status].bgColor
+                      }`}
+                    >
+                      {React.createElement(statusConfig[order.status].icon, {
+                        className: `h-5 w-5 ${
+                          statusConfig[order.status].color
+                        }`,
+                      })}
+                    </div>
+                    <div>
+                      <p
+                        className={`${typography.body} font-medium text-gray-900`}
+                      >
+                        Order #{order.id}
+                      </p>
+                      <p className="text-sm text-gray-500">
                         {formatDate(order.createdAt)}
                       </p>
                     </div>
+                  </div>
+                  <div className="text-right">
+                    <p
+                      className={`${typography.body} font-medium text-gray-900`}
+                    >
+                      {formatCurrency(order.total)}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {order.items.length} items
+                    </p>
+                  </div>
+                </div>
+
+                {isAdmin && (
+                  <div className="mt-3 flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                      <User className="h-3 w-3 text-gray-600" />
+                    </div>
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2 text-gray-500 mb-1">
-                        <DollarSign className="h-4 w-4 flex-shrink-0" />
-                        <p className="text-sm truncate">Total</p>
-                      </div>
-                      <p
-                        className={`${typography.body} text-gray-900 truncate`}
-                      >
-                        {formatCurrency(order.total)}
+                      <p className="text-sm text-gray-900 truncate">
+                        {order.user?.name || "Guest"}
+                      </p>
+                      <p className="text-xs text-gray-500 truncate">
+                        {order.user?.email || "No email provided"}
                       </p>
                     </div>
                   </div>
+                )}
 
-                  {/* Shipping Address */}
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 text-gray-500 mb-2">
-                      <MapPin className="h-4 w-4 flex-shrink-0" />
-                      <p className="text-sm truncate">Shipping Address</p>
-                    </div>
-                    <p className={`${typography.body} text-gray-900 truncate`}>
-                      {order.shippingAddress.street}
-                    </p>
-                    <p className="text-sm text-gray-500 truncate">
-                      {order.shippingAddress.city},{" "}
-                      {order.shippingAddress.state} {order.shippingAddress.zip}
-                    </p>
-                  </div>
-
-                  {/* Admin Note */}
-                  {order.note && (
-                    <div className="min-w-0 bg-gray-50 p-3 rounded-lg">
-                      <div className="flex items-center gap-2 text-gray-500 mb-2">
-                        <MessageSquare className="h-4 w-4 flex-shrink-0" />
-                        <p className="text-sm">Admin Note</p>
-                      </div>
-                      <p className="text-sm text-gray-600">{order.note}</p>
-                    </div>
-                  )}
-
-                  {/* Admin Actions */}
-                  {isAdmin && (
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="relative flex-1">
-                        <button
-                          onClick={() =>
-                            setActiveDropdown(
-                              activeDropdown === `status-${order.id}`
-                                ? null
-                                : `status-${order.id}`
-                            )
-                          }
-                          className="w-full px-4 py-2 rounded-lg bg-gray-900/10 text-gray-900 hover:bg-gray-900/20 transition-all duration-200 flex items-center justify-center gap-2"
-                        >
-                          <span>Update Status</span>
-                          <ChevronDown className="h-4 w-4" />
-                        </button>
-
-                        <AnimatePresence>
-                          {activeDropdown === `status-${order.id}` && (
-                            <motion.div
-                              initial={{ opacity: 0, y: 8 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: 8 }}
-                              className="absolute left-0 right-0 mt-2 rounded-xl bg-white shadow-lg border border-gray-100 py-1 z-10"
-                            >
-                              {Object.entries(statusConfig).map(
-                                ([status, config]) => (
-                                  <button
-                                    key={status}
-                                    onClick={() => {
-                                      handleStatusUpdate(order.id, status);
-                                      setActiveDropdown(null);
-                                    }}
-                                    className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2"
-                                  >
-                                    <config.icon
-                                      className={`h-4 w-4 ${config.color}`}
-                                    />
-                                    <span className="text-gray-700">
-                                      {config.label}
-                                    </span>
-                                  </button>
-                                )
-                              )}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-
-                      <button
-                        onClick={() => setEditingOrder(order.id)}
-                        className="px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all duration-200 flex items-center gap-2"
-                      >
-                        <MessageSquare className="h-4 w-4" />
-                        <span>Note</span>
-                      </button>
+                      <MapPin className="h-4 w-4 text-gray-400" />
+                      <p className="text-sm text-gray-600 truncate">
+                        {order.shippingAddress.street},{" "}
+                        {order.shippingAddress.city},{" "}
+                        {order.shippingAddress.state}{" "}
+                        {order.shippingAddress.zip}
+                      </p>
                     </div>
-                  )}
-                </div>
-
-                {/* Order Items Button - Always at bottom */}
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setExpandedOrderId(
-                        expandedOrderId === order.id ? null : order.id
-                      );
-                    }}
-                    className="order-items-button flex items-center justify-center gap-2 w-full px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all duration-200"
-                  >
-                    <span>Order Items</span>
-                    {expandedOrderId === order.id ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Collapsible Order Items */}
-            <AnimatePresence mode="wait">
-              {expandedOrderId === order.id && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                  className={`absolute left-0 right-0 ${
-                    Math.ceil(
-                      (paginatedOrders.findIndex((o) => o.id === order.id) +
-                        1) /
-                        3
-                    ) === Math.ceil(paginatedOrders.length / 3)
-                      ? "bottom-20"
-                      : "top-full mt-2"
-                  } bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden z-[100]`}
-                >
-                  <div className="sticky top-0 right-0 p-2 flex justify-end bg-white border-b border-gray-100">
                     <button
                       onClick={(e) => {
+                        e.preventDefault();
                         e.stopPropagation();
-                        setExpandedOrderId(null);
+                        setExpandedOrderId(
+                          expandedOrderId === order.id ? null : order.id
+                        );
                       }}
-                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      className="order-items-button flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-all duration-200"
                     >
-                      <ChevronUp className="h-5 w-5 text-gray-500" />
+                      <span>View Details</span>
+                      {expandedOrderId === order.id ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
                     </button>
                   </div>
-                  <OrderItems
-                    items={order.items}
-                    isExpanded={expandedOrderId === order.id}
-                    formatCurrency={formatCurrency}
-                    onClose={() => setExpandedOrderId(null)}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        ))}
-      </div>
+                </div>
+              </div>
+
+              <AnimatePresence>
+                {expandedOrderId === order.id && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="border-t border-gray-100"
+                  >
+                    <OrderItems
+                      items={order.items}
+                      isExpanded={expandedOrderId === order.id}
+                      formatCurrency={formatCurrency}
+                      onClose={() => setExpandedOrderId(null)}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          ))}
+        </div>
+      )}
 
       {/* Pagination */}
       {totalPages > 1 && (
