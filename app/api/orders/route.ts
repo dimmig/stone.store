@@ -2,17 +2,48 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { Role } from '@prisma/client';
+
+interface ShippingAddressInput {
+  street: string;
+  city: string;
+  state: string;
+  zip: string;
+  name: string;
+}
+
+interface OrderItemInput {
+  productId: string;
+  quantity: number;
+  price: number;
+  size?: string;
+  color?: string;
+}
+
+interface CreateOrderInput {
+  items: OrderItemInput[];
+  shippingAddress: ShippingAddressInput;
+}
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user) {
+    if (!session?.user?.email) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
+    // Check if user is admin
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { role: true }
+    });
+
+    const isAdmin = user?.role === Role.ADMIN;
+
+    // For admin users, fetch all orders. For regular users, fetch only their orders
     const orders = await prisma.order.findMany({
-      where: {
+      where: isAdmin ? undefined : {
         user: {
           email: session.user.email
         }
@@ -25,13 +56,7 @@ export async function GET() {
           }
         },
         items: {
-          select: {
-            id: true,
-            productId: true,
-            quantity: true,
-            price: true,
-            size: true,
-            color: true,
+          include: {
             product: {
               select: {
                 id: true,
@@ -43,7 +68,14 @@ export async function GET() {
             }
           }
         },
-        shippingAddress: true
+        shippingAddress: {
+          select: {
+            street: true,
+            city: true,
+            state: true,
+            zip: true
+          }
+        }
       },
       orderBy: {
         createdAt: 'desc'
@@ -65,30 +97,33 @@ export async function POST(req: Request) {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const body = await req.json();
+    const body = await req.json() as CreateOrderInput;
     const { items, shippingAddress } = body;
 
     if (!items || !shippingAddress) {
       return new NextResponse('Missing required fields', { status: 400 });
     }
 
+    // Calculate total from items
+    const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
     // Create shipping address
-    const newShippingAddress = await prisma.shippingAddress.create({
+    const newShippingAddress = await prisma.address.create({
       data: {
-        street: shippingAddress.street,
-        city: shippingAddress.city,
-        state: shippingAddress.state,
-        zip: shippingAddress.zip,
-      },
+        ...shippingAddress,
+        userId: session.user.id,
+        isDefault: false
+      }
     });
 
     // Create order
     const order = await prisma.order.create({
       data: {
         userId: session.user.id,
+        total,
         shippingAddressId: newShippingAddress.id,
         items: {
-          create: items.map((item: any) => ({
+          create: items.map((item) => ({
             productId: item.productId,
             quantity: item.quantity,
             price: item.price,
@@ -105,13 +140,7 @@ export async function POST(req: Request) {
           }
         },
         items: {
-          select: {
-            id: true,
-            productId: true,
-            quantity: true,
-            price: true,
-            size: true,
-            color: true,
+          include: {
             product: {
               select: {
                 id: true,
@@ -123,7 +152,14 @@ export async function POST(req: Request) {
             }
           }
         },
-        shippingAddress: true
+        shippingAddress: {
+          select: {
+            street: true,
+            city: true,
+            state: true,
+            zip: true
+          }
+        }
       },
     });
 

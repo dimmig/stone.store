@@ -84,18 +84,21 @@ export default function DashboardPage() {
         ordersResponse,
         customersResponse,
         revenueResponse,
+        allOrdersResponse,
       ] = await Promise.all([
         fetch("/api/dashboard/stats"),
         fetch("/api/orders/recent"),
         fetch("/api/users/recent"),
         fetch(`/api/dashboard/revenue?timeRange=${timeRange}`),
+        fetch("/api/orders"),
       ]);
 
       if (
         !statsResponse.ok ||
         !ordersResponse.ok ||
         !customersResponse.ok ||
-        !revenueResponse.ok
+        !revenueResponse.ok ||
+        !allOrdersResponse.ok
       ) {
         throw new Error("Failed to fetch dashboard data");
       }
@@ -104,6 +107,7 @@ export default function DashboardPage() {
       const ordersData = await ordersResponse.json();
       const customersData = await customersResponse.json();
       const revenueData = await revenueResponse.json();
+      const allOrdersData = await allOrdersResponse.json();
 
       console.log("CUSTOMERS ---------", customersData);
 
@@ -114,13 +118,13 @@ export default function DashboardPage() {
       // Process revenue data for the chart
       setRevenueData(revenueData);
 
-      // Process order status data for the pie chart
-      const orderStatuses = ordersData.reduce((acc, order) => {
+      // Process order status data for the pie chart using all orders
+      const orderStatuses = allOrdersData.reduce((acc, order) => {
         acc[order.status] = (acc[order.status] || 0) + 1;
         return acc;
       }, {});
 
-      const totalOrders = ordersData.length;
+      const totalOrders = allOrdersData.length;
       const processedOrderStatusData = Object.entries(orderStatuses).map(
         ([status, count]) => ({
           name: status.charAt(0).toUpperCase() + status.slice(1),
