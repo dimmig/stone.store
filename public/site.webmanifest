@@ -1,21 +1,46 @@
 {
-  "name": "STONE.STORE",
+  "name": "STONE.STORE - Premium Gray Fashion & Lifestyle",
   "short_name": "STONE.STORE",
-  "description": "Your one-stop shop for all your needs",
+  "description": "Discover premium gray clothes varieties at STONE.STORE. High-quality fashion and exceptional service.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "orientation": "portrait",
+  "background_color": "#1A1A1A",
+  "theme_color": "#1A1A1A",
+  "categories": ["shopping", "fashion", "lifestyle"],
   "icons": [
     {
       "src": "/favicon.svg",
       "sizes": "any",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     },
     {
       "src": "/apple-touch-icon.png",
       "sizes": "180x180",
       "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/home.jpg",
+      "sizes": "1280x720",
+      "type": "image/jpeg",
+      "platform": "wide",
+      "label": "Home page of STONE.STORE"
+    }
+  ],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Shop Now",
+      "url": "/store",
+      "description": "Browse our collection"
+    },
+    {
+      "name": "My Orders",
+      "url": "/dashboard/orders",
+      "description": "View your orders"
     }
   ]
 }

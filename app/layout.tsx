@@ -13,22 +13,45 @@ import { ChatWidget } from '@/components/chat/ChatWidget';
 const inter = Inter({subsets: ['latin']});
 
 export const viewport: Viewport = {
-    themeColor: '#ffffff',
+    themeColor: '#1A1A1A',
     width: 'device-width',
     initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
 };
 
 export const metadata: Metadata = {
     metadataBase: new URL('https://stone-store.app'),
-    title: 'STONE.STORE - Premium Shopping Destination | Luxury Products & Fashion',
-    description: 'STONE.STORE - Your premium shopping destination for luxury products, fashion, and lifestyle items. Discover curated collections with fast delivery and exceptional service.',
-    keywords: 'stone store, premium shopping, luxury products, fashion, lifestyle, home goods, accessories, online store, premium brands',
+    title: {
+        default: 'STONE.STORE - Premium Fashion & Lifestyle | Gray Clothes Varieties',
+        template: '%s | STONE.STORE'
+    },
+    description: 'Discover premium gray clothes varieties at STONE.STORE. We offer high-quality fashion, sustainable clothing, and exceptional customer service. Because you deserve the best!',
+    keywords: [
+        'stone store',
+        'gray clothes',
+        'premium fashion',
+        'sustainable clothing',
+        'luxury fashion',
+        'designer clothes',
+        'gray varieties',
+        'premium shopping',
+        'fashion store',
+        'sustainable fashion',
+        'ethical clothing',
+        'luxury lifestyle',
+        'premium brands',
+        'quality clothes',
+        'fashion boutique'
+    ],
     authors: [{ name: 'STONE.STORE Team' }],
     creator: 'STONE.STORE',
     publisher: 'STONE.STORE',
     alternates: {
         canonical: 'https://stone-store.app',
     },
+    category: 'fashion',
+    classification: 'Premium Fashion Store',
     other: {
         'fl-verify': 'a6c47674034a632b9efd21d8e889d253',
     },
@@ -37,24 +60,25 @@ export const metadata: Metadata = {
         locale: 'en_US',
         url: 'https://stone-store.app',
         siteName: 'STONE.STORE',
-        title: 'STONE.STORE - Premium Shopping Destination',
-        description: 'Discover a curated collection of premium products at STONE.STORE. Shop the latest trends with fast delivery and excellent customer service.',
+        title: 'STONE.STORE - Premium Gray Fashion & Lifestyle',
+        description: 'Discover our curated collection of premium gray clothes at STONE.STORE. Shop sustainable fashion with fast delivery and exceptional service. Because you deserve the best!',
         images: [
             {
-                url: 'https://stone-store.app/images/hero.jpg',
+                url: 'https://stone-store.app/og-image.jpg',
                 width: 1200,
                 height: 630,
-                alt: 'STONE.STORE - Premium Shopping Destination',
+                alt: 'STONE.STORE - Premium Gray Fashion Collection',
                 type: 'image/jpeg',
             },
         ],
     },
     twitter: {
         card: 'summary_large_image',
-        title: 'STONE.STORE - Premium Shopping Destination',
-        description: 'Discover a curated collection of premium products at STONE.STORE. Shop the latest trends with fast delivery and excellent customer service.',
-        images: ['https://stone-store.app/images/hero.jpg'],
+        title: 'STONE.STORE - Premium Gray Fashion & Lifestyle',
+        description: 'Discover our curated collection of premium gray clothes at STONE.STORE. Shop sustainable fashion with fast delivery and exceptional service.',
+        images: ['https://stone-store.app/og-image.jpg'],
         creator: '@stonestore',
+        site: '@stonestore',
     },
     icons: {
         icon: [
@@ -63,12 +87,14 @@ export const metadata: Metadata = {
         ],
         apple: [
             { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }
-        ]
+        ],
+        shortcut: ['/favicon.ico']
     },
     manifest: '/site.webmanifest',
     robots: {
         index: true,
         follow: true,
+        nocache: true,
         googleBot: {
             index: true,
             follow: true,
@@ -80,6 +106,20 @@ export const metadata: Metadata = {
     verification: {
         google: 'your-google-site-verification',
         yandex: 'your-yandex-verification',
+        other: {
+            'norton-safeweb': 'your-norton-verification',
+            'facebook-domain-verification': 'your-facebook-verification',
+            'msvalidate.01': 'your-bing-verification'
+        }
+    },
+    applicationName: 'STONE.STORE',
+    generator: 'Next.js',
+    referrer: 'origin-when-cross-origin',
+    colorScheme: 'dark light',
+    formatDetection: {
+        email: false,
+        address: false,
+        telephone: false,
     },
 };
 

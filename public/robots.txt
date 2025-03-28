@@ -1,3 +1,5 @@
+# https://stone-store.app/robots.txt
+# Allow all crawlers
 User-agent: *
 Allow: /
 Allow: /images/hero.jpg
@@ -6,7 +8,11 @@ Allow: /images/hero.jpg
 Sitemap: https://stone-store.app/sitemap.xml
 
 # Disallow admin and private routes
-Disallow: /admin/
 Disallow: /api/
-Disallow: /private/
-Disallow: /auth/ 
+Disallow: /dashboard/admin/
+Disallow: /dashboard/settings/
+Disallow: /checkout/
+Disallow: /auth/
+
+# Crawl-delay for all bots
+Crawl-delay: 1 
