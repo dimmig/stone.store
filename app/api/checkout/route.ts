@@ -32,7 +32,7 @@ export async function POST(req: Request) {
       payment_method_types: ['card'],
       mode: 'payment',
       shipping_address_collection: {
-        allowed_countries: ['US', 'CA', 'GB'], // Add more countries as needed
+        allowed_countries: ['US', 'CA', 'GB', 'UA'], // Add more countries as needed
       },
       line_items: cartItems.map((item) => ({
         price_data: {
