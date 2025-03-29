@@ -37,13 +37,6 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import {
-  colors,
-  typography,
-  spacing,
-  shadows,
-  transitions,
-} from "../styles/design-system";
 
 export default function DashboardPage() {
   const { data: session } = useSession();
@@ -70,7 +63,6 @@ export default function DashboardPage() {
     orderProcessingTimeTrend: 0,
   });
   const [recentOrders, setRecentOrders] = useState([]);
-  const [recentCustomers, setRecentCustomers] = useState([]);
   const [timeRange, setTimeRange] = useState("week"); // 'day', 'week', 'month', 'year'
   const [revenueData, setRevenueData] = useState([]);
   const [orderStatusData, setOrderStatusData] = useState([]);
@@ -105,15 +97,11 @@ export default function DashboardPage() {
 
       const statsData = await statsResponse.json();
       const ordersData = await ordersResponse.json();
-      const customersData = await customersResponse.json();
       const revenueData = await revenueResponse.json();
       const allOrdersData = await allOrdersResponse.json();
 
-      console.log("CUSTOMERS ---------", customersData);
-
       setStats(statsData);
       setRecentOrders(ordersData);
-      setRecentCustomers(customersData);
 
       // Process revenue data for the chart
       setRevenueData(revenueData);

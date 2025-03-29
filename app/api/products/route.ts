@@ -99,6 +99,7 @@ export async function POST(req: Request) {
     const description = formData.get('description') as string;
     const price = parseFloat(formData.get('price') as string);
     const categoryId = formData.get('categoryId') as string;
+    const discount = formData.get('discount') as string;
     const sizes = (formData.get('sizes') as string).split(',').filter(Boolean);
     const colors = (formData.get('colors') as string).split(',').filter(Boolean);
     const stockQuantity = parseInt(formData.get('stockQuantity') as string);
@@ -148,7 +149,7 @@ export async function POST(req: Request) {
           sizes,
           colors,
           rating: 4.5,
-          discount: 0,
+          discount: parseFloat(discount) || 0,
           stockQuantity,
           imageUrls,
           imageFilenames,

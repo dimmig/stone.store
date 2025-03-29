@@ -216,12 +216,8 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
-  const [editingOrderId, setEditingOrderId] = useState(null);
-  const [editingStatus, setEditingStatus] = useState("");
-  const [trackingNumber, setTrackingNumber] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [orderNote, setOrderNote] = useState("");
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [editingOrder, setEditingOrder] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -290,10 +286,6 @@ export default function OrdersPage() {
       setOrders(
         orders.map((order) => (order.id === orderId ? updatedOrder : order))
       );
-      setEditingOrderId(null);
-      setEditingStatus("");
-      setTrackingNumber("");
-      setOrderNote("");
       setActiveDropdown(null);
     } catch (error) {
       console.error("Error updating order status:", error);
@@ -424,11 +416,11 @@ export default function OrdersPage() {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <input
             type="text"
-            placeholder={isAdmin ? "Search orders..." : "Search by order ID..."}
+            placeholder={"Search by order ID..."}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200
-                            focus:outline-none focus:ring-2 focus:ring-accent-gold focus:border-transparent"
+                            focus:outline-none focus:ring-2 focus:ring-accent-gold focus:border-transparent placeholder-gray-500"
           />
         </div>
         <div className="relative min-w-[160px]">

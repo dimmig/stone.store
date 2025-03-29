@@ -38,7 +38,6 @@ const itemVariants = {
 
 export default function WishlistPage() {
     const {items, removeFromWishlist, isLoading} = useWishlist();
-    const {addToCart} = useCart();
     const router = useRouter();
 
     if (isLoading) {

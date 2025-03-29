@@ -36,13 +36,11 @@ export default function ProductPage({params}: ProductPageProps) {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [imageLoading, setImageLoading] = useState(true);
-    const [mainImageLoaded, setMainImageLoaded] = useState(false);
 
     const [selectedSize, setSelectedSize] = useState('');
     const [selectedColor, setSelectedColor] = useState('');
     const [quantity, setQuantity] = useState(1);
     const [activeImage, setActiveImage] = useState(0);
-    const [colorImages, setColorImages] = useState<{[key: string]: number}>({});
 
     const {addToCart} = useCart();
     const {addToWishlist, removeFromWishlist, isInWishlist, items} = useWishlist();
@@ -80,15 +78,12 @@ export default function ProductPage({params}: ProductPageProps) {
                     throw new Error('Failed to fetch product');
                 }
                 const data = await response.json();
-                console.log('Product data:', data);
-                
-                // Handle nested 'set' objects in the mapping
+
                 let mapping = data.colorImageMapping;
                 while (mapping?.set && typeof mapping.set === 'object') {
                     mapping = mapping.set;
                 }
-                console.log('Processed color mapping:', mapping);
-                
+
                 setProduct({
                     ...data,
                     colorImageMapping: mapping
@@ -285,7 +280,6 @@ export default function ProductPage({params}: ProductPageProps) {
                 mapping = mapping.set;
             }
             
-            console.log('Processed color mapping:', mapping);
             if (mapping && typeof mapping[color] === 'number') {
                 setImageLoading(true);
                 setActiveImage(mapping[color]);
@@ -338,7 +332,7 @@ export default function ProductPage({params}: ProductPageProps) {
                                         onImageChange={(index) => {
                                             setActiveImage(index);
                                             // Find and set the color that maps to this image
-                                            const colorForImage = Object.entries(product.colorImageMapping || {}).find(
+                                            const colorForImage = Object.entries(product?.colorImageMapping || {}).find(
                                                 ([_, imgIndex]) => imgIndex === index
                                             )?.[0];
                                             if (colorForImage) {
@@ -356,7 +350,7 @@ export default function ProductPage({params}: ProductPageProps) {
                                         key={index}
                                         onClick={() => {
                                             setActiveImage(index);
-                                            const colorForImage = Object.entries(product.colorImageMapping || {}).find(
+                                            const colorForImage = Object.entries(product?.colorImageMapping || {}).find(
                                                 ([_, imgIndex]) => imgIndex === index
                                             )?.[0];
                                             if (colorForImage) {

@@ -147,11 +147,8 @@ export async function GET() {
           },
         },
       }),
-      // Current period visitors (simulated)
       Promise.resolve(1000),
-      // Previous period visitors (simulated)
       Promise.resolve(800),
-      // Top products by sales
       prisma.orderItem.groupBy({
         by: ['productId'],
         _sum: {
