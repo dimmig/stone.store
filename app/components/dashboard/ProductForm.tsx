@@ -31,6 +31,7 @@ interface FormData {
   sizes: string[];
   colors: string[];
   stockQuantity: string;
+  discount: string;
   images: File[];
   currentImageUrls: string[];
   currentImageFilenames: string[];
@@ -143,6 +144,7 @@ export default function ProductForm({productId, onClose, onSuccess}: ProductForm
     sizes: [''],
     colors: [''],
     stockQuantity: '',
+    discount: '',
     images: [],
     currentImageUrls: [],
     currentImageFilenames: [],
@@ -212,6 +214,7 @@ export default function ProductForm({productId, onClose, onSuccess}: ProductForm
       sizes: [''],
       colors: [''],
       stockQuantity: '',
+      discount: '',
       images: [],
       currentImageUrls: [],
       currentImageFilenames: [],
@@ -261,6 +264,7 @@ export default function ProductForm({productId, onClose, onSuccess}: ProductForm
         sizes: product.sizes?.length > 0 ? product.sizes : [''],
         colors: product.colors?.length > 0 ? product.colors : [''],
         stockQuantity: product.stockQuantity.toString(),
+        discount: product.discount?.toString() || '',
         images: [],
         currentImageUrls: product.imageUrls || [],
         currentImageFilenames: product.imageFilenames || [],
@@ -304,6 +308,7 @@ export default function ProductForm({productId, onClose, onSuccess}: ProductForm
     formDataToSend.append('sizes', validSizes.join(','));
     formDataToSend.append('colors', validColors.join(','));
     formDataToSend.append('stockQuantity', formData.stockQuantity);
+    formDataToSend.append('discount', formData.discount);
     formDataToSend.append('currentImageUrls', JSON.stringify(formData.currentImageUrls));
     formDataToSend.append('currentImageFilenames', JSON.stringify(formData.currentImageFilenames));
     
@@ -783,6 +788,24 @@ export default function ProductForm({productId, onClose, onSuccess}: ProductForm
                           }))}
                           className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-colors"
                           placeholder="Enter stock quantity"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Discount
+                      </label>
+                      <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formData.discount}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            discount: e.target.value
+                          }))}
+                          className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-colors"
+                          placeholder="Enter discount"
                       />
                     </div>
                   </div>

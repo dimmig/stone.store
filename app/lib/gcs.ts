@@ -1,7 +1,6 @@
 import { Storage } from '@google-cloud/storage';
 import { v4 as uuidv4 } from 'uuid';
 
-// Initialize storage with credentials from environment variables
 const storage = new Storage({
   projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
   credentials: {
@@ -27,7 +26,7 @@ export const uploadToGCS = async (file: File): Promise<GCSUploadResult> => {
   const bucket = storage.bucket(bucketName);
   const blob = bucket.file(filename);
 
-  // Create a write stream with public read access
+  // @ts-ignore
   const blobStream = blob.createWriteStream({
     metadata: {
       contentType: file.type,
@@ -75,23 +74,3 @@ export const deleteFromGCS = async (filename: string): Promise<void> => {
     throw error;
   }
 };
-
-export const testGCSConnection = async (): Promise<boolean> => {
-  if (!bucketName) {
-    throw new Error('Google Cloud Storage bucket name is not configured');
-  }
-
-  const bucket = storage.bucket(bucketName);
-  const [exists] = await bucket.exists();
-  
-  if (!exists) {
-    throw new Error(`Bucket ${bucketName} does not exist`);
-  }
-
-  // Try to create a test file
-  const testFile = bucket.file('test.txt');
-  await testFile.save('Hello World');
-  await testFile.delete();
-  
-  return true;
-}; 

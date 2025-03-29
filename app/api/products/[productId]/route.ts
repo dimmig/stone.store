@@ -63,6 +63,7 @@ export async function PUT(
     const currentImageFilenames = JSON.parse(formData.get('currentImageFilenames') as string) || [];
     const colorImageMapping = JSON.parse(formData.get('colorImageMapping') as string || '{}');
     const newImages = formData.getAll('images') as File[];
+    const discount = formData.get('discount') as string;
 
     // Validate each field individually
     const errors = [];
@@ -142,6 +143,7 @@ export async function PUT(
       colors,
       stockQuantity,
       rating: 4.5,
+      discount: parseFloat(discount) || 0,
       imageUrls: [...currentImageUrls, ...newImageUrls],
       imageFilenames: [...currentImageFilenames, ...newImageFilenames],
       colorImageMapping,

@@ -3,7 +3,25 @@
 import React, {useState, useEffect} from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import {Heart, ShoppingBag, Search, Filter, X, Star, Pin, PinOff, Check, ChevronDown, ChevronUp, Loader2, ChevronLeft, ChevronRight, Eye, Clock, Trash2} from 'lucide-react';
+import {
+    Heart,
+    ShoppingBag,
+    Search,
+    Filter,
+    X,
+    Star,
+    Pin,
+    PinOff,
+    Check,
+    ChevronDown,
+    ChevronUp,
+    Loader2,
+    ChevronLeft,
+    ChevronRight,
+    Eye,
+    Clock,
+    Trash2
+} from 'lucide-react';
 import {useCart} from '@/app/providers/CartProvider';
 import {useWishlist} from '@/app/providers/WishlistProvider';
 import {Product} from '@/types';
@@ -13,11 +31,11 @@ import {useRouter} from "next/navigation";
 import moment from "moment"
 import {useUserStore} from "@/store/user-store";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/app/components/ui/select"
 
 interface ProductFilters {
@@ -42,14 +60,14 @@ async function getProducts(searchQuery = '', filters: ProductFilters = {}, page 
     const params = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
-        ...(searchQuery && { search: searchQuery }),
-        ...(filters.category && { category: filters.category }),
-        ...(filters.priceRange && { priceRange: filters.priceRange }),
-        ...(filters.sortBy && { sortBy: filters.sortBy }),
-        ...(filters.color && { color: filters.color }),
-        ...(filters.size && { size: filters.size }),
-        ...(filters.rating && { rating: filters.rating }),
-        ...(filters.stockFilter && { stockFilter: filters.stockFilter })
+        ...(searchQuery && {search: searchQuery}),
+        ...(filters.category && {category: filters.category}),
+        ...(filters.priceRange && {priceRange: filters.priceRange}),
+        ...(filters.sortBy && {sortBy: filters.sortBy}),
+        ...(filters.color && {color: filters.color}),
+        ...(filters.size && {size: filters.size}),
+        ...(filters.rating && {rating: filters.rating}),
+        ...(filters.stockFilter && {stockFilter: filters.stockFilter})
     });
 
     const response = await fetch(`/api/products?${params}`);
@@ -66,7 +84,7 @@ export default function StorePage() {
     const [loading, setLoading] = useState(true);
     const [showFilters, setShowFilters] = useState(false);
     const [isPinned, setIsPinned] = useState(false);
-    const [loadingStates, setLoadingStates] = useState<{[key: string]: {cart?: boolean, wishlist?: boolean}}>({});
+    const [loadingStates, setLoadingStates] = useState<{ [key: string]: { cart?: boolean, wishlist?: boolean } }>({});
     const [filters, setFilters] = useState({
         category: '',
         priceRange: '',
@@ -229,210 +247,6 @@ export default function StorePage() {
         {label: 'Best Rating', value: 'rating-desc'}
     ];
 
-    const FilterContent = () => (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-gray-200 pb-4">
-                <div>
-                    <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
-                    <p className="mt-1 text-sm text-gray-500">Refine your results</p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => setIsPinned(!isPinned)}
-                        className="group rounded-full p-2 hover:bg-gray-100 transition-colors"
-                        title={isPinned ? "Unpin filters" : "Pin filters"}
-                    >
-                        {isPinned ? (
-                            <PinOff className="h-5 w-5 text-gray-400 group-hover:text-gray-600" />
-                        ) : (
-                            <Pin className="h-5 w-5 text-gray-400 group-hover:text-gray-600" />
-                        )}
-                    </button>
-                    {!isPinned && (
-                        <button
-                            onClick={() => setShowFilters(false)}
-                            className="group rounded-full p-2 hover:bg-gray-100 transition-colors"
-                        >
-                            <X className="h-5 w-5 text-gray-400 group-hover:text-gray-600" />
-                        </button>
-                    )}
-                </div>
-            </div>
-
-            {/* Categories */}
-            <div className="space-y-3">
-                <h3 className="text-sm font-medium text-gray-900">Categories</h3>
-                <div className="grid grid-cols-2 gap-2">
-                    <button
-                        onClick={() => setFilters({...filters, category: ''})}
-                        className={`flex items-center justify-center rounded-lg px-3 py-2.5 text-sm transition-all ${
-                            !filters.category
-                                ? 'bg-black text-white'
-                                : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-                        }`}
-                    >
-                        All Categories
-                    </button>
-                    {filterOptions.categories.map((category) => (
-                        <button
-                            key={category.value}
-                            onClick={() => setFilters({...filters, category: category.value})}
-                            className={`flex items-center justify-center rounded-lg px-3 py-2.5 text-sm transition-all ${
-                                filters.category === category.value
-                                    ? 'bg-black text-white'
-                                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-                            }`}
-                        >
-                            {category.label}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* Price Range */}
-            <div className="space-y-3">
-                <h3 className="text-sm font-medium text-gray-900">Price Range</h3>
-                <div className="grid grid-cols-2 gap-2">
-                    {filterOptions.priceRanges.map((range) => (
-                        <button
-                            key={range.value}
-                            onClick={() => setFilters({...filters, priceRange: range.value})}
-                            className={`flex items-center justify-center rounded-lg px-3 py-2.5 text-sm transition-all ${
-                                filters.priceRange === range.value
-                                    ? 'bg-black text-white'
-                                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-                            }`}
-                        >
-                            {range.label}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* Colors */}
-            <div className="space-y-3">
-                <h3 className="text-sm font-medium text-gray-900">Colors</h3>
-                <div className="flex flex-wrap gap-3">
-                    {filterOptions.colors.map((color) => (
-                        <button
-                            key={color.value}
-                            onClick={() => setFilters({...filters, color: color.value})}
-                            className={`group relative h-12 w-12 overflow-hidden rounded-xl ${color.class} ${
-                                filters.color === color.value ? 'ring-2 ring-black ring-offset-2' : ''
-                            } transition-all hover:scale-105`}
-                            title={color.label}
-                        >
-                            {filters.color === color.value && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                                    <Check className="h-5 w-5 text-white drop-shadow" />
-                                </div>
-                            )}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* Sizes */}
-            <div className="space-y-3">
-                <h3 className="text-sm font-medium text-gray-900">Sizes</h3>
-                <div className="flex flex-wrap gap-2">
-                    {filterOptions.sizes.map((size) => (
-                        <button
-                            key={size}
-                            onClick={() => setFilters({...filters, size})}
-                            className={`relative h-11 w-11 rounded-lg text-sm font-medium transition-all hover:scale-105 ${
-                                filters.size === size
-                                    ? 'bg-black text-white'
-                                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-                            }`}
-                        >
-                            {size}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* Rating */}
-            <div className="space-y-3">
-                <h3 className="text-sm font-medium text-gray-900">Rating</h3>
-                <div className="space-y-2">
-                    {filterOptions.ratingOptions.map((rating) => (
-                        <button
-                            key={rating.value}
-                            onClick={() => setFilters({...filters, rating: rating.value})}
-                            className={`flex w-full items-center justify-between rounded-lg px-4 py-3 text-sm transition-all ${
-                                filters.rating === rating.value
-                                    ? 'bg-black text-white'
-                                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-                            }`}
-                        >
-              <span className="flex items-center gap-1.5">
-                                {rating.label.split(' ')[0]}
-                                <Star className={`h-4 w-4 ${
-                                    filters.rating === rating.value ? 'fill-white text-white' : 'fill-yellow-400 text-yellow-400'
-                                }`} />
-                & up
-              </span>
-                            <span className={`text-xs ${
-                                filters.rating === rating.value ? 'text-white/60' : 'text-gray-500'
-                            }`}>
-                                ({rating.count?.toFixed(1)})
-                            </span>
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* In Stock Toggle */}
-            <div className="space-y-3">
-                <h3 className="text-sm font-medium text-gray-900">Availability</h3>
-                <label className="flex cursor-pointer items-center justify-between rounded-lg bg-gray-50 px-4 py-3 hover:bg-gray-100">
-                    <span className="text-sm text-gray-700">Show In-Stock Items Only</span>
-                    <div className={`relative h-6 w-11 rounded-full transition-colors ${
-                        filters.stockFilter === 'inStock' ? 'bg-black' : 'bg-gray-300'
-                    }`}>
-                        <div className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
-                            filters.stockFilter === 'inStock' ? 'translate-x-5' : 'translate-x-0'
-                        }`} />
-                        <input
-                            type="checkbox"
-                            className="sr-only"
-                            checked={filters.stockFilter === 'inStock'}
-                            onChange={(e) => setFilters({...filters, stockFilter: e.target.checked ? 'inStock' : ''})}
-                        />
-                    </div>
-                </label>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="sticky bottom-0 -mx-6 -mb-6 border-t border-gray-200 bg-white p-6 pt-4">
-                <div className="flex gap-3">
-                <button
-                    onClick={() => setFilters({
-                        category: '',
-                        priceRange: '',
-                        sortBy: 'newest',
-                        stockFilter: '',
-                        color: '',
-                        size: '',
-                        rating: ''
-                    })}
-                        className="flex-1 rounded-xl bg-gray-100 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
-                >
-                    Clear All
-                </button>
-                <button
-                    onClick={() => setShowFilters(false)}
-                        className="flex-1 rounded-xl bg-black py-3 text-sm font-medium text-white transition-opacity hover:opacity-90"
-                >
-                    Apply Filters
-                </button>
-                </div>
-            </div>
-        </div>
-    );
-
     return (
         <div className="min-h-screen bg-gray-50/50">
             {/* Search and Filters Header */}
@@ -454,14 +268,15 @@ export default function StorePage() {
                                 value={filters.sortBy}
                                 onValueChange={(value: string) => setFilters({...filters, sortBy: value})}
                             >
-                                <SelectTrigger className="w-[180px] bg-gray-100 border-0 focus:ring-2 focus:ring-black/5">
-                                    <SelectValue placeholder="Sort by" />
+                                <SelectTrigger
+                                    className="w-[180px] bg-gray-100 border-0 focus:ring-2 focus:ring-black/5">
+                                    <SelectValue placeholder="Sort by"/>
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="clear">Clear sorting</SelectItem>
                                     {sortOptions.map((option) => (
-                                        <SelectItem 
-                                            key={option.value} 
+                                        <SelectItem
+                                            key={option.value}
                                             value={option.value}
                                         >
                                             {option.label}
@@ -487,13 +302,13 @@ export default function StorePage() {
                 {/* Recently Viewed Section - Redesigned */}
                 {recentlyViewed.length > 0 && (
                     <div className="mb-8">
-                        <button 
+                        <button
                             onClick={() => setIsRecentlyViewedExpanded(!isRecentlyViewedExpanded)}
                             className="flex w-full items-center justify-between rounded-xl bg-white p-4 shadow-sm transition-all hover:shadow-md"
                         >
                             <div className="flex items-center gap-3">
                                 <div className="rounded-lg bg-black/5 p-2">
-                                    <Clock className="h-5 w-5 text-gray-600" />
+                                    <Clock className="h-5 w-5 text-gray-600"/>
                                 </div>
                                 <div className="text-left">
                                     <h2 className="text-lg font-medium text-gray-900">Recently Viewed</h2>
@@ -509,29 +324,30 @@ export default function StorePage() {
                                     }}
                                     className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors"
                                 >
-                                    <Trash2 className="h-4 w-4" />
+                                    <Trash2 className="h-4 w-4"/>
                                     Clear
                                 </button>
-                                <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform ${isRecentlyViewedExpanded ? 'rotate-180' : ''}`} />
+                                <ChevronDown
+                                    className={`h-5 w-5 text-gray-400 transition-transform ${isRecentlyViewedExpanded ? 'rotate-180' : ''}`}/>
                             </div>
                         </button>
-                        
+
                         <AnimatePresence>
                             {isRecentlyViewedExpanded && (
                                 <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: "auto", opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    transition={{ duration: 0.2 }}
+                                    initial={{height: 0, opacity: 0}}
+                                    animate={{height: "auto", opacity: 1}}
+                                    exit={{height: 0, opacity: 0}}
+                                    transition={{duration: 0.2}}
                                     className="overflow-hidden"
                                 >
                                     <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                                         {recentlyViewed.map((product, index) => (
                                             <motion.div
                                                 key={product.id}
-                                                initial={{ opacity: 0, y: 20 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: index * 0.1 }}
+                                                initial={{opacity: 0, y: 20}}
+                                                animate={{opacity: 1, y: 0}}
+                                                transition={{delay: index * 0.1}}
                                                 className="group relative overflow-hidden rounded-2xl bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:shadow-gray-100/50"
                                             >
                                                 <Link
@@ -546,14 +362,18 @@ export default function StorePage() {
                                                         loadingProductId === product.id ? 'cursor-wait pointer-events-none' : ''
                                                     }`}
                                                 >
-                                                    <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-gray-50">
-                                                        <div className={`absolute inset-0 bg-black/[0.03] transition-opacity duration-300 ${
-                                                            loadingProductId === product.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                                                        }`} />
+                                                    <div
+                                                        className="relative aspect-[4/5] overflow-hidden rounded-xl bg-gray-50">
+                                                        <div
+                                                            className={`absolute inset-0 bg-black/[0.03] transition-opacity duration-300 ${
+                                                                loadingProductId === product.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                                            }`}/>
                                                         {loadingProductId === product.id && (
-                                                            <div className="absolute inset-0 flex items-center justify-center bg-black/5 backdrop-blur-[2px]">
+                                                            <div
+                                                                className="absolute inset-0 flex items-center justify-center bg-black/5 backdrop-blur-[2px]">
                                                                 <div className="rounded-lg bg-white/90 p-3">
-                                                                    <Loader2 className="h-6 w-6 animate-spin text-gray-600" />
+                                                                    <Loader2
+                                                                        className="h-6 w-6 animate-spin text-gray-600"/>
                                                                 </div>
                                                             </div>
                                                         )}
@@ -575,7 +395,7 @@ export default function StorePage() {
                                                                 }}
                                                                 className="rounded-xl bg-white/90 p-2.5 backdrop-blur-sm transition-all hover:scale-110 active:scale-95 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                                                             >
-                                                                <Eye className="h-[18px] w-[18px]" />
+                                                                <Eye className="h-[18px] w-[18px]"/>
                                                             </button>
                                                             <button
                                                                 onClick={(e) => {
@@ -591,9 +411,11 @@ export default function StorePage() {
                                                                 disabled={loadingStates[product.id]?.wishlist}
                                                             >
                                                                 {loadingStates[product.id]?.wishlist ? (
-                                                                    <Loader2 className="h-[18px] w-[18px] animate-spin" />
+                                                                    <Loader2
+                                                                        className="h-[18px] w-[18px] animate-spin"/>
                                                                 ) : (
-                                                                    <Heart className={`h-[18px] w-[18px] ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
+                                                                    <Heart
+                                                                        className={`h-[18px] w-[18px] ${isInWishlist(product.id) ? 'fill-current' : ''}`}/>
                                                                 )}
                                                             </button>
                                                             {product.stockQuantity > 0 && (
@@ -607,18 +429,43 @@ export default function StorePage() {
                                                                     disabled={loadingStates[product.id]?.cart}
                                                                 >
                                                                     {loadingStates[product.id]?.cart ? (
-                                                                        <Loader2 className="h-[18px] w-[18px] animate-spin" />
+                                                                        <Loader2
+                                                                            className="h-[18px] w-[18px] animate-spin"/>
                                                                     ) : (
-                                                                        <ShoppingBag className="h-[18px] w-[18px]" />
+                                                                        <ShoppingBag className="h-[18px] w-[18px]"/>
                                                                     )}
                                                                 </button>
                                                             )}
                                                         </div>
                                                         {product.discount > 0 && (
                                                             <div className="absolute left-3 top-3">
-                                                                <div
-                                                                    className="rounded-lg bg-black px-2 py-1 text-xs font-medium text-white">
-                                                                    -{product.discount}%
+                                                                <div className="relative">
+                                                                    <div
+                                                                        className="absolute -left-1 top-0 h-full w-1 bg-red-500"></div>
+                                                                    <div
+                                                                        className="absolute -left-1 top-0 h-1 w-3 bg-red-500"></div>
+                                                                    <div
+                                                                        className="absolute -left-1 bottom-0 h-1 w-3 bg-red-500"></div>
+                                                                    <div
+                                                                        className="bg-red-500/95 backdrop-blur-sm px-4 py-1.5 text-xs font-semibold text-white shadow-sm">
+                                                                        -{product.discount}% OFF
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        {moment(product.createdAt).isAfter(moment().subtract(1, 'weeks')) && (
+                                                            <div className="absolute left-3 top-12">
+                                                                <div className="relative">
+                                                                    <div
+                                                                        className="absolute -left-1 top-0 h-full w-1 bg-blue-500"></div>
+                                                                    <div
+                                                                        className="absolute -left-1 top-0 h-1 w-3 bg-blue-500"></div>
+                                                                    <div
+                                                                        className="absolute -left-1 bottom-0 h-1 w-3 bg-blue-500"></div>
+                                                                    <div
+                                                                        className="bg-blue-500/95 backdrop-blur-sm px-4 py-1.5 text-xs font-semibold text-white shadow-sm">
+                                                                        New Arrival
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         )}
@@ -639,7 +486,8 @@ export default function StorePage() {
                                                                     ${product.price}
                                                                 </span>
                                                                 {product.discount > 0 && (
-                                                                    <span className="text-xs text-gray-500 line-through">
+                                                                    <span
+                                                                        className="text-xs text-gray-500 line-through">
                                                                         ${Math.round(product.price * (1 + product.discount / 100))}
                                                                     </span>
                                                                 )}
@@ -678,7 +526,7 @@ export default function StorePage() {
                                         className="group rounded-full p-2 hover:bg-gray-100 transition-colors"
                                         title="Unpin filters"
                                     >
-                                        <PinOff className="h-5 w-5 text-gray-400 group-hover:text-gray-600" />
+                                        <PinOff className="h-5 w-5 text-gray-400 group-hover:text-gray-600"/>
                                     </button>
                                 </div>
 
@@ -748,8 +596,9 @@ export default function StorePage() {
                                                     title={color.label}
                                                 >
                                                     {filters.color === color.value && (
-                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                                                            <Check className="h-5 w-5 text-white drop-shadow" />
+                                                        <div
+                                                            className="absolute inset-0 flex items-center justify-center bg-black/10">
+                                                            <Check className="h-5 w-5 text-white drop-shadow"/>
                                                         </div>
                                                     )}
                                                 </button>
@@ -795,7 +644,7 @@ export default function StorePage() {
                                                         {rating.label.split(' ')[0]}
                                                         <Star className={`h-4 w-4 ${
                                                             filters.rating === rating.value ? 'fill-white text-white' : 'fill-yellow-400 text-yellow-400'
-                                                        }`} />
+                                                        }`}/>
                                                         & up
                                                     </span>
                                                     <span className={`text-xs ${
@@ -811,19 +660,24 @@ export default function StorePage() {
                                     {/* In Stock Toggle */}
                                     <div className="mt-6 space-y-3">
                                         <h3 className="text-sm font-medium text-gray-900">Availability</h3>
-                                        <label className="flex cursor-pointer items-center justify-between rounded-lg bg-gray-50 px-4 py-3 hover:bg-gray-100">
+                                        <label
+                                            className="flex cursor-pointer items-center justify-between rounded-lg bg-gray-50 px-4 py-3 hover:bg-gray-100">
                                             <span className="text-sm text-gray-700">Show In-Stock Items Only</span>
                                             <div className={`relative h-6 w-11 rounded-full transition-colors ${
                                                 filters.stockFilter === 'inStock' ? 'bg-black' : 'bg-gray-300'
                                             }`}>
-                                                <div className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
-                                                    filters.stockFilter === 'inStock' ? 'translate-x-5' : 'translate-x-0'
-                                                }`} />
+                                                <div
+                                                    className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
+                                                        filters.stockFilter === 'inStock' ? 'translate-x-5' : 'translate-x-0'
+                                                    }`}/>
                                                 <input
                                                     type="checkbox"
                                                     className="sr-only"
                                                     checked={filters.stockFilter === 'inStock'}
-                                                    onChange={(e) => setFilters({...filters, stockFilter: e.target.checked ? 'inStock' : ''})}
+                                                    onChange={(e) => setFilters({
+                                                        ...filters,
+                                                        stockFilter: e.target.checked ? 'inStock' : ''
+                                                    })}
                                                 />
                                             </div>
                                         </label>
@@ -871,7 +725,8 @@ export default function StorePage() {
                         ) : products.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12">
                                 <p className="text-lg font-medium text-gray-900">No products found</p>
-                                <p className="mt-2 text-sm text-gray-500">Try adjusting your search or filter criteria</p>
+                                <p className="mt-2 text-sm text-gray-500">Try adjusting your search or filter
+                                    criteria</p>
                                 <button
                                     onClick={() => {
                                         setSearchQuery('');
@@ -908,14 +763,17 @@ export default function StorePage() {
                                                 loadingProductId === product.id ? 'cursor-wait pointer-events-none' : ''
                                             }`}
                                         >
-                                            <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-gray-50">
-                                                <div className={`absolute inset-0 bg-black/[0.03] transition-opacity duration-300 ${
-                                                    loadingProductId === product.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                                                }`} />
+                                            <div
+                                                className="relative aspect-[4/5] overflow-hidden rounded-xl bg-gray-50">
+                                                <div
+                                                    className={`absolute inset-0 bg-black/[0.03] transition-opacity duration-300 ${
+                                                        loadingProductId === product.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                                    }`}/>
                                                 {loadingProductId === product.id && (
-                                                    <div className="absolute inset-0 flex items-center justify-center bg-black/5 backdrop-blur-[2px]">
+                                                    <div
+                                                        className="absolute inset-0 flex items-center justify-center bg-black/5 backdrop-blur-[2px]">
                                                         <div className="rounded-lg bg-white/90 p-3">
-                                                            <Loader2 className="h-6 w-6 animate-spin text-gray-600" />
+                                                            <Loader2 className="h-6 w-6 animate-spin text-gray-600"/>
                                                         </div>
                                                     </div>
                                                 )}
@@ -937,7 +795,7 @@ export default function StorePage() {
                                                         }}
                                                         className="rounded-xl bg-white/90 p-2.5 backdrop-blur-sm transition-all hover:scale-110 active:scale-95 text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                                                     >
-                                                        <Eye className="h-[18px] w-[18px]" />
+                                                        <Eye className="h-[18px] w-[18px]"/>
                                                     </button>
                                                     <button
                                                         onClick={(e) => {
@@ -953,9 +811,10 @@ export default function StorePage() {
                                                         disabled={loadingStates[product.id]?.wishlist}
                                                     >
                                                         {loadingStates[product.id]?.wishlist ? (
-                                                            <Loader2 className="h-[18px] w-[18px] animate-spin" />
+                                                            <Loader2 className="h-[18px] w-[18px] animate-spin"/>
                                                         ) : (
-                                                            <Heart className={`h-[18px] w-[18px] ${isInWishlist(product.id) ? 'fill-current' : ''}`} />
+                                                            <Heart
+                                                                className={`h-[18px] w-[18px] ${isInWishlist(product.id) ? 'fill-current' : ''}`}/>
                                                         )}
                                                     </button>
                                                     {product.stockQuantity > 0 && (
@@ -969,26 +828,31 @@ export default function StorePage() {
                                                             disabled={loadingStates[product.id]?.cart}
                                                         >
                                                             {loadingStates[product.id]?.cart ? (
-                                                                <Loader2 className="h-[18px] w-[18px] animate-spin" />
+                                                                <Loader2 className="h-[18px] w-[18px] animate-spin"/>
                                                             ) : (
-                                                                <ShoppingBag className="h-[18px] w-[18px]" />
+                                                                <ShoppingBag className="h-[18px] w-[18px]"/>
                                                             )}
                                                         </button>
                                                     )}
                                                 </div>
                                                 {product.discount > 0 && (
-                                                    <div className="absolute left-3 top-3">
-                                                        <div
-                                                            className="rounded-lg bg-black px-2 py-1 text-xs font-medium text-white">
-                                                            -{product.discount}%
+                                                    <div className="absolute left-0 top-3">
+                                                        <div className="relative">
+                                                            <div
+                                                                className="bg-red-500/95 backdrop-blur-sm px-4 py-1.5 text-xs font-semibold text-white shadow-sm">
+                                                                -{product.discount}% OFF
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 )}
                                                 {moment(product.createdAt).isAfter(moment().subtract(1, 'weeks')) && (
-                                                    <div className="absolute left-3 top-3">
-                                                        <div
-                                                            className="rounded-lg bg-blue-500 px-2 py-1 text-xs font-medium text-white">
-                                                            New
+                                                    <div
+                                                        className={`absolute left-0 ${product.discount ? "top-12" : "top-3"}`}>
+                                                        <div className="relative">
+                                                            <div
+                                                                className="bg-blue-500/95 backdrop-blur-sm px-4 py-1.5 text-xs font-semibold text-white shadow-sm">
+                                                                New Arrival
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 )}
@@ -1015,9 +879,11 @@ export default function StorePage() {
                                                         )}
                                                     </div>
                                                     {product.stockQuantity > 0 ? (
-                                                        <span className="text-xs font-medium text-green-600">In Stock</span>
+                                                        <span
+                                                            className="text-xs font-medium text-green-600">In Stock</span>
                                                     ) : (
-                                                        <span className="text-xs font-medium text-red-500">Out of Stock</span>
+                                                        <span
+                                                            className="text-xs font-medium text-red-500">Out of Stock</span>
                                                     )}
                                                 </div>
                                             </div>
@@ -1028,7 +894,9 @@ export default function StorePage() {
                                 {/* Pagination */}
                                 <div className="mt-8 flex items-center justify-between border-t border-gray-200 pt-4">
                                     <div className="text-sm text-gray-700">
-                                        Showing <span className="font-medium">{((currentPage - 1) * productsPerPage) + 1}</span> to <span className="font-medium">{Math.min(currentPage * productsPerPage, totalProducts)}</span> of{' '}
+                                        Showing <span
+                                        className="font-medium">{((currentPage - 1) * productsPerPage) + 1}</span> to <span
+                                        className="font-medium">{Math.min(currentPage * productsPerPage, totalProducts)}</span> of{' '}
                                         <span className="font-medium">{totalProducts}</span> products
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -1040,13 +908,13 @@ export default function StorePage() {
                                                     ? 'text-gray-400 cursor-not-allowed'
                                                     : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                                             }`}
-                                            whileHover={{ scale: currentPage === 1 ? 1 : 1.02 }}
-                                            whileTap={{ scale: currentPage === 1 ? 1 : 0.98 }}
+                                            whileHover={{scale: currentPage === 1 ? 1 : 1.02}}
+                                            whileTap={{scale: currentPage === 1 ? 1 : 0.98}}
                                         >
-                                            <ChevronLeft className="h-4 w-4" />
+                                            <ChevronLeft className="h-4 w-4"/>
                                         </motion.button>
                                         <div className="flex items-center gap-1">
-                                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                            {Array.from({length: totalPages}, (_, i) => i + 1).map((page) => (
                                                 <motion.button
                                                     key={page}
                                                     onClick={() => setCurrentPage(page)}
@@ -1055,8 +923,8 @@ export default function StorePage() {
                                                             ? 'bg-black text-white'
                                                             : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                                                     }`}
-                                                    whileHover={{ scale: 1.02 }}
-                                                    whileTap={{ scale: 0.98 }}
+                                                    whileHover={{scale: 1.02}}
+                                                    whileTap={{scale: 0.98}}
                                                 >
                                                     {page}
                                                 </motion.button>
@@ -1070,10 +938,10 @@ export default function StorePage() {
                                                     ? 'text-gray-400 cursor-not-allowed'
                                                     : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                                             }`}
-                                            whileHover={{ scale: currentPage === totalPages ? 1 : 1.02 }}
-                                            whileTap={{ scale: currentPage === totalPages ? 1 : 0.98 }}
+                                            whileHover={{scale: currentPage === totalPages ? 1 : 1.02}}
+                                            whileTap={{scale: currentPage === totalPages ? 1 : 0.98}}
                                         >
-                                            <ChevronRight className="h-4 w-4" />
+                                            <ChevronRight className="h-4 w-4"/>
                                         </motion.button>
                                     </div>
                                 </div>
@@ -1088,21 +956,22 @@ export default function StorePage() {
                 {showFilters && !isPinned && (
                     <>
                         <motion.div
-                            transition={{ duration: 0.2 }}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 0.4 }}
-                            exit={{ opacity: 0 }}
+                            transition={{duration: 0.2}}
+                            initial={{opacity: 0}}
+                            animate={{opacity: 0.4}}
+                            exit={{opacity: 0}}
                             onClick={() => setShowFilters(false)}
                             className="fixed inset-0 z-40 bg-black/80 backdrop-blur-[2px]"
                         />
                         <motion.div
-                            initial={{ x: '100%' }}
-                            animate={{ x: 0 }}
-                            exit={{ x: '100%' }}
-                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            initial={{x: '100%'}}
+                            animate={{x: 0}}
+                            exit={{x: '100%'}}
+                            transition={{type: "spring", damping: 25, stiffness: 300}}
                             className="fixed inset-y-0 right-0 z-50 w-full max-w-sm overflow-y-auto bg-white shadow-2xl"
                         >
-                            <div className="sticky top-0 z-10 border-b border-gray-100 bg-white/80 px-6 py-4 backdrop-blur-xl">
+                            <div
+                                className="sticky top-0 z-10 border-b border-gray-100 bg-white/80 px-6 py-4 backdrop-blur-xl">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
@@ -1114,13 +983,13 @@ export default function StorePage() {
                                             className="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
                                             title={isPinned ? "Unpin filters" : "Pin filters"}
                                         >
-                                            {isPinned ? <PinOff className="h-5 w-5" /> : <Pin className="h-5 w-5" />}
+                                            {isPinned ? <PinOff className="h-5 w-5"/> : <Pin className="h-5 w-5"/>}
                                         </button>
                                         <button
                                             onClick={() => setShowFilters(false)}
                                             className="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
                                         >
-                                            <X className="h-5 w-5" />
+                                            <X className="h-5 w-5"/>
                                         </button>
                                     </div>
                                 </div>
@@ -1221,8 +1090,9 @@ export default function StorePage() {
                                                 title={color.label}
                                             >
                                                 {filters.color === color.value && (
-                                                    <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                                                        <Check className="h-5 w-5 text-white drop-shadow" />
+                                                    <div
+                                                        className="absolute inset-0 flex items-center justify-center bg-black/10">
+                                                        <Check className="h-5 w-5 text-white drop-shadow"/>
                                                     </div>
                                                 )}
                                             </button>
@@ -1288,7 +1158,7 @@ export default function StorePage() {
                                                     {rating.label.split(' ')[0]}
                                                     <Star className={`h-4 w-4 ${
                                                         filters.rating === rating.value ? 'fill-white text-white' : 'fill-yellow-400 text-yellow-400'
-                                                    }`} />
+                                                    }`}/>
                                                     & up
                                                 </span>
                                                 <span className={`text-xs ${
@@ -1314,19 +1184,24 @@ export default function StorePage() {
                                             </button>
                                         )}
                                     </div>
-                                    <label className="flex cursor-pointer items-center justify-between rounded-xl bg-gray-50 px-4 py-3 hover:bg-gray-100">
+                                    <label
+                                        className="flex cursor-pointer items-center justify-between rounded-xl bg-gray-50 px-4 py-3 hover:bg-gray-100">
                                         <span className="text-sm text-gray-700">Show In-Stock Items Only</span>
                                         <div className={`relative h-6 w-11 rounded-full transition-colors ${
                                             filters.stockFilter === 'inStock' ? 'bg-black' : 'bg-gray-300'
                                         }`}>
-                                            <div className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-                                                filters.stockFilter === 'inStock' ? 'translate-x-5' : 'translate-x-0'
-                                            }`} />
+                                            <div
+                                                className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                                                    filters.stockFilter === 'inStock' ? 'translate-x-5' : 'translate-x-0'
+                                                }`}/>
                                             <input
                                                 type="checkbox"
                                                 className="sr-only"
                                                 checked={filters.stockFilter === 'inStock'}
-                                                onChange={(e) => setFilters({...filters, stockFilter: e.target.checked ? 'inStock' : ''})}
+                                                onChange={(e) => setFilters({
+                                                    ...filters,
+                                                    stockFilter: e.target.checked ? 'inStock' : ''
+                                                })}
                                             />
                                         </div>
                                     </label>
@@ -1334,7 +1209,8 @@ export default function StorePage() {
                             </div>
 
                             {/* Action Buttons */}
-                            <div className="sticky bottom-0 border-t border-gray-100 bg-white/80 px-6 py-4 backdrop-blur-xl">
+                            <div
+                                className="sticky bottom-0 border-t border-gray-100 bg-white/80 px-6 py-4 backdrop-blur-xl">
                                 <div className="flex gap-3">
                                     <button
                                         onClick={() => setFilters({
@@ -1367,16 +1243,16 @@ export default function StorePage() {
             <AnimatePresence>
                 {isQuickViewOpen && quickViewProduct && (
                     <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
+                        initial={{opacity: 0}}
+                        animate={{opacity: 1}}
+                        exit={{opacity: 0}}
                         className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
                         onClick={() => setIsQuickViewOpen(false)}
                     >
                         <motion.div
-                            initial={{ scale: 0.95, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.95, opacity: 0 }}
+                            initial={{scale: 0.95, opacity: 0}}
+                            animate={{scale: 1, opacity: 1}}
+                            exit={{scale: 0.95, opacity: 0}}
                             className="relative w-full max-w-2xl bg-white rounded-2xl shadow-xl overflow-hidden"
                             onClick={e => e.stopPropagation()}
                         >
@@ -1384,9 +1260,9 @@ export default function StorePage() {
                                 onClick={() => setIsQuickViewOpen(false)}
                                 className="absolute right-4 top-4 z-10 rounded-full bg-white/80 p-2 text-gray-500 hover:bg-white hover:text-gray-900 transition-colors"
                             >
-                                <X className="h-5 w-5" />
+                                <X className="h-5 w-5"/>
                             </button>
-                            
+
                             <div className="grid grid-cols-1 md:grid-cols-2">
                                 <div className="relative aspect-square">
                                     <Image
@@ -1400,10 +1276,12 @@ export default function StorePage() {
                                     <h3 className="text-lg font-medium text-gray-900">{quickViewProduct.name}</h3>
                                     <div className="flex items-center gap-1">
                                         <Star className="h-4 w-4 fill-current text-yellow-400"/>
-                                        <span className="text-sm text-gray-600">{quickViewProduct.rating || '4.5'}</span>
+                                        <span
+                                            className="text-sm text-gray-600">{quickViewProduct.rating || '4.5'}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-lg font-medium text-gray-900">${quickViewProduct.price}</span>
+                                        <span
+                                            className="text-lg font-medium text-gray-900">${quickViewProduct.price}</span>
                                         {quickViewProduct.discount > 0 && (
                                             <span className="text-sm text-gray-500 line-through">
                                                 ${Math.round(quickViewProduct.price * (1 + quickViewProduct.discount / 100))}
@@ -1424,7 +1302,7 @@ export default function StorePage() {
                                         >
                                             {loadingStates[quickViewProduct.id]?.cart ? (
                                                 <div className="flex items-center justify-center gap-2">
-                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                    <Loader2 className="h-4 w-4 animate-spin"/>
                                                     <span>Adding...</span>
                                                 </div>
                                             ) : (
@@ -1450,15 +1328,15 @@ export default function StorePage() {
 
             {/* Back to Top Button */}
             <AnimatePresence>
-                {showBackToTop && (
+                {showBackToTop && !showFilters && (
                     <motion.button
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 20 }}
+                        initial={{opacity: 0, y: 20}}
+                        animate={{opacity: 1, y: 0}}
+                        exit={{opacity: 0, y: 20}}
                         onClick={scrollToTop}
                         className="fixed bottom-24 right-8 z-50 rounded-full bg-black p-3 text-white shadow-lg hover:bg-gray-900 transition-colors duration-200"
                     >
-                        <ChevronUp className="h-5 w-5" />
+                        <ChevronUp className="h-5 w-5"/>
                     </motion.button>
                 )}
             </AnimatePresence>

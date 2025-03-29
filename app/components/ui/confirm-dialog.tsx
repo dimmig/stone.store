@@ -33,7 +33,7 @@ export function ConfirmDialog({
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ 
+          transition={{
             duration: 0.2,
             ease: [0.16, 1, 0.3, 1], // Custom spring-like easing
             opacity: { duration: 0.15 }
