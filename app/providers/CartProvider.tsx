@@ -2,11 +2,10 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { CartItem, Product } from '@/types';
-import { getStripe } from '@/lib/stripe';
 import { toast } from 'sonner';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import {useUserStore} from "@/store/user-store";
+import { useTranslations } from 'next-intl';
 
 interface CartContextType {
   items: CartItem[];
@@ -26,6 +25,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const { data: session } = useSession();
   const { user } = useUserStore()
+  const t  = useTranslations("cart");
 
   // Fetch cart items from API on mount and when session changes
   useEffect(() => {
@@ -93,10 +93,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return [...current, newItem];
       });
 
-      toast.success('Added to cart');
+      toast.success(t('addedToCart'));
     } catch (error) {
       console.error('Error adding to cart:', error);
-      toast.error('Failed to add item to cart');
+      toast.error(t('failedToAddItemToCart'));
     }
   };
 
@@ -111,7 +111,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (!response.ok) throw new Error('Failed to remove item from cart');
 
       setItems(current => current.filter(item => item.id !== itemId));
-      toast.success('Removed from cart');
+      toast.success(t('removedFromCart'));
     } catch (error) {
       console.error('Error removing from cart:', error);
       toast.error('Failed to remove item from cart');
@@ -151,7 +151,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }).catch(e => console.log(e))
       ));
       setItems([]);
-      toast.success('Cart cleared');
+      toast.success(t('clearedCart'));
     } catch (error) {
       console.error('Error clearing cart:', error);
       toast.error('Failed to clear cart');
@@ -160,7 +160,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const checkout = async () => {
     if (!session?.user) {
-      toast.error('Please sign in to checkout');
+      toast.error(t('pleaseSignInToCheckout'));
       return;
     }
 
@@ -186,7 +186,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       } 
     } catch (error) {
       console.error('Error during checkout:', error);
-      toast.error('Failed to initiate checkout');
+      toast.error(t('failedToInitiateCheckout'));
     }
   };
 

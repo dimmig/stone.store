@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { typography } from '../styles/design-system';
+import { typography } from '../../styles/design-system';
 import { ChevronDown, ShoppingBag, CreditCard, Truck, RefreshCw, Shield, Mail, Phone, Clock } from 'lucide-react';
 
 const fadeInUp = {
