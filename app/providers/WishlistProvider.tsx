@@ -4,6 +4,7 @@ import React, {createContext, useContext, useState, useEffect} from 'react';
 import {WishlistItem, Product} from '@/types';
 import {toast} from 'sonner';
 import {useSession} from 'next-auth/react';
+import { useTranslations } from 'next-intl';        
 
 interface WishlistContextType {
     items: WishlistItem[];
@@ -20,6 +21,7 @@ export function WishlistProvider({children}: { children: React.ReactNode }) {
     const [items, setItems] = useState<WishlistItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const {data: session} = useSession();
+    const t = useTranslations("wishlist");
 
     // Fetch wishlist items from API on mount and when session changes
     useEffect(() => {
@@ -37,7 +39,7 @@ export function WishlistProvider({children}: { children: React.ReactNode }) {
                 setItems(data);
             } catch (error) {
                 console.error('Error fetching wishlist:', error);
-                toast.error('Failed to load wishlist items');
+                toast.error(t('failedToLoadWishlistItems'));
             } finally {
                 setIsLoading(false);
             }
@@ -48,7 +50,7 @@ export function WishlistProvider({children}: { children: React.ReactNode }) {
 
     const addToWishlist = async (product: Product) => {
         if (!session?.user) {
-            toast.error('Please sign in to add items to wishlist');
+            toast.error(t('pleaseSignInToAddItemsToWishlist'));
             return;
         }
 
@@ -62,7 +64,7 @@ export function WishlistProvider({children}: { children: React.ReactNode }) {
             if (!response.ok) {
                 const error = await response.text();
                 if (error === 'Item already in wishlist') {
-                    toast.error('Item is already in your wishlist');
+                    toast.error(t('itemAlreadyInWishlist'));
                     return;
                 }
                 throw new Error('Failed to add item to wishlist');
@@ -79,10 +81,10 @@ export function WishlistProvider({children}: { children: React.ReactNode }) {
                 return [...current, newItem];
             });
 
-            toast.success('Added to wishlist');
+            toast.success(t('addedToWishlist'));
         } catch (error) {
             console.error('Error adding to wishlist:', error);
-            toast.error('Failed to add item to wishlist');
+            toast.error(t('failedToAddItemToWishlist'));
         }
     };
 
@@ -96,10 +98,10 @@ export function WishlistProvider({children}: { children: React.ReactNode }) {
             if (!response.ok) throw new Error('Failed to remove item from wishlist');
 
             setItems(current => current.filter(item => item.id !== itemId));
-            toast.success('Removed from wishlist');
+            toast.success(t('removedFromWishlist'));
         } catch (error) {
             console.error('Error removing from wishlist:', error);
-            toast.error('Failed to remove item from wishlist');
+            toast.error(t('failedToRemoveItemFromWishlist'));
         }
     };
 
